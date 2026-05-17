@@ -1031,6 +1031,7 @@ function renderSectionContent(key) {
     case 'calculadora':
       document.getElementById('ds-calculadora').innerHTML = renderBetCalculator(g);
       syncPickLabelField();
+      syncOddsField();
       break;
   }
 }
@@ -1152,6 +1153,74 @@ function sportScale(sportKey) {
 function probToScore(prob) { return Math.round(prob * 100 + 5); } // ej: 0.60→65 (MEDIA), 0.70→75 (ALTA)
 function bandLetter(score) { return score >= 70 ? 'alta' : (score >= 55 ? 'media' : 'baja'); }
 
+// ---------- CUOTAS REALES + CALIFICACIÓN (confianza + valor) ----------
+// Mejor cuota y promedio de un conjunto de precios de varias casas
+function bestAvgOdds(prices) {
+  const arr = (prices||[]).filter(x => typeof x === 'number' && x > 1);
+  if (!arr.length) return null;
+  return { best: Math.max(...arr), avg: arr.reduce((a,b)=>a+b,0)/arr.length, count: arr.length };
+}
+// Quita el margen de la casa ("vig"): normaliza prob. implícitas para que sumen 1
+function devigProbs(oddsArr) {
+  const impl = oddsArr.map(o => 1/o);
+  const sum = impl.reduce((a,b)=>a+b,0) || 1;
+  return impl.map(x => x/sum);
+}
+// Lee un mercado h2h o totals de un evento de cuotas
+function readOddsMarket(ev, marketKey) {
+  const out = {};
+  (ev.bookmakers||[]).forEach(bm => {
+    const m = (bm.markets||[]).find(x => x.key === marketKey);
+    if (!m) return;
+    (m.outcomes||[]).forEach(o => {
+      if (marketKey === 'h2h') {
+        (out[o.name] = out[o.name] || []).push(o.price);
+      } else {
+        if (o.point == null) return;
+        out[o.point] = out[o.point] || {};
+        (out[o.point][o.name] = out[o.point][o.name] || []).push(o.price);
+      }
+    });
+  });
+  return out;
+}
+// Spreads: agrupa los 2 lados de cada línea por valor absoluto (ej. -1.5 y +1.5 = línea 1.5)
+function readSpreads(ev) {
+  const byAbs = {};
+  (ev.bookmakers||[]).forEach(bm => {
+    const m = (bm.markets||[]).find(x => x.key === 'spreads');
+    if (!m) return;
+    (m.outcomes||[]).forEach(o => {
+      if (o.point == null) return;
+      const side = (o.name === ev.home_team) ? 'home' : (o.name === ev.away_team ? 'away' : null);
+      if (!side) return;
+      const abs = Math.abs(o.point);
+      byAbs[abs] = byAbs[abs] || { home:null, away:null };
+      const slot = byAbs[abs][side] || { point:o.point, prices:[] };
+      slot.point = o.point; slot.prices.push(o.price);
+      byAbs[abs][side] = slot;
+    });
+  });
+  return byAbs;
+}
+// CALIFICACIÓN nueva: combina CONFIANZA (probabilidad) y VALOR (EV de la cuota real).
+// Mezcla 50/50 el pronóstico del modelo con el de las casas (sin margen).
+// Un valor esperado (EV) negativo baja la nota fuerte — eso la hace conservadora.
+function marketScore(pModel, pMarket, oddsReal) {
+  if (pMarket == null || !oddsReal || oddsReal <= 1) {
+    const s = Math.round(Math.max(0, Math.min(100, pModel*100 + 5)));
+    return { score: s, pBlend: pModel, edge: null, ev1: null, provisional: true };
+  }
+  const pBlend = 0.5*pModel + 0.5*pMarket;
+  const edge = pBlend - (1/oddsReal);
+  const ev1  = pBlend*oddsReal - 1;
+  const conf = pBlend * 100;
+  const value = Math.max(0, Math.min(100, 50 + edge*300));
+  let score = 0.5*conf + 0.5*value;
+  if (ev1 < 0) score *= 0.6;
+  return { score: Math.round(Math.max(0, Math.min(100, score))), pBlend, edge, ev1, provisional: false };
+}
+
 // Devuelve las CATEGORÍAS disponibles para un partido (Paso 1 del selector)
 function getMarketCategories(g) {
   if (g.sport.startsWith('soccer')) {
@@ -1171,116 +1240,161 @@ function getMarketCategories(g) {
   ];
 }
 
-// Devuelve las OPCIONES específicas dentro de una categoría (Paso 2)
-// Cada opción: { key, name, prob, score, band, trackerPick }
+// Devuelve las OPCIONES de una categoría, ANCLADAS a las cuotas reales de la API
+// cuando existen. Cada opción incluye: key, name, trackerPick, prob (=modelo),
+// pModel, pMarket (sin margen, o null), oddsBest, oddsAvg, bookCount, point,
+// score, band, provisional (bool), noRealOdds (bool).
 function getMarketOptions(g, category) {
-  if (category === 'props') return []; // Player Props no tiene opciones automáticas
-  const opts = [];
-  if (g.sport.startsWith('soccer')) {
-    const lh = Math.max(0.3, g.homeStats.avgScored*1.10);
-    const la = Math.max(0.3, g.awayStats.avgScored*0.90);
-    const p = poissonMatchProbs(lh, la);
-    if (category === '1x2') {
-      opts.push({ key:'home', name:`Gana ${g.home.name}`, prob:p.homeWin, trackerPick:`${g.home.name} gana` });
-      opts.push({ key:'draw', name:'Empate', prob:p.draw, trackerPick:'Empate' });
-      opts.push({ key:'away', name:`Gana ${g.away.name}`, prob:p.awayWin, trackerPick:`${g.away.name} gana` });
-    } else if (category === 'ou') {
-      [['o15','Over 1.5',p.over15],['o25','Over 2.5',p.over25],['o35','Over 3.5',p.over35],
-       ['u15','Under 1.5',1-p.over15],['u25','Under 2.5',p.under25],['u35','Under 3.5',1-p.over35]
-      ].forEach(([k,n,pr])=>opts.push({key:k, name:n, prob:pr, trackerPick:n}));
-    } else if (category === 'btts') {
-      opts.push({ key:'yes', name:'BTTS Sí (ambos anotan)', prob:p.bttsYes, trackerPick:'BTTS Sí' });
-      opts.push({ key:'no',  name:'BTTS No (al menos uno en cero)', prob:p.bttsNo, trackerPick:'BTTS No' });
-    } else if (category === 'spread') {
-      // Sumas acumuladas de la distribución de spread (h-a)
-      const sd = p.spreadDist;
-      const sumAt = pred => Object.keys(sd).map(Number).filter(pred).reduce((acc,k)=>acc+sd[k],0);
-      const homeM05 = sumAt(k=>k>=1);  // Local -0.5: gana por 1+
-      const homeM15 = sumAt(k=>k>=2);  // Local -1.5: gana por 2+
-      const homeP05 = sumAt(k=>k>=0);  // Local +0.5: gana o empata
-      const awayM05 = sumAt(k=>k<=-1); // Visita -0.5: gana por 1+
-      const awayM15 = sumAt(k=>k<=-2); // Visita -1.5: gana por 2+
-      const awayP05 = sumAt(k=>k<=0);  // Visita +0.5: gana o empata
-      opts.push({ key:'hm05', name:`${g.home.name} -0.5`, prob:homeM05, trackerPick:`${g.home.name} -0.5` });
-      opts.push({ key:'hm15', name:`${g.home.name} -1.5`, prob:homeM15, trackerPick:`${g.home.name} -1.5` });
-      opts.push({ key:'hp05', name:`${g.home.name} +0.5`, prob:homeP05, trackerPick:`${g.home.name} +0.5` });
-      opts.push({ key:'am05', name:`${g.away.name} -0.5`, prob:awayM05, trackerPick:`${g.away.name} -0.5` });
-      opts.push({ key:'am15', name:`${g.away.name} -1.5`, prob:awayM15, trackerPick:`${g.away.name} -1.5` });
-      opts.push({ key:'ap05', name:`${g.away.name} +0.5`, prob:awayP05, trackerPick:`${g.away.name} +0.5` });
-    }
+  if (category === 'props') return [];
+  // Si aún no hay cuotas en memoria pero sí en caché, las usamos (sin gastar API)
+  if (!state.oddsData) {
+    const ck = getCachedOdds(ODDS_SPORT_MAP[state.sport]);
+    if (ck && ck.data) state.oddsData = ck.data;
+  }
+  const ev = matchOddsEvent(g);
+  const isSoccer = g.sport.startsWith('soccer');
+  const sc = sportScale(g.sport);
+
+  // --- Modelo base ---
+  let P=null, lh=0, la=0, eh=0, ea=0, ed=0, total=0, pHomeML=0.5;
+  if (isSoccer) {
+    lh = Math.max(0.3, g.homeStats.avgScored*1.10);
+    la = Math.max(0.3, g.awayStats.avgScored*0.90);
+    P = poissonMatchProbs(lh, la);
   } else {
-    // No fútbol: NBA, NFL, MLB
-    const eh = g.homeStats.avgScored * 1.04;
-    const ea = g.awayStats.avgScored * 0.96;
-    const ed = eh - ea;          // diferencial esperado (h - a)
-    const total = eh + ea;       // total esperado
-    const sc = sportScale(g.sport);
-    const pHome_ML = sigmoid(ed / 6); // moneyline (misma fórmula que renderOtherMultiMarket)
-    if (category === 'ml') {
-      opts.push({ key:'home', name:`Gana ${g.home.name}`, prob:pHome_ML, trackerPick:`${g.home.name} gana` });
-      opts.push({ key:'away', name:`Gana ${g.away.name}`, prob:1-pHome_ML, trackerPick:`${g.away.name} gana` });
-    } else if (category === 'spread') {
-      // Línea sugerida = redondeo al .5 más cercano del diferencial esperado
-      // Para MLB usamos solo run line ±1.5 (estándar)
-      if (g.sport === 'baseball/mlb') {
-        const pHomeRL = sigmoid((ed - 1.5) / sc.kSpread); // home gana por 2+
-        const pAwayRL = sigmoid((-1.5 - ed) / sc.kSpread); // away gana por 2+
-        opts.push({ key:'hm15', name:`${g.home.name} -1.5 (run line)`, prob:pHomeRL, trackerPick:`${g.home.name} -1.5` });
-        opts.push({ key:'hp15', name:`${g.home.name} +1.5`, prob:1-pAwayRL, trackerPick:`${g.home.name} +1.5` });
-        opts.push({ key:'am15', name:`${g.away.name} -1.5 (run line)`, prob:pAwayRL, trackerPick:`${g.away.name} -1.5` });
-        opts.push({ key:'ap15', name:`${g.away.name} +1.5`, prob:1-pHomeRL, trackerPick:`${g.away.name} +1.5` });
-      } else {
-        // NBA / NFL: línea base ≈ |ed| redondeado al .5, mostramos también ±smallOff y ±bigOff
-        const base = Math.max(0.5, Math.round(Math.abs(ed) * 2) / 2 + 0.5); // .5 nearest, evita 0
-        const favIsHome = ed >= 0;
-        // Tres líneas para el favorito y tres para el underdog
-        const lines = [base - sc.smallOff, base, base + sc.smallOff].map(x => Math.max(0.5, x));
-        // Favorito: -line significa "ganar por más de line"
-        lines.forEach(L => {
-          const Lround = Math.round(L * 2) / 2;
-          if (favIsHome) {
-            const pr = sigmoid((ed - Lround) / sc.kSpread);
-            opts.push({ key:`hm${Lround}`, name:`${g.home.name} -${Lround}`, prob:pr, trackerPick:`${g.home.name} -${Lround}` });
-          } else {
-            const pr = sigmoid((-Lround - ed) / sc.kSpread);
-            opts.push({ key:`am${Lround}`, name:`${g.away.name} -${Lround}`, prob:pr, trackerPick:`${g.away.name} -${Lround}` });
-          }
+    eh = g.homeStats.avgScored*1.04; ea = g.awayStats.avgScored*0.96;
+    ed = eh-ea; total = eh+ea; pHomeML = sigmoid(ed/6);
+  }
+  // Prob. del modelo de que el total supere la línea L
+  function pOverModel(L) {
+    if (isSoccer) {
+      const lam = lh+la; let cdf=0;
+      for (let k=0;k<=Math.floor(L);k++) cdf += poissonPmf(lam,k);
+      return Math.max(0, Math.min(1, 1-cdf));
+    }
+    return sigmoid((total - L)/sc.kTotal);
+  }
+  // Prob. del modelo de que un lado cubra el spread con su 'point'
+  function pSpreadModel(side, point) {
+    if (isSoccer) {
+      const sd = P.spreadDist, ks = Object.keys(sd).map(Number);
+      if (side==='home') return ks.filter(k=>k > -point).reduce((a,k)=>a+sd[k],0);
+      return ks.filter(k=>k < point).reduce((a,k)=>a+sd[k],0);
+    }
+    if (side==='home') return sigmoid((ed + point)/sc.kSpread);
+    return sigmoid((point - ed)/sc.kSpread);
+  }
+
+  const opts = [];
+  const push = o => {
+    const ms = marketScore(o.pModel, o.pMarket, o.oddsBest);
+    opts.push({ ...o, prob:o.pModel, score:ms.score, band:bandLetter(ms.score),
+                pBlend:ms.pBlend, edge:ms.edge, ev1:ms.ev1, provisional:ms.provisional });
+  };
+
+  // ===== MONEYLINE / 1X2 =====
+  if (category === 'ml' || category === '1x2') {
+    const h2h = ev ? readOddsMarket(ev, 'h2h') : null;
+    const hasH2H = h2h && (h2h[ev.home_team] || h2h[ev.away_team]);
+    if (hasH2H) {
+      const sides = [];
+      const hb = bestAvgOdds(h2h[ev.home_team]);
+      const db = isSoccer ? bestAvgOdds(h2h['Draw']) : null;
+      const ab = bestAvgOdds(h2h[ev.away_team]);
+      if (hb) sides.push({ side:'home', ba:hb, name:`Gana ${g.home.name}`, pick:`${g.home.name} gana`, pModel:isSoccer?P.homeWin:pHomeML });
+      if (db) sides.push({ side:'draw', ba:db, name:'Empate', pick:'Empate', pModel:P.draw });
+      if (ab) sides.push({ side:'away', ba:ab, name:`Gana ${g.away.name}`, pick:`${g.away.name} gana`, pModel:isSoccer?P.awayWin:1-pHomeML });
+      const dv = devigProbs(sides.map(s=>s.ba.avg));
+      sides.forEach((s,i) => push({ key:s.side, name:s.name, trackerPick:s.pick, pModel:s.pModel,
+        pMarket: sides.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+        oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:null, noRealOdds:false }));
+    } else {
+      const list = isSoccer
+        ? [['home',`Gana ${g.home.name}`,`${g.home.name} gana`,P.homeWin],['draw','Empate','Empate',P.draw],['away',`Gana ${g.away.name}`,`${g.away.name} gana`,P.awayWin]]
+        : [['home',`Gana ${g.home.name}`,`${g.home.name} gana`,pHomeML],['away',`Gana ${g.away.name}`,`${g.away.name} gana`,1-pHomeML]];
+      list.forEach(([k,n,tp,pr])=>push({ key:k, name:n, trackerPick:tp, pModel:pr, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true }));
+    }
+  }
+  // ===== OVER / UNDER =====
+  else if (category === 'ou') {
+    const tot = ev ? readOddsMarket(ev, 'totals') : null;
+    const points = tot ? Object.keys(tot).map(parseFloat).filter(x=>!isNaN(x)).sort((a,b)=>a-b) : [];
+    if (points.length) {
+      points.forEach(L => {
+        const lineObj = tot[L];
+        const present = [];
+        const ob = bestAvgOdds(lineObj['Over']);  if (ob) present.push({ side:'over', ba:ob });
+        const ub = bestAvgOdds(lineObj['Under']); if (ub) present.push({ side:'under', ba:ub });
+        const dv = devigProbs(present.map(s=>s.ba.avg));
+        present.forEach((s,i) => {
+          const pModel = s.side==='over' ? pOverModel(L) : 1-pOverModel(L);
+          push({ key:`${s.side==='over'?'o':'u'}${L}`,
+            name:`${s.side==='over'?'Over':'Under'} ${L}`,
+            trackerPick:`${s.side==='over'?'Over':'Under'} ${L}`,
+            pModel, pMarket: present.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+            oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:L, noRealOdds:false });
         });
-        // Underdog: +line significa "no perder por más de line"
-        lines.forEach(L => {
-          const Lround = Math.round(L * 2) / 2;
-          if (favIsHome) {
-            const pr = sigmoid((Lround - ed) / sc.kSpread); // away no pierde por más de L  ↔ ed < L
-            opts.push({ key:`ap${Lround}`, name:`${g.away.name} +${Lround}`, prob:pr, trackerPick:`${g.away.name} +${Lround}` });
-          } else {
-            const pr = sigmoid((ed + Lround) / sc.kSpread); // home no pierde por más de L
-            opts.push({ key:`hp${Lround}`, name:`${g.home.name} +${Lround}`, prob:pr, trackerPick:`${g.home.name} +${Lround}` });
-          }
-        });
-      }
-    } else if (category === 'ou') {
-      // Línea base = total esperado redondeado al .5
-      const base = Math.round(total * 2) / 2;
-      const offs = [-sc.bigOff, -sc.smallOff, 0];
-      // Over en líneas bajas (más fáciles), Under en líneas altas (más fáciles)
-      offs.forEach(off => {
-        const L = Math.max(0.5, Math.round((base + off) * 2) / 2);
-        const pOver = sigmoid((total - L) / sc.kTotal);
-        opts.push({ key:`o${L}`, name:`Over ${L}`, prob:pOver, trackerPick:`Over ${L}` });
       });
-      [0, sc.smallOff, sc.bigOff].forEach(off => {
-        const L = Math.max(0.5, Math.round((base + off) * 2) / 2);
-        const pUnder = sigmoid((L - total) / sc.kTotal);
-        // Evita duplicar la línea exacta del medio si off===0 y ya está en Over con el mismo L
-        opts.push({ key:`u${L}`, name:`Under ${L}`, prob:pUnder, trackerPick:`Under ${L}` });
+    } else {
+      // Teórico: líneas alrededor del total esperado del modelo
+      const lines = isSoccer ? [1.5,2.5,3.5]
+        : [Math.round(total*2)/2 - 1, Math.round(total*2)/2, Math.round(total*2)/2 + 1].map(x=>Math.max(0.5,x));
+      [...new Set(lines)].forEach(L => {
+        push({ key:`o${L}`, name:`Over ${L}`, trackerPick:`Over ${L}`, pModel:pOverModel(L), pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:L, noRealOdds:true });
+        push({ key:`u${L}`, name:`Under ${L}`, trackerPick:`Under ${L}`, pModel:1-pOverModel(L), pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:L, noRealOdds:true });
       });
     }
   }
-  // Anexar score + band a cada opción
-  return opts.map(o => {
-    const score = probToScore(o.prob);
-    return { ...o, score, band: bandLetter(score) };
-  });
+  // ===== SPREAD / HÁNDICAP =====
+  else if (category === 'spread') {
+    const byAbs = ev ? readSpreads(ev) : {};
+    const absPoints = Object.keys(byAbs).map(parseFloat).filter(x=>!isNaN(x)).sort((a,b)=>a-b);
+    if (absPoints.length) {
+      absPoints.forEach(abs => {
+        const grp = byAbs[abs];
+        const present = [];
+        if (grp.home && grp.home.prices.length) present.push({ side:'home', point:grp.home.point, ba:bestAvgOdds(grp.home.prices) });
+        if (grp.away && grp.away.prices.length) present.push({ side:'away', point:grp.away.point, ba:bestAvgOdds(grp.away.prices) });
+        const valid = present.filter(s=>s.ba);
+        const dv = devigProbs(valid.map(s=>s.ba.avg));
+        valid.forEach((s,i) => {
+          const teamName = s.side==='home'?g.home.name:g.away.name;
+          const sign = s.point<0?'m':'p';
+          push({ key:`${s.side==='home'?'h':'a'}${sign}${Math.abs(s.point)}`,
+            name:`${teamName} ${s.point>0?'+':''}${s.point}`,
+            trackerPick:`${teamName} ${s.point>0?'+':''}${s.point}`,
+            pModel:pSpreadModel(s.side, s.point),
+            pMarket: valid.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+            oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:s.point, noRealOdds:false });
+        });
+      });
+    } else if (isSoccer) {
+      [[-0.5,'home'],[-1.5,'home'],[0.5,'home'],[-0.5,'away'],[-1.5,'away'],[0.5,'away']].forEach(([pt,side])=>{
+        const team = side==='home'?g.home.name:g.away.name;
+        push({ key:`${side==='home'?'h':'a'}${pt<0?'m':'p'}${Math.abs(pt)}`,
+          name:`${team} ${pt>0?'+':''}${pt}`, trackerPick:`${team} ${pt>0?'+':''}${pt}`,
+          pModel:pSpreadModel(side,pt), pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:pt, noRealOdds:true });
+      });
+    } else {
+      const baseLines = g.sport==='baseball/mlb' ? [1.5]
+        : [...new Set([Math.max(0.5,Math.round(Math.abs(ed)*2)/2), Math.max(0.5,Math.round(Math.abs(ed)*2)/2 + sc.smallOff)])];
+      baseLines.forEach(L => {
+        [['home',-L],['home',L],['away',-L],['away',L]].forEach(([side,pt])=>{
+          const team = side==='home'?g.home.name:g.away.name;
+          push({ key:`${side==='home'?'h':'a'}${pt<0?'m':'p'}${Math.abs(pt)}`,
+            name:`${team} ${pt>0?'+':''}${pt}`, trackerPick:`${team} ${pt>0?'+':''}${pt}`,
+            pModel:pSpreadModel(side,pt), pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:pt, noRealOdds:true });
+        });
+      });
+    }
+  }
+  // ===== BTTS (fútbol) — no hay cuotas en los mercados que descargamos =====
+  else if (category === 'btts') {
+    push({ key:'yes', name:'BTTS Sí (ambos anotan)', trackerPick:'BTTS Sí', pModel:P.bttsYes, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
+    push({ key:'no',  name:'BTTS No (al menos uno en cero)', trackerPick:'BTTS No', pModel:P.bttsNo, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
+  }
+  // Mejores opciones primero (por calificación)
+  return opts.sort((a,b)=>b.score-a.score);
 }
 
 function renderBetCalculator(g) {
@@ -1358,6 +1472,46 @@ function syncPickLabelField() {
   el.dataset.lastDefault = defaultLabel;
 }
 
+// Autollena el campo "Tu cuota" con la mejor cuota real de la opción seleccionada.
+function syncOddsField() {
+  const g = state.selectedGame; if (!g) return;
+  const el = document.getElementById('calc-odds'); if (!el) return;
+  const cat = state.calcMarket.category;
+  if (cat === 'props') return;
+  const opts = getMarketOptions(g, cat);
+  const sel = opts.find(o=>o.key===state.calcMarket.optionKey) || opts[0];
+  if (!sel || sel.oddsBest == null) return;
+  const def = sel.oddsBest.toFixed(2);
+  if (!el.value.trim() || el.value === el.dataset.lastOdds) el.value = def;
+  el.dataset.lastOdds = def;
+}
+
+// Carga las cuotas reales de la liga (de caché o de la API) y re-renderiza las opciones.
+async function ensureOddsForCalc() {
+  const g = state.selectedGame; if (!g) return;
+  const sk = ODDS_SPORT_MAP[state.sport];
+  const area = document.getElementById('calc-options-area');
+  if (!state.oddsKey) { alert('Primero configura tu API key de The Odds API en la pestaña Herramientas.'); return; }
+  if (area) area.innerHTML = `<div class="state-msg"><span class="loader"></span>Cargando cuotas reales desde The Odds API…</div>`;
+  try {
+    if (!state.oddsData) {
+      const ck = getCachedOdds(sk);
+      if (ck && ck.data) state.oddsData = ck.data;
+    }
+    if (!state.oddsData) {
+      state.oddsData = await fetchOddsForCurrentSport();
+      saveOddsToCache(sk, state.oddsData);
+      saveOddsSnapshot(state.oddsData);
+    }
+  } catch(e) {
+    if (area) area.innerHTML = renderMarketOptionsArea(g);
+    alert('No se pudieron cargar las cuotas: ' + e.message + '\nPuedes escribir la cuota a mano.');
+    return;
+  }
+  if (area) area.innerHTML = renderMarketOptionsArea(g);
+  syncPickLabelField(); syncOddsField(); updateCalculator();
+}
+
 // Render del Paso 2 — opciones de la categoría activa
 function renderMarketOptionsArea(g) {
   const cat = state.calcMarket.category;
@@ -1385,12 +1539,22 @@ function renderMarketOptionsArea(g) {
   }
   const opts = getMarketOptions(g, cat);
   if (!opts.length) return `<div class="state-msg" style="padding:14px;">Sin opciones disponibles para esta categoría.</div>`;
-  // Por defecto pre-selecciona la opción de mayor probabilidad si no hay nada elegido
+  // Pre-selecciona la opción de mejor calificación si no hay nada elegido
   if (!state.calcMarket.optionKey || !opts.find(o=>o.key===state.calcMarket.optionKey)) {
-    const best = [...opts].sort((a,b)=>b.prob-a.prob)[0];
-    state.calcMarket.optionKey = best.key;
+    state.calcMarket.optionKey = opts[0].key;
   }
-  return `<div class="market-options-grid">
+  // Aviso si la categoría no tiene cuotas reales (calificación provisional)
+  let banner = '';
+  if (opts.every(o => o.noRealOdds)) {
+    const action = cat === 'btts'
+      ? 'BTTS no viene en los mercados que descarga la API gratuita — escribe la cuota de tu casa a mano abajo.'
+      : (state.oddsKey
+          ? '<button class="btn-tiny accent" onclick="ensureOddsForCalc()">Cargar cuotas reales de la API</button>'
+          : 'Configura tu API key de The Odds API en la pestaña Herramientas, o escribe la cuota a mano abajo.');
+    banner = `<div style="border-left:3px solid var(--c-cobre);background:var(--surface-hover);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--text-2);line-height:1.5;">
+      ⚠ Sin cuotas reales para este partido — la calificación es <strong>provisional</strong> (solo el modelo, sin valor de cuota). ${action}</div>`;
+  }
+  return banner + `<div class="market-options-grid">
     ${opts.map(o => `
       <div class="market-option ${state.calcMarket.optionKey===o.key?'selected':''}" onclick="selectMarketOption('${o.key}')">
         <div class="market-option-head">
@@ -1398,8 +1562,10 @@ function renderMarketOptionsArea(g) {
           <span class="market-option-score s-${o.band}">${o.score}</span>
         </div>
         <div class="market-option-foot">
-          <span class="market-option-prob">${(o.prob*100).toFixed(1)}%</span>
-          <span class="market-option-band b-${o.band}">${o.band.toUpperCase()}</span>
+          <span class="market-option-prob">Modelo ${(o.pModel*100).toFixed(1)}%${o.pMarket!=null?` · Casas ${(o.pMarket*100).toFixed(1)}%`:''}</span>
+          ${o.oddsBest!=null
+            ? `<span class="market-option-band b-${o.band}">@ ${o.oddsBest.toFixed(2)}</span>`
+            : `<span class="market-option-band b-${o.band}">${o.band.toUpperCase()}</span>`}
         </div>
       </div>
     `).join('')}
@@ -1418,6 +1584,7 @@ function selectMarketCategory(catKey) {
   const g = state.selectedGame; if (!g) return;
   document.getElementById('calc-options-area').innerHTML = renderMarketOptionsArea(g);
   syncPickLabelField();
+  syncOddsField();
   updateCalculator();
 }
 
@@ -1428,6 +1595,7 @@ function selectMarketOption(optKey) {
     el.classList.toggle('selected', el.getAttribute('onclick').includes(`'${optKey}'`));
   });
   syncPickLabelField();
+  syncOddsField();
   updateCalculator();
 }
 
@@ -1450,56 +1618,70 @@ function updateCalculator() {
   const bankrollInput = parseFloat(document.getElementById('calc-bankroll').value) || 0;
   const out = document.getElementById('calc-output');
   if (!oddsInput || oddsInput <= 1) { out.innerHTML = `<div class="state-msg">Ingresa una cuota válida (> 1) para ver el análisis.</div>`; return; }
-  let modelProb = 0, label = '', categoryLabel = '';
+  let pModel = 0, pMarket = null, label = '', categoryLabel = '', bookCount = 0;
   const cat = state.calcMarket.category;
   const categories = getMarketCategories(g);
   const catObj = categories.find(c=>c.key===cat);
   categoryLabel = catObj ? catObj.trackerName : '';
   if (cat === 'props') {
     if (!state.calcMarket.customProb) { out.innerHTML = `<div class="state-msg">Para Player Props, ingresa tu probabilidad estimada arriba (%) para correr el cálculo.</div>`; return; }
-    modelProb = state.calcMarket.customProb;
+    pModel = state.calcMarket.customProb;
     label = state.calcMarket.customLabel || 'Player Prop (custom)';
   } else {
     const opts = getMarketOptions(g, cat);
     const sel = opts.find(o=>o.key===state.calcMarket.optionKey) || opts[0];
     if (!sel) { out.innerHTML = `<div class="state-msg">Elige una opción de mercado arriba.</div>`; return; }
-    modelProb = sel.prob;
+    pModel = sel.prob;
+    pMarket = sel.pMarket;
+    bookCount = sel.bookCount || 0;
     label = sel.trackerPick || sel.name;
   }
   // El campo editable "Selección / línea exacta" tiene prioridad para lo que se REGISTRA
-  // (el cálculo de probabilidad sigue usando la opción del modelo)
   const pickLabelEl = document.getElementById('calc-pick-label');
   const pickLabel = (pickLabelEl && pickLabelEl.value.trim()) ? pickLabelEl.value.trim() : label;
   const bookEl = document.getElementById('calc-book');
   const book = bookEl ? bookEl.value.trim() : '';
+  // Calificación con la cuota REAL que vas a jugar: combina confianza + valor,
+  // mezclando 50/50 la probabilidad del modelo con la de las casas (sin margen).
+  const ms = marketScore(pModel, pMarket, oddsInput);
+  const pBlend = ms.pBlend;
+  const hasMarket = pMarket != null;
   const impliedProb = 1 / oddsInput;
-  const edge = modelProb - impliedProb;
+  const edge = pBlend - impliedProb;
   const edgePct = edge * 100;
-  const evPer1 = modelProb * (oddsInput - 1) - (1 - modelProb);
-  const kelly = oddsInput > 1 ? Math.max(0, (modelProb * oddsInput - 1) / (oddsInput - 1)) : 0;
+  const evPer1 = pBlend * (oddsInput - 1) - (1 - pBlend);
+  const kelly = oddsInput > 1 ? Math.max(0, (pBlend * oddsInput - 1) / (oddsInput - 1)) : 0;
   const halfKelly = kelly / 2;
   const kellyStake = bankrollInput * halfKelly;
   let verdict, verdictClass;
-  if (edgePct >= 5 && evPer1 >= 0.05) { verdict = `✓ VALUE BET — Edge de ${edgePct.toFixed(1)}%. Apuesta favorable según el modelo.`; verdictClass = 'verdict-value'; }
+  if (edgePct >= 5 && evPer1 >= 0.05) { verdict = `✓ VALUE BET — Edge de ${edgePct.toFixed(1)}% sobre la probabilidad combinada. Apuesta favorable.`; verdictClass = 'verdict-value'; }
   else if (edgePct >= 0) { verdict = `≡ JUSTA — Edge mínimo (${edgePct.toFixed(1)}%). No hay ventaja clara; mejor pasar.`; verdictClass = 'verdict-fair'; }
-  else { verdict = `✕ DESVENTAJA — La cuota es desfavorable (edge ${edgePct.toFixed(1)}%). NO apostar según el modelo.`; verdictClass = 'verdict-bad'; }
-  state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput, modelProb, impliedProb, edge: edgePct, ev: evPer1*100, kelly: halfKelly, kellyStake };
+  else { verdict = `✕ DESVENTAJA — La cuota es desfavorable (edge ${edgePct.toFixed(1)}%). NO apostar.`; verdictClass = 'verdict-bad'; }
+  const provNote = ms.provisional ? ' · <span style="color:var(--c-cobre);">provisional, sin cuota de mercado</span>' : '';
+  const bandClass = bandLetter(ms.score);
+  state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput, modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: ms.score, bookCount, impliedProb, edge: edgePct, ev: evPer1*100, kelly: halfKelly, kellyStake };
   out.innerHTML = `
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
     <div class="calc-output">
-      <div class="calc-out-cell"><div class="calc-out-label">Probabilidad implícita</div><div class="calc-out-value">${(impliedProb*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que la cuota afirma</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Probabilidad modelo</div><div class="calc-out-value">${(modelProb*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que estima el sistema</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Edge (ventaja)</div><div class="calc-out-value ${edge>=0?'pos':'neg'}">${edge>=0?'+':''}${edgePct.toFixed(1)}%</div><div class="calc-out-desc">Modelo − Implícita</div></div>
+      <div class="calc-out-cell" style="border-color:var(--border-strong);">
+        <div class="calc-out-label">Calificación · confianza + valor</div>
+        <div class="calc-out-value s-${bandClass}" style="font-size:25px;">${ms.score}</div>
+        <div class="calc-out-desc">0–100${provNote}</div>
+      </div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. del modelo</div><div class="calc-out-value">${(pModel*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que estima el sistema</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. de las casas</div><div class="calc-out-value">${hasMarket?(pMarket*100).toFixed(1)+'%':'—'}</div><div class="calc-out-desc">${hasMarket?`Sin margen · ${bookCount} casa${bookCount===1?'':'s'}`:'API sin cuotas de este mercado'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. combinada</div><div class="calc-out-value accent">${(pBlend*100).toFixed(1)}%</div><div class="calc-out-desc">${hasMarket?'Mezcla 50/50 modelo + casas':'= modelo (sin cuota de mercado)'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. implícita</div><div class="calc-out-value">${(impliedProb*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que afirma tu cuota ${oddsInput}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Edge (ventaja)</div><div class="calc-out-value ${edge>=0?'pos':'neg'}">${edge>=0?'+':''}${edgePct.toFixed(1)}%</div><div class="calc-out-desc">Combinada − Implícita</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">EV por $1 stake</div><div class="calc-out-value ${evPer1>=0?'pos':'neg'}">${evPer1>=0?'+':''}$${evPer1.toFixed(3)}</div><div class="calc-out-desc">Ganancia esperada</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Kelly (puro)</div><div class="calc-out-value">${(kelly*100).toFixed(1)}%</div><div class="calc-out-desc">Stake óptimo agresivo</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Half Kelly (recomendado)</div><div class="calc-out-value accent">${(halfKelly*100).toFixed(1)}%</div><div class="calc-out-desc">${bankrollInput? `= $${kellyStake.toFixed(2)}` : 'Más conservador'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Half Kelly (recomendado)</div><div class="calc-out-value accent">${(halfKelly*100).toFixed(1)}%</div><div class="calc-out-desc">${bankrollInput? `= $${kellyStake.toFixed(2)}` : 'Ingresa bankroll'}</div></div>
     </div>
     <div class="edu-box">
       <div class="ttl">Cómo interpretar lo de arriba</div>
-      <strong>Implícita vs Modelo:</strong> si modelo > implícita, hay value. Aquí modelo dice <strong>${(modelProb*100).toFixed(1)}%</strong>, casa dice <strong>${(impliedProb*100).toFixed(1)}%</strong>.<br><br>
-      <strong>Edge:</strong> es la diferencia. Sharps no apuestan con edge < 3-5% (el modelo nunca es perfecto, necesitas colchón).<br><br>
-      <strong>EV:</strong> si apuestas $10, esperas ganar/perder en promedio <strong>$${(evPer1*10).toFixed(2)}</strong> por apuesta a largo plazo.<br><br>
-      <strong>Kelly Stake:</strong> Half Kelly de ${(halfKelly*100).toFixed(1)}% del bankroll = $${kellyStake.toFixed(2)} ${bankrollInput?'':'(ingresa tu bankroll para calcular)'}. Si Kelly es 0 o negativo, NO apuestes.
+      <strong>Calificación:</strong> combina dos cosas — qué tan probable es ganar (confianza) y si la cuota paga lo suficiente (valor). Una apuesta casi segura pero mal pagada ya no saca nota alta.<br><br>
+      <strong>Modelo vs casas:</strong> el modelo dice <strong>${(pModel*100).toFixed(1)}%</strong>${hasMarket?`, las casas (quitándoles el margen) dicen <strong>${(pMarket*100).toFixed(1)}%</strong>. La <strong>combinada</strong> promedia ambas mitad y mitad — más conservadora que fiarse solo del modelo.`:`. No hay cuotas reales de este mercado en la API, así que se usa solo el modelo (calificación provisional).`}<br><br>
+      <strong>Edge:</strong> diferencia entre la probabilidad combinada y la implícita. Sin un edge positivo (idealmente ≥ 3–5%) no hay value.<br><br>
+      <strong>EV / Kelly:</strong> si apuestas $10, esperas ${evPer1>=0?'ganar':'perder'} ~<strong>$${Math.abs(evPer1*10).toFixed(2)}</strong> de media a largo plazo. Half Kelly sugiere ${(halfKelly*100).toFixed(1)}% del bankroll${bankrollInput?` = $${kellyStake.toFixed(2)}`:''}. Si Kelly es 0, no apuestes.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       <button class="btn-accent" onclick="prefillBet('calc')">→ Enviar al tracker con estos datos</button>
@@ -2309,7 +2491,9 @@ function prefillBet(mode = 'default') {
       if (ar) { ar.checked = true; updateAlignmentPills(); }
       // Si la selección registrada difiere de la del modelo, lo anotamos para no perder contexto
       const lineNote = (c.pickLabel && c.pickLabel !== c.modelLabel) ? ` · Línea registrada: ${c.pickLabel} (modelo analizó: ${c.modelLabel})` : '';
-      document.getElementById('bf-notes').value = `Score: ${g.viability?.total} · Modelo: ${(c.modelProb*100).toFixed(1)}% · Implícita: ${(c.impliedProb*100).toFixed(1)}% · Edge: ${c.edge.toFixed(1)}% · EV: ${c.ev.toFixed(1)}% · Half Kelly: ${(c.kelly*100).toFixed(1)}%${lineNote}`;
+      const mktTxt = (c.marketProb!=null) ? ` · Casas: ${(c.marketProb*100).toFixed(1)}%` : '';
+      const califTxt = (c.score!=null) ? ` · Calificación: ${c.score}/100` : '';
+      document.getElementById('bf-notes').value = `Viabilidad: ${g.viability?.total}${califTxt} · Modelo: ${(c.modelProb*100).toFixed(1)}%${mktTxt} · Implícita: ${(c.impliedProb*100).toFixed(1)}% · Edge: ${c.edge.toFixed(1)}% · EV: ${c.ev.toFixed(1)}% · Half Kelly: ${(c.kelly*100).toFixed(1)}%${lineNote}`;
       if (c.kellyStake) document.getElementById('bf-stake').value = c.kellyStake.toFixed(2);
     }
     document.getElementById('bf-stake').focus();
