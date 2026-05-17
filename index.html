@@ -8,16 +8,16 @@
 <style>
   :root {
     /* Base — minimal warm grayscale */
-    --bg: #fafaf7;
+    --bg: #f1efe8;
     --surface: #ffffff;
-    --surface-hover: #f5f3ee;
-    --surface-2: #f0ede6;
-    --border: #e8e4dd;
-    --border-strong: #c8c4bc;
-    --text-1: #0a0a0a;
-    --text-2: #4a4a4a;
-    --text-3: #8a8680;
-    --text-muted: #b8b4ae;
+    --surface-hover: #f2eee5;
+    --surface-2: #e7e2d6;
+    --border: #d3cebf;
+    --border-strong: #a8a294;
+    --text-1: #050505;
+    --text-2: #343230;
+    --text-3: #6a665e;
+    --text-muted: #9a958c;
     /* 5-color minimalist accent palette */
     --c-carbon: #1a1a1a;
     --c-cobre: #a85d2a;
@@ -40,6 +40,8 @@
   .header-inner { max-width: 1600px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
   .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
   .brand-mark { width: 8px; height: 8px; background: var(--c-cobre); border-radius: 50%; }
+  .brand-logo { height: 38px; width: auto; display: block; }
+  .sync-gate-brand .brand-logo { height: 44px; margin: 0 auto 4px; }
   .brand-sub { font-family: var(--font-mono); color: var(--text-3); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-left: 6px; font-weight: 400; }
   .controls { display: flex; gap: 8px; margin-left: auto; align-items: center; flex-wrap: wrap; }
   select, button.ctrl { background: var(--surface); border: 1px solid var(--border); color: var(--text-1); padding: 8px 12px; font-family: var(--font-body); font-size: 12px; cursor: pointer; transition: all 0.15s ease; border-radius: 0; }
@@ -113,7 +115,17 @@
   /* DETAIL */
   .detail { margin-top: 28px; border: 1px solid var(--border); background: var(--surface); padding: 24px; display: none; }
   .detail.active { display: block; }
-  .detail-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+  .detail-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px 16px; padding: 14px 18px; border: 1px solid var(--border-strong); background: var(--surface); margin: -24px -24px 22px; position: sticky; top: var(--hh, 116px); z-index: 40; }
+  .detail-head-main { min-width: 180px; }
+  .detail-head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .detail-summary { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 6px 14px; background: var(--surface-2); border: 1px solid var(--border-strong); }
+  .ds-sum-score { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .ds-sum-block { display: flex; flex-direction: column; gap: 1px; }
+  .ds-sum-band { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.08em; }
+  .ds-sum-fav { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+  .ds-sum-band.b-alta { color: var(--c-salvia); }
+  .ds-sum-band.b-media { color: var(--c-cobre); }
+  .ds-sum-band.b-baja, .ds-sum-band.b-no { color: var(--c-granate); }
   .detail-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
   .detail-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); margin-top: 4px; }
   .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
@@ -461,11 +473,19 @@
   .game-card.high-viability .team-name { font-weight: 700; }
   .game-card.high-viability .score-badge { border-color: var(--c-salvia); }
   /* === CUOTAS MULTI-MERCADO: tableros por lado === */
-  .market-block { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px dashed var(--border); }
-  .market-block:last-child { border-bottom: 0; margin-bottom: 0; }
-  .market-block-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .market-block { margin-bottom: 14px; border: 1px solid var(--border-strong); background: var(--surface); }
+  .market-block-head { display: flex; align-items: center; gap: 10px; padding: 13px 16px; background: var(--surface-2); flex-wrap: wrap; cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-strong); }
+  .market-block.collapsed .market-block-head { border-bottom: 0; }
+  .market-block-head:hover { background: var(--surface-hover); }
   .market-block-title { font-size: 14px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
   .market-block-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+  .mb-toggle { margin-left: auto; font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--c-cobre); white-space: nowrap; }
+  .market-block-body { padding: 16px; }
+  .market-block.collapsed .market-block-body { display: none; }
+  .mb-collapse-btn { display: block; width: 100%; background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text-2); padding: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; cursor: pointer; }
+  .mb-collapse-btn:hover { background: var(--surface-hover); }
+  .mb-collapse-btn.top { margin-bottom: 12px; }
+  .mb-collapse-btn.bot { margin-top: 12px; }
   .market-line-group { margin-top: 14px; }
   .market-line-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
   .best-odds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
@@ -505,13 +525,58 @@
   .sync-gate-skip { display: block; width: 100%; margin-top: 12px; background: transparent; border: none; color: var(--text-3); font-family: var(--font-body); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 6px; }
   .sync-gate-skip:hover { color: var(--text-1); }
   .sync-gate-note { font-size: 11px; color: var(--text-3); line-height: 1.6; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* ===== ARBITRAJE / BANKROLL ===== */
+  .bankroll-box { border: 1px solid var(--border-strong); background: var(--surface); padding: 18px 20px; margin-bottom: 22px; }
+  .bankroll-box input { background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-1); padding: 9px 12px; font-family: var(--font-mono); font-size: 15px; width: 100%; }
+  .arb-subpanel { display: none; }
+  .arb-subpanel.active { display: block; }
+  /* ===== TABLA DE HISTORIAL (rediseno) ===== */
+  .tracker-block-title { font-size: 15px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; margin: 26px 0 4px; display: flex; align-items: center; gap: 10px; }
+  .tracker-block-title .count { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--surface); background: var(--c-carbon); padding: 2px 9px; }
+  .tracker-block-sub { font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
+  table.bets td.cell-match { font-family: var(--font-body); font-weight: 600; color: var(--text-1); }
+  table.bets td.cell-market { font-family: var(--font-body); }
+  table.bets td.cell-when { white-space: nowrap; }
+  .bets tr.bet-settled-won td { background: rgba(45,94,66,0.05); }
+  .bets tr.bet-settled-lost td { background: rgba(122,46,46,0.05); }
+  .live-pill { background: var(--c-granate); color: #fff; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; display: inline-block; animation: livePulse 1.6s infinite; }
+  @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+  .pl-pos { color: var(--c-salvia); font-weight: 700; }
+  .pl-neg { color: var(--c-granate); font-weight: 700; }
+  .lesson-link { color: var(--c-pizarra); text-decoration: underline; cursor: pointer; font-weight: 600; }
+  .lesson-link:hover { color: var(--c-cobre); }
+  .auto-tag { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.06em; background: var(--c-pizarra-t); color: var(--c-pizarra); padding: 1px 5px; margin-left: 4px; }
+  .manual-tag { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.06em; background: var(--surface-2); color: var(--text-3); padding: 1px 5px; margin-left: 4px; }
+  .icon-btn.btn-edit { color: var(--c-pizarra); border-color: var(--c-pizarra); }
+  /* ===== MODAL DE LECCION / EDICION ===== */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,8,0.6); display: none; align-items: flex-start; justify-content: center; z-index: 500; padding: 40px 16px; overflow-y: auto; }
+  .modal-overlay.active { display: flex; }
+  .modal-card { background: var(--surface); border: 1px solid var(--border-strong); max-width: 640px; width: 100%; padding: 26px; }
+  .modal-card h2 { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .modal-close { float: right; background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text-2); width: 30px; height: 30px; cursor: pointer; font-size: 16px; }
+  .lesson-section { border-left: 3px solid var(--c-pizarra); background: var(--bg); padding: 12px 14px; margin: 12px 0; font-size: 13px; line-height: 1.6; }
+  .lesson-section.win { border-left-color: var(--c-salvia); }
+  .lesson-section.loss { border-left-color: var(--c-granate); }
+  .lesson-section .lh { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  .modal-card .form-row { margin-bottom: 12px; }
+  .modal-card label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+  .modal-card input, .modal-card select, .modal-card textarea { width: 100%; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-1); padding: 8px 10px; font-family: var(--font-mono); font-size: 13px; }
+  /* ===== PRESET ADAPTATIVO ===== */
+  .adaptive-card { border: 1px solid var(--c-pizarra); border-left: 4px solid var(--c-pizarra); background: var(--c-pizarra-t); padding: 16px 18px; margin-bottom: 18px; }
+  .adaptive-card .ac-title { font-weight: 800; font-size: 14px; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
+  .adaptive-badge { font-family: var(--font-mono); font-size: 9px; background: var(--c-pizarra); color: #fff; padding: 2px 7px; letter-spacing: 0.06em; }
+  .adaptive-log { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); max-height: 150px; overflow-y: auto; margin-top: 10px; }
+  .adaptive-log div { padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .preset-btn.adaptive { border-color: var(--c-pizarra); color: var(--c-pizarra); font-weight: 700; }
+  .preset-btn.adaptive.active { background: var(--c-pizarra); color: #fff; }
 </style>
 </head>
 <body>
 
 <header class="header">
   <div class="header-inner">
-    <div class="brand"><span class="brand-mark"></span>QUANT.SPORTS<span class="brand-sub">v3 · MINIMAL</span></div>
+    <div class="brand"><img class="brand-logo" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACwAngDASIAAhEBAxEB/8QAHQABAQEAAgMBAQAAAAAAAAAAAAcIBQYDBAkBAv/EAGMQAAEDAgMDBgcICgsNBgcAAAEAAgMEBQYHEQgSIRMxQVFhsxQiN3F0dbEVMjZSc4GRshYYIzQ4QmKSocEXM1ZydoKltNLT4yQ1VWRlZmeDk5SVotElKFOjwuEnRVRjpPDx/8QAHAEBAAIDAQEBAAAAAAAAAAAAAAECAwQFBgcI/8QAPhEAAgEDAQQHBQYEBgMBAAAAAAECAwQRBRIhMUEGMjNRcbHBE3KBkaEiNDVhstEUQsLwFRYkYnPhQ1KD8f/aAAwDAQACEQMRAD8A2AiItUyhERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBEXX8eYxw9giwyXnEdwjo6Zp3WDnfK/oYxvO5x6vnOg4qQdgTUdaxvjzawxJWzyQYOtFLaqXXRlRWN5ecjoO7ruN83jedTC5Z3ZrXCRz58b3SMnopy2EfQwBXVJldpH0X1CL5wU2cOaFPIJGY6vriOYSVJePodqF3nCG1DmPaJmC8mgv9OD4zZ4BDJp2PjAGvaWlS6TG0jcyKb5O5yYTzKh5C3yvoLuxm9Lbqlw5QAc7mEcHt7RxHSAqQsbWCwREUAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIo9tYY0xLgfAFuumFrl7n1k10ZTySchHLrGYpXEaSNcOdreOmvBZl+2Gzh/df/JtJ/VK8YNrJGTfaLBFNtCZvvqYmOxdq1zwCPc2l5tfklvdRKLjxCeQiIqkhERAEREAREQBERAEREAREQBERAEREAREQBERAEUU2hcc4pwpiC20tgungcM1IZJG+DxSau3yNdXtJ5gpj+zHmP+6P/wDCp/6tatS8hTk4tM9RY9E7y9t416copS728+TNcos25V5nY4veYFotVzvfhFHUSubLH4LC3eAY487WAjiBzFaSWWjWjVWYnL1XSa2l1VSrNNtZ3Z8OaXcERFlOWEREAREQBERAEREAREQBERAEREB69zraW222puNdM2ClpYnTTSu5mMaCXE+YAr5z52ZiXLMjGtReKp8kdBE4x26lJ8WCHXhw+M7gXHpPYAta7ZuIpLJk1PQwSFk14qo6PVvOI+Mj/mIZun98sIHidVnpR5lJM/URfiylT9X4iID3LLc6+zXWmutrq5aStpZBLBNGdHMcOYj/APeK+imRmPoMxsvaO+gMjrmE09fC3mjnaBrp2OBDh2O06F831o/YSxI+jxzd8MySEQXGj5eNpPDlYj0edjnfmhY6kcrJaLNloiLXLhERAZm2i9oO5Yfv9VhHBHIx1VIeTrbjIwSFknTHG0+Lq3mLjrx1GnDVZsveOsaXqRz7riu9Ve9ztkrZNweZuug+YL1ccyvmxrfZpHbz5LjUOces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CyGpfC0yxtPOGuI1AOnQvbRAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAUS2s/wC8Fj9Kk+qFbVEtrP8AvBY/SpPqha932Mju9GfxWj4vyZnZcphD4WWf0+DvGri1ymEPhZZ/T4O8auJHrI+yXHZS8H5G4giBF6M/PwREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAFHc7sirJjyQ3yzvis2JmEPFU1n3KoI5hK0dP5Y49evMrEiklNp5RnLL/AGcI5MRC/ZhTUtdHAGiltdO4uiJHEulcQN4a6ndHA8NSeZaKgiighZDDGyOKNoaxjGgNa0DQAAcwX9oqxSjFRXBGW5uKlzWlWqPMpPLCIikwhERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAXSc2sA/Z7b6Gk91vc7wWV0m94Pyu9qNNNN5ui7sirOCmtmXAz2tzVtaqrUXiS4P8A/SCfa5/54/yZ/ar2rPs/+592o6/7LeV8GnZNue52m9uuB015XhzK4osKtKK5eZ2ZdKdVkmnV4/7Y/sERFsHnwiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgP//Z" alt="QuantSports" /></div>
     <div class="controls">
       <select id="sport-select" title="Liga">
         <optgroup label="FÚTBOL">
@@ -520,10 +585,12 @@
           <option value="soccer/ita.1">Serie A</option>
           <option value="soccer/ger.1">Bundesliga</option>
           <option value="soccer/fra.1">Ligue 1</option>
+          <option value="soccer/ecu.1">LigaPro Ecuador</option>
           <option value="soccer/uefa.champions">Champions</option>
           <option value="soccer/uefa.europa">Europa League</option>
-          <option value="soccer/usa.1">MLS</option>
           <option value="soccer/conmebol.libertadores">Libertadores</option>
+          <option value="soccer/conmebol.sudamericana">Copa Sudamericana</option>
+          <option value="soccer/fifa.world">Mundial FIFA</option>
         </optgroup>
         <optgroup label="BÁSQUET"><option value="basketball/nba">NBA</option></optgroup>
         <optgroup label="BÉISBOL"><option value="baseball/mlb">MLB</option></optgroup>
@@ -536,6 +603,7 @@
   </div>
   <div class="tabs" id="tabs">
     <button class="tab active" data-tab="schedule">Cronograma</button>
+    <button class="tab" data-tab="arb">Arbitraje</button>
     <button class="tab" data-tab="tracker">Mis Apuestas</button>
     <button class="tab" data-tab="tools">Herramientas</button>
     <button class="tab" data-tab="education">Educación</button>
@@ -564,9 +632,10 @@
     <div id="schedule-content"><div class="state-msg"><span class="loader"></span>Conectando a fuentes de datos...</div></div>
     <div class="detail" id="detail">
       <div class="detail-head">
-        <div><div class="detail-title" id="detail-title">—</div><div class="detail-meta" id="detail-meta">—</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn-secondary" onclick="backToSchedule()">← Volver al cronograma</button>
+        <div class="detail-head-main"><div class="detail-title" id="detail-title">—</div><div class="detail-meta" id="detail-meta">—</div></div>
+        <div class="detail-summary" id="detail-summary"></div>
+        <div class="detail-head-actions">
+          <button class="btn-secondary" onclick="backToSchedule()">← Volver</button>
           <button class="btn-accent" onclick="prefillBet()">+ Registrar apuesta</button>
         </div>
       </div>
@@ -575,9 +644,50 @@
   </section>
 
   <!-- HERRAMIENTAS (arbitraje + hedging — cosas que no son de un solo partido) -->
+  <!-- ARBITRAJE / HEDGING -->
+  <section class="panel" id="panel-arb">
+    <h1 class="section-title">Arbitraje y Hedging</h1>
+    <p class="section-sub">El arbitraje (surebet) busca partidos donde combinar cuotas de varias casas te deja ganar pase lo que pase. El hedging cubre una apuesta que ya hiciste. Ambos usan las cuotas que cargues desde la sección Cuotas de cualquier partido del Cronograma.</p>
+
+    <div class="bankroll-box">
+      <div class="block-title">Tu bankroll para arbitraje</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Cuánto dinero total quieres exponer en cada arbitraje. El sistema reparte ese monto entre las casas para asegurar la ganancia — igual que la calculadora del Cronograma reparte el stake con Kelly. Se guarda en tu navegador.</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="number" id="arb-bankroll" step="1" min="1" placeholder="100" style="max-width:200px;" oninput="onArbBankrollChange()" />
+        <span class="muted" style="font-family:var(--font-mono);font-size:11px;">USD de exposición total por arbitraje</span>
+      </div>
+    </div>
+
+    <div class="subtabs" id="arb-subtabs">
+      <button class="subtab active" data-arbsub="scan">Escáner de surebets</button>
+      <button class="subtab" data-arbsub="hedge">Calculadora de hedging</button>
+    </div>
+
+    <div class="arb-subpanel active" id="arbsub-scan">
+      <p class="section-sub">Escanea toda la liga que tengas cargada en caché y detecta arbitrajes activos, ordenados por margen. Los stakes se calculan sobre tu bankroll.</p>
+      <div id="arb-content"><div class="state-msg">Carga cuotas desde la sección <strong>Cuotas</strong> de cualquier partido del Cronograma para que el escáner tenga datos que analizar.</div></div>
+    </div>
+
+    <div class="arb-subpanel" id="arbsub-hedge">
+      <p class="section-sub">Calcula cuánto apostar al lado opuesto de una posición abierta para asegurar ganancia o limitar la pérdida.</p>
+      <div class="calc-form">
+        <div class="block-title">Calculadora de hedging</div>
+        <div class="add-bet-grid">
+          <div class="form-row"><label>Stake original ($)</label><input type="number" id="hg-stake" step="0.01" placeholder="100" /></div>
+          <div class="form-row"><label>Cuota original (decimal)</label><input type="number" id="hg-odds1" step="0.01" placeholder="2.50" /></div>
+          <div class="form-row"><label>Cuota actual del lado opuesto</label><input type="number" id="hg-odds2" step="0.01" placeholder="1.80" /></div>
+        </div>
+        <div class="form-actions"><button class="btn-accent" onclick="calcHedge()">Calcular</button><button class="btn-secondary" onclick="document.querySelectorAll('#arbsub-hedge input').forEach(i=>i.value='');document.getElementById('hg-result').innerHTML='';">Limpiar</button></div>
+      </div>
+      <div id="hg-result"></div>
+      <div class="small-note"><strong>Cómo leer los resultados:</strong> el sistema calcula 3 escenarios: (1) "Lock-in equivalente" — apuestas el monto que iguala tu ganancia sin importar quién gane; (2) "Break-even" — apuestas lo justo para no perder dinero si tu apuesta original falla; (3) "Sin hedge" — qué pasaría si no haces nada. Útil cuando una cuota se movió fuerte a tu favor antes del evento.</div>
+    </div>
+  </section>
+
+  <!-- HERRAMIENTAS -->
   <section class="panel" id="panel-tools">
     <h1 class="section-title">Herramientas</h1>
-    <p class="section-sub">Utilidades que no dependen de un partido específico: el arbitraje escanea toda la liga cargada, y el hedging calcula coberturas de posiciones abiertas.</p>
+    <p class="section-sub">Configuración de la app: tu clave de The Odds API y la sincronización entre dispositivos.</p>
     <div class="api-key-form">
       <div class="block-title">API Key — The Odds API <span class="muted" style="text-transform:none;letter-spacing:0;">(compartida con la sección Cuotas de cada partido)</span></div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Regístrate gratis en <a href="https://the-odds-api.com" target="_blank">the-odds-api.com</a> y pega tu key. Se guarda solo en tu navegador.</p>
@@ -589,27 +699,6 @@
       <div class="block-title">Sincronización entre dispositivos</div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Usa una clave numérica para que tus apuestas, presets y cuotas se compartan entre tu iPhone, iPad y laptop. Escribe la misma clave en cada dispositivo. Cualquiera que conozca la clave puede ver y editar estos datos, así que guárdala como guardarías una contraseña.</p>
       <div id="sync-tools-box"></div>
-    <div class="subtabs" id="tools-subtabs">
-      <button class="subtab active" data-sub="arb">Arbitraje (Surebets)</button>
-      <button class="subtab" data-sub="hedge">Hedging Calculator</button>
-    </div>
-    <div class="subpanel active" id="sub-arb">
-      <p class="section-sub">Detecta automáticamente partidos donde las cuotas combinadas de distintas casas permiten ganar pase lo que pase. Usa las cuotas que hayas cargado desde cualquier partido de la liga (caché). El sistema calcula los stakes óptimos para $100 de exposición total.</p>
-      <div id="arb-content"><div class="state-msg">Carga cuotas desde la sección <strong>Cuotas</strong> de cualquier partido para que el arbitraje tenga datos que escanear.</div></div>
-    </div>
-    <div class="subpanel" id="sub-hedge">
-      <p class="section-sub">Calcula cuánto apostar al lado opuesto de una posición abierta para asegurar ganancia o limitar pérdida.</p>
-      <div class="calc-form">
-        <div class="block-title">Calculadora de hedging</div>
-        <div class="add-bet-grid">
-          <div class="form-row"><label>Stake original ($)</label><input type="number" id="hg-stake" step="0.01" placeholder="100" /></div>
-          <div class="form-row"><label>Cuota original (decimal)</label><input type="number" id="hg-odds1" step="0.01" placeholder="2.50" /></div>
-          <div class="form-row"><label>Cuota actual del lado opuesto</label><input type="number" id="hg-odds2" step="0.01" placeholder="1.80" /></div>
-        </div>
-        <div class="form-actions"><button class="btn-accent" onclick="calcHedge()">Calcular</button><button class="btn-secondary" onclick="document.querySelectorAll('#sub-hedge input').forEach(i=>i.value='');document.getElementById('hg-result').innerHTML='';">Limpiar</button></div>
-      </div>
-      <div id="hg-result"></div>
-      <div class="small-note"><strong>Cómo leer los resultados:</strong> el sistema calcula 3 escenarios: (1) "Lock-in equivalente" — apuestas el monto que iguala tu ganancia/pérdida sin importar quién gane; (2) "Break-even" — apuestas lo justo para no perder dinero si tu apuesta original falla; (3) "Sin hedge" — qué pasaría si no haces nada. Útil cuando una cuota se movió fuerte a tu favor antes del evento.</div>
     </div>
   </section>
 
@@ -640,11 +729,7 @@
         </div>
         <div class="form-row" style="grid-column:1/-1;">
           <label>Alineación con el modelo</label>
-          <div class="radio-pills" id="bf-alignment-pills">
-            <label class="radio-pill"><input type="radio" name="alignment" value="aligned"> Sigue al favorito del modelo</label>
-            <label class="radio-pill"><input type="radio" name="alignment" value="against"> Va contra el favorito</label>
-            <label class="radio-pill"><input type="radio" name="alignment" value="na" checked> N/A o sin modelo</label>
-          </div>
+          <div class="small-note" style="margin:0;font-size:12px;">Se calcula <strong>automáticamente</strong>. Si registras la apuesta desde la calculadora de un partido, el sistema detecta solo si seguiste (o no) la opción mejor calificada por el modelo. Las apuestas escritas a mano quedan como "sin modelo".</div>
         </div>
         <div class="form-row" style="grid-column:1/-1;">
           <label>Notas (razonamiento, contexto, lección)</label>
@@ -654,9 +739,6 @@
       <div class="form-actions">
         <button type="submit" class="btn-primary">Guardar apuesta</button>
         <button type="button" class="btn-secondary" onclick="document.getElementById('bet-form').reset();initFormDefaults();">Limpiar formulario</button>
-        <button type="button" class="btn-secondary" onclick="exportBets()">↓ Exportar (JSON)</button>
-        <button type="button" class="btn-secondary" onclick="document.getElementById('import-input').click()">↑ Importar JSON</button>
-        <input type="file" id="import-input" accept=".json" style="display:none" onchange="importBets(event)" />
       </div>
     </form>
 
@@ -678,8 +760,11 @@
 
   <!-- EDUCATION -->
   <section class="panel" id="panel-education">
-    <h1 class="section-title">Educación · Conceptos clave</h1>
-    <p class="section-sub">Cada término que verás en el dashboard explicado en lenguaje sencillo, con ejemplos numéricos. Vuelve aquí cuando tengas dudas.</p>
+    <h1 class="section-title">Educación</h1>
+    <p class="section-sub">Conceptos clave explicados en lenguaje sencillo, las variables del modelo, y lecciones automáticas a partir de tus propios resultados.</p>
+    <div id="education-dynamic"></div>
+    <h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Glosario de conceptos</h2>
+    <p class="section-sub">Cada término del dashboard explicado con ejemplos numéricos. Vuelve aquí cuando tengas dudas.</p>
     <div class="insights">
       <div class="insight-card cobre"><div class="head">◆ Probabilidad implícita</div><div class="body">La probabilidad que <strong>la cuota está afirmando</strong>. Fórmula: <code>1 / cuota</code>.<br><br>Ejemplo: cuota 2.00 → 50%. Cuota 1.50 → 66.7%. Cuota 4.00 → 25%.<br><br>Es lo que la casa cree (o quiere que creas) va a pasar. Tu trabajo: encontrar cuándo tu probabilidad estimada > implícita.</div></div>
       <div class="insight-card salvia"><div class="head">◆ Value Bet</div><div class="body">Una apuesta donde <strong>tu probabilidad estimada es mayor que la implícita</strong> en la cuota.<br><br>Ejemplo: modelo dice "Arsenal 60%", cuota 2.10 (implica 47.6%) → <strong>value de 12.4 puntos</strong>.<br><br>Encontrar value bets es lo que separa profesionales de casuales.</div></div>
@@ -757,6 +842,7 @@ const state = {
 };
 // Clean up name property if loaded from old version
 delete state.weights.name;
+state.pendingBetMeta = null;
 
 // ============================================================
 // CONFIGURACIÓN DE SINCRONIZACIÓN (Supabase)
@@ -774,8 +860,10 @@ const ODDS_SPORT_MAP = {
   'soccer/eng.1': 'soccer_epl', 'soccer/esp.1': 'soccer_spain_la_liga',
   'soccer/ita.1': 'soccer_italy_serie_a', 'soccer/ger.1': 'soccer_germany_bundesliga',
   'soccer/fra.1': 'soccer_france_ligue_one', 'soccer/uefa.champions': 'soccer_uefa_champs_league',
-  'soccer/uefa.europa': 'soccer_uefa_europa_league', 'soccer/usa.1': 'soccer_usa_mls',
+  'soccer/uefa.europa': 'soccer_uefa_europa_league',
   'soccer/conmebol.libertadores': 'soccer_conmebol_copa_libertadores',
+  'soccer/conmebol.sudamericana': 'soccer_conmebol_copa_sudamericana',
+  'soccer/fifa.world': 'soccer_fifa_world_cup',
   'basketball/nba': 'basketball_nba', 'baseball/mlb': 'baseball_mlb', 'football/nfl': 'americanfootball_nfl'
 };
 
@@ -929,7 +1017,10 @@ async function loadWeek() {
   state.games = parseGames(data, state.sport);
   state.games.forEach(g=>g.viability=null);
   updateStatBar(); renderSchedule();
-  for (const g of state.games) computeGameViability(g).then(()=>{renderSchedule();updateStatBar();});
+  await Promise.all(state.games.map(g => computeGameViability(g).then(()=>{ renderSchedule(); updateStatBar(); })));
+  // Resultados finalizados -> registro de outcomes -> ajuste silencioso del preset adaptativo
+  scanShadowOutcomes();
+  recomputeAdaptive();
 }
 async function computeGameViability(g) {
   try {
@@ -966,42 +1057,53 @@ function backToSchedule() {
   document.querySelectorAll('.game-card').forEach(el=>el.classList.remove('selected'));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+function renderDetailSummary(g) {
+  const el = document.getElementById('detail-summary');
+  if (!el) return;
+  if (!g.viability || g.viability.insufficient) {
+    el.innerHTML = `<div class="ds-sum-block"><span class="ds-sum-band">Datos insuficientes</span><span class="ds-sum-fav">sin historial reciente</span></div>`;
+    return;
+  }
+  const v = g.viability, b = bandFromScore(v.total);
+  const bcls = v.total>=75?'b-alta':(v.total>=60?'b-media':(v.total>=45?'b-baja':'b-no'));
+  const fav = v.favorite==='home' ? g.home.name : g.away.name;
+  el.innerHTML = `
+    <span class="ds-sum-score">${v.total}</span>
+    <div class="ds-sum-block">
+      <span class="ds-sum-band ${bcls}">${b.name}</span>
+      <span class="ds-sum-fav">Favorito: ${fav}</span>
+    </div>`;
+}
 function renderDetail() {
   const g = state.selectedGame; if (!g) return;
   const det = document.getElementById('detail'); det.classList.add('active');
   document.getElementById('detail-title').textContent = `${g.home.name} vs ${g.away.name}`;
   document.getElementById('detail-meta').textContent = `${fmtDateTimeHuman(g.date)} · ${g.league}`;
+  renderDetailSummary(g);
   if (!g.viability||g.viability.insufficient) {
     document.getElementById('detail-body').innerHTML = `<div class="state-msg">Datos insuficientes para este partido (sin suficiente historial reciente de los equipos).</div>`;
     return;
   }
-  const v = g.viability, b = bandFromScore(v.total);
-  // Mini-preview que se ve cuando la sección está colapsada
-  const resumenPreview = `<span class="ds-mini-preview">Score <strong>${v.total}</strong> · ${b.name}</span>`;
-  // Esqueleto: 6 secciones COLAPSABLES, todas cerradas por default. El contenido se renderiza al abrir.
+  // Esqueleto: 5 secciones COLAPSABLES (el Resumen ahora vive en la barra superior fija).
   document.getElementById('detail-body').innerHTML = `
-    <div class="detail-section collapsed" data-section="resumen">
-      <div class="detail-section-head" onclick="toggleSection('resumen')"><span class="ds-num">1</span><span class="ds-title">Resumen</span><span class="ds-sub">viabilidad global</span>${resumenPreview}<span class="ds-chevron">▼</span></div>
-      <div class="ds-content" id="ds-resumen"></div>
-    </div>
     <div class="detail-section collapsed" data-section="descriptivo">
-      <div class="detail-section-head" onclick="toggleSection('descriptivo')"><span class="ds-num">2</span><span class="ds-title">Descriptivo</span><span class="ds-sub">forma, stats y calificación por mercado</span><span class="ds-chevron">▼</span></div>
+      <div class="detail-section-head" onclick="toggleSection('descriptivo')"><span class="ds-num">1</span><span class="ds-title">Descriptivo</span><span class="ds-sub">forma, stats y calificación por mercado</span><span class="ds-chevron">▼</span></div>
       <div class="ds-content" id="ds-descriptivo"></div>
     </div>
     <div class="detail-section collapsed" data-section="predictivo">
-      <div class="detail-section-head" onclick="toggleSection('predictivo')"><span class="ds-num">3</span><span class="ds-title">Predictivo</span><span class="ds-sub">modelo de probabilidades + contra-análisis</span><span class="ds-chevron">▼</span></div>
+      <div class="detail-section-head" onclick="toggleSection('predictivo')"><span class="ds-num">2</span><span class="ds-title">Predictivo</span><span class="ds-sub">modelo de probabilidades + contra-análisis</span><span class="ds-chevron">▼</span></div>
       <div class="ds-content" id="ds-predictivo"></div>
     </div>
     <div class="detail-section collapsed" data-section="calificador">
-      <div class="detail-section-head" onclick="toggleSection('calificador')"><span class="ds-num">4</span><span class="ds-title">Calificador</span><span class="ds-sub">ajusta los pesos del modelo</span><span class="ds-chevron">▼</span></div>
+      <div class="detail-section-head" onclick="toggleSection('calificador')"><span class="ds-num">3</span><span class="ds-title">Calificador</span><span class="ds-sub">ajusta los pesos del modelo</span><span class="ds-chevron">▼</span></div>
       <div class="ds-content" id="ds-calificador"></div>
     </div>
     <div class="detail-section collapsed" data-section="cuotas">
-      <div class="detail-section-head" onclick="toggleSection('cuotas')"><span class="ds-num">5</span><span class="ds-title">Cuotas</span><span class="ds-sub">moneyline · totales · spreads — mejores cuotas resaltadas</span><span class="ds-chevron">▼</span></div>
+      <div class="detail-section-head" onclick="toggleSection('cuotas')"><span class="ds-num">4</span><span class="ds-title">Cuotas</span><span class="ds-sub">moneyline · totales · spreads — mejores cuotas resaltadas</span><span class="ds-chevron">▼</span></div>
       <div class="ds-content" id="ds-cuotas"></div>
     </div>
     <div class="detail-section collapsed" data-section="calculadora">
-      <div class="detail-section-head" onclick="toggleSection('calculadora')"><span class="ds-num">6</span><span class="ds-title">Calculadora de apuesta</span><span class="ds-sub">EV · Kelly · enviar al tracker</span><span class="ds-chevron">▼</span></div>
+      <div class="detail-section-head" onclick="toggleSection('calculadora')"><span class="ds-num">5</span><span class="ds-title">Calculadora de apuesta</span><span class="ds-sub">EV · Kelly · enviar al tracker</span><span class="ds-chevron">▼</span></div>
       <div class="ds-content" id="ds-calculadora"></div>
     </div>
   `;
@@ -1023,7 +1125,6 @@ function toggleSection(key) {
 function renderSectionContent(key) {
   const g = state.selectedGame; if (!g) return;
   switch (key) {
-    case 'resumen': renderResumenSection(g); break;
     case 'descriptivo': renderDescriptive(); break;
     case 'predictivo': renderPredictive(); break;
     case 'calificador': renderRating(); break;
@@ -1034,21 +1135,6 @@ function renderSectionContent(key) {
       syncOddsField();
       break;
   }
-}
-
-// Contenido de la sección 1: Resumen
-function renderResumenSection(g) {
-  const c = document.getElementById('ds-resumen');
-  if (!c) return;
-  const v = g.viability, b = bandFromScore(v.total);
-  c.innerHTML = `
-    <div style="text-align:center;">
-      <div class="block-title">Calificación de viabilidad</div>
-      <div class="score-big">${v.total}</div><div class="score-band">— ${b.name} —</div>
-      <div style="margin-top:14px;color:var(--text-2);font-size:13px;max-width:560px;margin-left:auto;margin-right:auto;">${b.recom}</div>
-      <div style="margin-top:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-3);">FAVORITO DEL MODELO: <span class="accent">${v.favorite==='home'?g.home.name:g.away.name}</span></div>
-    </div>
-  `;
 }
 
 function marketBand(score) {
@@ -1660,6 +1746,15 @@ function updateCalculator() {
   const provNote = ms.provisional ? ' · <span style="color:var(--c-cobre);">provisional, sin cuota de mercado</span>' : '';
   const bandClass = bandLetter(ms.score);
   state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput, modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: ms.score, bookCount, impliedProb, edge: edgePct, ev: evPer1*100, kelly: halfKelly, kellyStake };
+  // Metadatos estructurados para el marcado automático
+  {
+    let _sel = null, _opts = null;
+    if (cat !== 'props') {
+      _opts = getMarketOptions(g, cat);
+      _sel = _opts.find(o=>o.key===state.calcMarket.optionKey) || _opts[0];
+    }
+    state.lastCalc.meta = buildCalcMeta(g, cat, _sel, _opts, pickLabel);
+  }
   out.innerHTML = `
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
     <div class="calc-output">
@@ -1740,13 +1835,44 @@ function renderPredictive() {
 function probRow(l,p){const pct=(p*100).toFixed(1); return `<div class="prob-row"><span class="prob-label">${l}</span><span class="prob-val">${pct}%</span></div><div class="prob-bar-wrap"><div class="prob-bar" style="width:${pct}%;"></div></div>`;}
 
 // ---------- RATING ----------
+function renderAdaptiveCard() {
+  const n = Object.keys(getOutcomeLog()).length;
+  const meta = getAdaptiveMeta();
+  const isActive = state.activePreset === 'adaptativo';
+  const learning = n < ADAPTIVE_MIN_RESULTS;
+  let statusTxt;
+  if (learning) {
+    statusTxt = `<strong>Aprendiendo.</strong> Necesita ${ADAPTIVE_MIN_RESULTS} resultados finalizados antes de empezar a ajustar; lleva <strong>${n}</strong>. Mientras tanto se queda en la base Balanceada. El contador sube solo cuando cargas semanas del cronograma con partidos ya terminados.`;
+  } else {
+    statusTxt = `<strong>Activo.</strong> Ajustando los 7 pesos con <strong>${n}</strong> resultados — tus apuestas reales más el análisis hipotético de partidos de riesgo medio/alto que no apostaste. Los ajustes son pequeños, acotados y automáticos.`;
+  }
+  let logHtml;
+  if (meta.history.length) {
+    logHtml = '<div class="adaptive-log">' + meta.history.slice(0,8).map(h => {
+      const d = new Date(h.ts);
+      const ws = WKEYS.map(k => k.slice(0,4)+' '+h.weights[k]).join(' · ');
+      return `<div>${d.toLocaleDateString('es-EC',{day:'2-digit',month:'short'})} ${d.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'})} · ${h.n} resultados · ${ws}</div>`;
+    }).join('') + '</div>';
+  } else {
+    logHtml = '<div class="tracker-block-sub" style="margin-top:6px;">Sin ajustes registrados todavía.</div>';
+  }
+  return `<div class="adaptive-card">
+    <div class="ac-title">Preset Adaptativo <span class="adaptive-badge">${isActive?'PREDETERMINADO':'EN 2.º PLANO'}</span></div>
+    <p style="font-size:13px;color:var(--text-2);margin:8px 0;line-height:1.55;">${statusTxt}</p>
+    <p style="font-size:12px;color:var(--text-3);margin-bottom:2px;">Registro interno de ajustes:</p>
+    ${logHtml}
+    <div style="margin-top:12px;"><button class="btn-secondary" onclick="resetAdaptive()">Reiniciar Adaptativo a la base</button></div>
+  </div>`;
+}
 function renderRating() {
   const c = document.getElementById('ds-calificador');
   if (!c) return;
   const lbl = Object.fromEntries(Object.entries(WEIGHT_INFO).map(([k,v])=>[k,v.name]));
+  const adaptiveActive = state.activePreset === 'adaptativo';
   const presetActive = Object.entries(PRESETS).find(([_,p]) => Object.keys(state.weights).every(k => state.weights[k] === p[k]));
-  const builtIn = Object.entries(PRESETS).map(([k,v]) => {
-    const active = presetActive && presetActive[0] === k;
+  const adaptiveBtn = `<button class="preset-btn adaptive${adaptiveActive?' active':''}" onclick="applyPreset('adaptativo')">◉ Adaptativo</button>`;
+  const builtIn = adaptiveBtn + Object.entries(PRESETS).map(([k,v]) => {
+    const active = !adaptiveActive && presetActive && presetActive[0] === k;
     return `<button class="preset-btn${active?' active':''}" onclick="applyPreset('${k}')">${v.name}</button>`;
   }).join('');
   const customs = Object.keys(state.customPresets).map(k => `<button class="preset-btn" onclick="applyCustomPreset('${k}')">${k}</button> <button class="icon-btn btn-x" onclick="deletePreset('${k}')" style="margin-left:-4px;">✕</button>`).join(' ');
@@ -1773,7 +1899,8 @@ function renderRating() {
   c.innerHTML = `
     ${gameSection}
     <div class="weights-panel">
-      <div class="preset-row"><span class="lbl">PRESETS PREDEFINIDOS:</span>${builtIn}</div>
+      ${renderAdaptiveCard()}
+      <div class="preset-row"><span class="lbl">PRESETS:</span>${builtIn}</div>
       ${Object.keys(state.customPresets).length ? `<div class="preset-row"><span class="lbl">TUS PRESETS:</span>${customs}</div>` : ''}
       <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
         <button class="btn-secondary" onclick="saveCurrentPreset()">+ Guardar como preset</button>
@@ -1799,8 +1926,21 @@ function renderRating() {
   updateWeightTotal();
 }
 
-function applyPreset(key) { state.weights = { ...PRESETS[key] }; delete state.weights.name; lsSet('quantWeights', JSON.stringify(state.weights)); recalculateAll(); }
-function applyCustomPreset(name) { state.weights = { ...state.customPresets[name] }; lsSet('quantWeights', JSON.stringify(state.weights)); recalculateAll(); }
+function applyPreset(key) {
+  state.activePreset = key;
+  localStorage.setItem('quantActivePreset', key);
+  if (key === 'adaptativo') { state.weights = getAdaptiveWeights(); }
+  else { state.weights = { ...PRESETS[key] }; delete state.weights.name; }
+  lsSet('quantWeights', JSON.stringify(state.weights));
+  recalculateAll();
+}
+function applyCustomPreset(name) {
+  state.activePreset = null;
+  localStorage.removeItem('quantActivePreset');
+  state.weights = { ...state.customPresets[name] };
+  lsSet('quantWeights', JSON.stringify(state.weights));
+  recalculateAll();
+}
 function saveCurrentPreset() {
   const name = prompt('Nombre del preset:'); if (!name) return;
   state.customPresets[name] = { ...state.weights };
@@ -1821,9 +1961,7 @@ function recalculateAll() {
   // Si hay partido abierto, actualizar el título mini-preview del resumen y re-renderizar solo las
   // secciones que ya están abiertas (las cerradas se renderizarán cuando el usuario las abra)
   if (state.selectedGame) {
-    const v = state.selectedGame.viability, b = bandFromScore(v.total);
-    const preview = document.querySelector('[data-section="resumen"] .ds-mini-preview');
-    if (preview) preview.innerHTML = `Score <strong>${v.total}</strong> · ${b.name}`;
+    renderDetailSummary(state.selectedGame);
     document.querySelectorAll('.detail-section').forEach(s => {
       if (!s.classList.contains('collapsed') && s.dataset.rendered) {
         renderSectionContent(s.dataset.section);
@@ -1832,6 +1970,7 @@ function recalculateAll() {
   }
 }
 function updateWeight(k,v){
+  if (state.activePreset) { state.activePreset = null; localStorage.removeItem('quantActivePreset'); }
   state.weights[k]=parseInt(v,10);
   document.getElementById('wv-'+k).textContent=v+'%';
   updateWeightTotal();
@@ -2113,19 +2252,31 @@ function buildSideBoard({ title, rows, category, optionKey, displayLabel, lineSu
 }
 
 // Renderiza una sección de mercado completa (Moneyline / Totales / Spreads)
+let _mbSeq = 0;
 function renderMarketBlock({ title, sub, arbHint, groups }) {
-  let html = `<div class="market-block">
-    <div class="market-block-head">
+  const id = 'mb-' + (++_mbSeq);
+  const collapseBtn = pos => `<button class="mb-collapse-btn ${pos}" onclick="toggleMarketBlock('${id}')">\u25b2 Colapsar este mercado</button>`;
+  let body = collapseBtn('top');
+  groups.forEach(grp => {
+    if (grp.label) body += `<div class="market-line-group"><div class="market-line-label">${grp.label}</div><div class="best-odds-grid">${grp.boards.join('')}</div></div>`;
+    else body += `<div class="best-odds-grid">${grp.boards.join('')}</div>`;
+  });
+  body += collapseBtn('bot');
+  return `<div class="market-block collapsed" id="${id}">
+    <div class="market-block-head" onclick="toggleMarketBlock('${id}')">
       <span class="market-block-title">${title}</span>
       <span class="market-block-sub">${sub}</span>
       ${arbHint || ''}
-    </div>`;
-  groups.forEach(grp => {
-    if (grp.label) html += `<div class="market-line-group"><div class="market-line-label">${grp.label}</div><div class="best-odds-grid">${grp.boards.join('')}</div></div>`;
-    else html += `<div class="best-odds-grid">${grp.boards.join('')}</div>`;
-  });
-  html += `</div>`;
-  return html;
+      <span class="mb-toggle" data-mbt>\u25bc Ver mercado</span>
+    </div>
+    <div class="market-block-body">${body}</div>
+  </div>`;
+}
+function toggleMarketBlock(id) {
+  const el = document.getElementById(id); if (!el) return;
+  el.classList.toggle('collapsed');
+  const t = el.querySelector('[data-mbt]');
+  if (t) t.textContent = el.classList.contains('collapsed') ? '\u25bc Ver mercado' : '\u25b2 Ocultar mercado';
 }
 
 // Totales o Spreads: agrupados por línea (point). Para cada línea, tableros Over/Under (o Home/Away)
@@ -2271,8 +2422,21 @@ function pickOddsForCalc(category, optionKey, displayLabel, book, odds) {
 }
 
 // ---------- ARBITRAGE ----------
+function getArbBankroll() {
+  const v = parseFloat(localStorage.getItem('quantArbBankroll'));
+  return (v && v > 0) ? v : 100;
+}
+function onArbBankrollChange() {
+  const el = document.getElementById('arb-bankroll');
+  const v = parseFloat(el.value);
+  if (v && v > 0) lsSet('quantArbBankroll', String(v));
+  renderArb();
+}
 function renderArb() {
   const c = document.getElementById('arb-content');
+  const bkEl = document.getElementById('arb-bankroll');
+  if (bkEl && !bkEl.value) bkEl.value = getArbBankroll();
+  const arbBankroll = getArbBankroll();
   // Rehidratar desde caché si no hay oddsData en memoria
   if (!state.oddsData) {
     const sk = ODDS_SPORT_MAP[state.sport];
@@ -2295,7 +2459,7 @@ function renderArb() {
     const sum = (bH.p?1/bH.p:0) + (bA.p?1/bA.p:0) + (hasDraw?(bD.p?1/bD.p:0):0);
     if (sum > 0 && sum < 1) {
       const profit = (1-sum)*100;
-      const total = 100;
+      const total = arbBankroll;
       const sH = (total/bH.p) / sum;
       const sA = (total/bA.p) / sum;
       const sD = hasDraw && bD.p ? (total/bD.p)/sum : 0;
@@ -2392,6 +2556,77 @@ function syncOddsKeyInputs() {
     : 'Estado: sin API key.';
 }
 // Render de la pestaña Herramientas (arbitraje + hedging)
+function renderEducation() {
+  const c = document.getElementById('education-dynamic');
+  if (!c) return;
+  // --- Parte 1: las 7 variables del modelo ---
+  let weightsHtml = `<h2 style="font-size:20px;font-weight:700;margin:6px 0 4px;">Las 7 variables del modelo de viabilidad</h2>
+    <p class="section-sub">El score de viabilidad (0–100) sale de combinar estas 7 variables. Cada una mide algo distinto del partido. En el <strong>Calificador</strong> (dentro del detalle de un partido) puedes darle más o menos peso a cada una — o dejar que el preset Adaptativo lo haga por ti.</p>
+    <div class="insights">` +
+    Object.entries(WEIGHT_INFO).map(([k,info]) =>
+      `<div class="insight-card pizarra"><div class="head">◆ ${info.name}</div><div class="body">${info.desc}<br><br><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${info.rec}</span></div></div>`
+    ).join('') + `</div>`;
+
+  // --- Parte 2: lecciones aprendidas de tus resultados ---
+  let lessonsHtml = `<h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Lecciones aprendidas de tus apuestas</h2>`;
+  const settled = state.bets.filter(b => b.status!=='pending');
+  if (settled.length < 3) {
+    lessonsHtml += `<p class="section-sub">Cuando tengas al menos 3 apuestas finalizadas, aquí aparecerán lecciones automáticas basadas en tus resultados reales. Llevas ${settled.length}.</p>`;
+    c.innerHTML = weightsHtml + lessonsHtml;
+    return;
+  }
+  lessonsHtml += `<p class="section-sub">Generadas automáticamente a partir de tus ${settled.length} apuestas finalizadas. Se actualizan solas con cada nuevo resultado.</p>`;
+  const cards = [];
+  // Conteo de tipos de leccion
+  const withLesson = settled.filter(b => b.lesson);
+  const cnt = { validation:0, variance:0, insight:0, discipline:0 };
+  withLesson.forEach(b => { if (cnt[b.lesson]!=null) cnt[b.lesson]++; });
+  const overall = aggMetrics(settled);
+  // Leccion: disciplina
+  if (cnt.discipline >= 2) {
+    cards.push({ cls:'granate', head:'✕ Cuidado con la indisciplina', body:`Tienes <strong>${cnt.discipline}</strong> apuestas donde fuiste <strong>contra</strong> el modelo y perdiste. Es el patrón más caro a largo plazo. Antes de volver a ir contra el modelo, escribe una razón concreta — si no la tienes, mejor sigue la recomendación.` });
+  } else if (withLesson.length >= 3 && cnt.validation >= cnt.discipline) {
+    cards.push({ cls:'salvia', head:'✓ Vas por buen camino', body:`De tus apuestas con modelo, la mayoría son <strong>validaciones</strong> (seguiste al modelo y ganaste) y muy pocas indisciplinas. Ese es exactamente el perfil de un apostador disciplinado. Manténlo.` });
+  }
+  // Leccion: varianza
+  if (cnt.variance >= 3) {
+    cards.push({ cls:'pizarra', head:'≡ La varianza es normal', body:`Tienes <strong>${cnt.variance}</strong> apuestas donde seguiste al modelo y aún así perdiste. Eso NO significa que el modelo falle: hasta una apuesta con 70% de probabilidad pierde 3 de cada 10 veces. Lo que te protege es el stake disciplinado, no acertar siempre.` });
+  }
+  // Leccion: intuicion
+  if (cnt.insight >= 2) {
+    cards.push({ cls:'cobre', head:'◆ Tu intuición acertó varias veces', body:`Fuiste contra el modelo y ganaste <strong>${cnt.insight}</strong> veces. Puede ser lectura real (algo que el modelo no ve) o suerte. Revisa las notas de esas apuestas: si había una razón repetida, quizá valga subir ese factor en el Calificador.` });
+  }
+  // Leccion: mejor / peor mercado
+  const byMarket = groupBy(settled, b => b.market || '—');
+  const mkts = Object.entries(byMarket).filter(([_,a]) => a.length>=3).map(([k,a]) => ({k, ...aggMetrics(a)}));
+  if (mkts.length) {
+    mkts.sort((a,b)=>b.roi-a.roi);
+    const best = mkts[0];
+    if (best.roi > 0.03) cards.push({ cls:'salvia', head:'▲ Tu mercado más rentable', body:`En <strong>${best.k}</strong> llevas ${best.n} apuestas con ROI <strong>${(best.roi*100).toFixed(1)}%</strong> (acierto ${(best.winRate*100).toFixed(0)}%). Parece tu zona de ventaja — considera enfocar ahí.` });
+    const worst = mkts[mkts.length-1];
+    if (worst.roi < -0.05 && worst.k !== best.k) cards.push({ cls:'granate', head:'▼ Tu mercado más flojo', body:`En <strong>${worst.k}</strong> llevas ${worst.n} apuestas con ROI <strong>${(worst.roi*100).toFixed(1)}%</strong>. Si el patrón se mantiene, considera dejar ese mercado o revisar cómo lo analizas.` });
+  }
+  // Leccion: score
+  const withScore = settled.filter(b => b.score!=null);
+  if (withScore.length >= 4) {
+    const hi = aggMetrics(withScore.filter(b=>b.score>=60));
+    const lo = aggMetrics(withScore.filter(b=>b.score<60));
+    if (hi.settled >= 2 && lo.settled >= 2) {
+      cards.push({ cls: hi.roi>lo.roi?'salvia':'pizarra', head:'◈ El score sí importa', body:`Apuestas con score ≥ 60: ROI ${(hi.roi*100).toFixed(1)}% (${hi.settled} apuestas). Apuestas con score < 60: ROI ${(lo.roi*100).toFixed(1)}% (${lo.settled} apuestas). ${hi.roi>lo.roi?'Confirma la regla: apuesta solo con score ≥ 60.':'Por ahora la diferencia no es clara — necesitas más muestra.'}` });
+    }
+  }
+  // Leccion: el preset adaptativo
+  const nOut = Object.keys(getOutcomeLog()).length;
+  cards.push({ cls:'pizarra', head:'◉ Tu preset Adaptativo', body: nOut < ADAPTIVE_MIN_RESULTS
+    ? `El modelo lleva <strong>${nOut}</strong> resultados analizados (de ${ADAPTIVE_MIN_RESULTS} necesarios). Cuando llegue a ${ADAPTIVE_MIN_RESULTS}, empezará a afinar los 7 pesos solo, comparando qué factores predijeron mejor los partidos que ganaste.`
+    : `El modelo ya ajusta los pesos con <strong>${nOut}</strong> resultados. Cada semana que revisas el cronograma, aprende un poco más. Puedes ver y reiniciar esos ajustes en el Calificador.` });
+  // Resumen general
+  cards.push({ cls: overall.roi>=0?'salvia':'granate', head:'◉ Resumen', body:`En total: ${overall.settled} apuestas finalizadas, acierto ${(overall.winRate*100).toFixed(0)}%, ROI <strong>${(overall.roi*100).toFixed(1)}%</strong>. ${overall.settled<20?'Aún es muestra chica — apunta a 30+ para sacar conclusiones firmes.':(overall.roi>=0?'Vas en positivo; mantén la disciplina de stake.':'Vas en negativo; considera bajar stakes y revisar tu proceso.')}` });
+
+  lessonsHtml += `<div class="insights">` + cards.map(x => `<div class="insight-card ${x.cls}"><div class="head">${x.head}</div><div class="body">${x.body}</div></div>`).join('') + `</div>`;
+  c.innerHTML = weightsHtml + lessonsHtml;
+}
+
 function renderTools() {
   syncOddsKeyInputs();
   renderArb();
@@ -2402,12 +2637,9 @@ function renderTools() {
 // ============================================================
 function persistBets() { lsSet('quantBets', JSON.stringify(state.bets)); }
 
-function getAlignment() {
-  const r = document.querySelector('input[name="alignment"]:checked');
-  return r ? r.value : 'na';
-}
 function addBet(e) {
   e.preventDefault();
+  const meta = state.pendingBetMeta || null;
   const bet = {
     id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
     createdAt: new Date().toISOString(),
@@ -2422,15 +2654,69 @@ function addBet(e) {
     score: document.getElementById('bf-score').value ? parseInt(document.getElementById('bf-score').value, 10) : null,
     book: document.getElementById('bf-book').value.trim(),
     mode: document.getElementById('bf-mode').value,
-    alignment: getAlignment(),
+    alignment: meta ? meta.alignment : 'na',
     notes: document.getElementById('bf-notes').value.trim(),
     status: 'pending'
   };
+  // Datos estructurados (solo si la apuesta viene de la calculadora de un partido).
+  // Estos campos habilitan el marcado automático de resultados (Fase A).
+  if (meta) {
+    bet.espnGameId = meta.espnGameId || null;
+    bet.espnSport  = meta.espnSport || null;
+    bet.homeTeam   = meta.homeTeam || null;
+    bet.awayTeam   = meta.awayTeam || null;
+    bet.league     = meta.league || bet.sport;
+    bet.commence   = meta.commence || null;
+    bet.comp       = meta.comp || null;
+    bet.favSide    = meta.favSide || null;
+    bet.resolve    = meta.resolve || null;
+    bet.auto       = !!(meta.resolve && meta.espnGameId && meta.espnSport);
+  } else {
+    bet.auto = false;
+  }
   state.bets.unshift(bet);
+  state.pendingBetMeta = null;
   persistBets();
   document.getElementById('bet-form').reset();
   initFormDefaults();
   renderTracker();
+  autoResolveBets();
+}
+
+// Construye los metadatos estructurados de una apuesta a partir del estado de la calculadora.
+function buildCalcMeta(g, cat, sel, opts, pickLabel) {
+  let alignment = 'na';
+  if (cat !== 'props' && sel && opts && opts.length && g.viability && !g.viability.insufficient) {
+    alignment = (sel.key === opts[0].key) ? 'aligned' : 'against';
+  }
+  let resolve = null;
+  if (sel) {
+    if (cat === '1x2' || cat === 'ml') {
+      resolve = { market:'ml', side: sel.key, line:null };
+    } else if (cat === 'btts') {
+      resolve = { market:'btts', side: sel.key, line:null };
+    } else if (cat === 'ou') {
+      let side = sel.key.charAt(0)==='o' ? 'over' : 'under';
+      let line = (sel.point!=null) ? sel.point : null;
+      const m = (pickLabel||'').match(/(over|under|m\u00e1s|menos)\s*([0-9]+(?:[.,][0-9]+)?)/i);
+      if (m) { const w=m[1].toLowerCase(); side=(w==='over'||w==='m\u00e1s')?'over':'under'; line=parseFloat(m[2].replace(',','.')); }
+      resolve = (line!=null) ? { market:'totals', side, line } : null;
+    } else if (cat === 'spread') {
+      let side = sel.key.charAt(0)==='h' ? 'home' : 'away';
+      let line = (sel.point!=null) ? sel.point : null;
+      const m = (pickLabel||'').match(/([+-]?[0-9]+(?:[.,][0-9]+)?)\s*$/);
+      if (m) line = parseFloat(m[1].replace(',','.'));
+      resolve = (line!=null) ? { market:'spread', side, line } : null;
+    }
+  }
+  return {
+    alignment, resolve,
+    espnGameId: g.id, espnSport: g.sport,
+    homeTeam: g.home.name, awayTeam: g.away.name, league: g.league,
+    commence: (g.date instanceof Date) ? g.date.toISOString() : g.date,
+    comp: (g.viability && g.viability.components) ? Object.assign({}, g.viability.components) : null,
+    favSide: (g.viability && !g.viability.insufficient) ? g.viability.favorite : null
+  };
 }
 
 function setStatus(id, status) {
@@ -2457,17 +2743,6 @@ function deleteBet(id) {
   lsSet('quantDeletedBets', JSON.stringify(state.deletedBets));
   persistBets(); renderTracker();
 }
-function exportBets() {
-  const blob = new Blob([JSON.stringify(state.bets, null, 2)], {type:'application/json'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `quant_bets_${new Date().toISOString().slice(0,10)}.json`; a.click();
-}
-function importBets(e) {
-  const f = e.target.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => { try { const d = JSON.parse(ev.target.result); if (!Array.isArray(d)) throw new Error('JSON debe ser array'); if (confirm(`Importar ${d.length} apuestas? Reemplazará las actuales.`)) { state.bets=d; state.deletedBets=[]; lsSet('quantDeletedBets','[]'); persistBets(); renderTracker(); } } catch(err) { alert('Error: '+err.message); } };
-  r.readAsText(f); e.target.value = '';
-}
 function prefillBet(mode = 'default') {
   const g = state.selectedGame; if (!g) return;
   document.querySelector('[data-tab="tracker"]').click();
@@ -2487,8 +2762,8 @@ function prefillBet(mode = 'default') {
       const trackerOptions = ['1X2 / Moneyline','Over/Under','Spread / Handicap','BTTS','Player Prop','Otro'];
       const targetMarket = c.categoryLabel && trackerOptions.includes(c.categoryLabel) ? c.categoryLabel : 'Otro';
       document.getElementById('bf-market').value = targetMarket;
-      const ar = document.querySelector('input[name="alignment"][value="aligned"]');
-      if (ar) { ar.checked = true; updateAlignmentPills(); }
+      // La alineación con el modelo y los datos estructurados se guardan automáticamente
+      state.pendingBetMeta = c.meta || null;
       // Si la selección registrada difiere de la del modelo, lo anotamos para no perder contexto
       const lineNote = (c.pickLabel && c.pickLabel !== c.modelLabel) ? ` · Línea registrada: ${c.pickLabel} (modelo analizó: ${c.modelLabel})` : '';
       const mktTxt = (c.marketProb!=null) ? ` · Casas: ${(c.marketProb*100).toFixed(1)}%` : '';
@@ -2501,14 +2776,7 @@ function prefillBet(mode = 'default') {
 }
 function initFormDefaults() {
   document.getElementById('bf-date').value = new Date().toISOString().slice(0,10);
-  const naRadio = document.querySelector('input[name="alignment"][value="na"]');
-  if (naRadio) naRadio.checked = true;
-  updateAlignmentPills();
-}
-function updateAlignmentPills() {
-  document.querySelectorAll('#bf-alignment-pills .radio-pill').forEach(p => {
-    p.classList.toggle('checked', p.querySelector('input').checked);
-  });
+  state.pendingBetMeta = null;
 }
 
 // ---------- TRACKER RENDER ----------
@@ -2638,20 +2906,154 @@ const LESSON_LABELS = {
   discipline: { name: 'Indisciplina', cls: 'lesson-discipline', desc: 'Fuiste contra el modelo y perdiste. Patrón a evitar.' }
 };
 
+const STATUS_ES = { pending:'pendiente', won:'ganada', lost:'perdida', push:'nula' };
+
+// Celda "Fecha / hora": muestra hora del partido, o EN VIVO si esta en juego.
+function betWhenCell(b) {
+  if (b.liveStatus === 'in') return '<span class="live-pill">EN VIVO</span>';
+  let d = null;
+  if (b.commence) { const x = new Date(b.commence); if (!isNaN(x)) d = x; }
+  if (d) return d.toLocaleString('es-EC',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'});
+  if (b.date) { const x = new Date(b.date+'T12:00:00'); if (!isNaN(x)) return x.toLocaleDateString('es-EC',{day:'2-digit',month:'short',year:'2-digit'}); }
+  return b.date || '—';
+}
+// Celda "Mercado": todos los detalles de la apuesta.
+function betMarketCell(b) {
+  if (b.resolve) {
+    const r = b.resolve;
+    const tn = s => s==='home' ? (b.homeTeam||'Local') : (s==='away' ? (b.awayTeam||'Visita') : 'Empate');
+    if (r.market==='ml')     return `<strong>Ganador</strong> · ${tn(r.side)}`;
+    if (r.market==='btts')   return `<strong>Ambos anotan</strong> · ${r.side==='yes'?'Sí':'No'}`;
+    if (r.market==='totals') return `<strong>Total</strong> · ${r.side==='over'?'Over':'Under'} ${r.line}`;
+    if (r.market==='spread') return `<strong>Hándicap</strong> · ${tn(r.side)} ${r.line>0?'+':''}${r.line}`;
+  }
+  return `<strong>${b.market||'—'}</strong>${b.pick?' · '+b.pick:''}`;
+}
 function renderTrackerList() {
   const c = document.getElementById('tracker-list');
   if (!state.bets.length) { c.innerHTML = `<div class="empty-tracker"><div class="ic">▦</div>Sin apuestas registradas todavía.<br>Usa el formulario de arriba para empezar tu historial.</div>`; return; }
-  let html = `<div class="bets-table-wrap"><table class="bets"><thead><tr><th>Fecha</th><th>Liga</th><th>Partido</th><th>Selección</th><th>Cuota</th><th>Stake</th><th>Score</th><th>Modo</th><th>Estado</th><th>Lección</th><th>P/L</th><th></th></tr></thead><tbody>`;
-  state.bets.forEach(b => {
+  const pending = state.bets.filter(b => b.status==='pending');
+  const settled = state.bets.filter(b => b.status!=='pending');
+  c.innerHTML = trackerTable('Pendientes y activas', pending, true)
+              + trackerTable('Finalizadas', settled, false);
+}
+function trackerTable(title, bets, isPending) {
+  const header = `<div class="tracker-block-title">${title} <span class="count">${bets.length}</span></div>`;
+  if (!bets.length) return header + `<div class="tracker-block-sub">Sin apuestas en este bloque.</div>`;
+  const sub = isPending
+    ? `<div class="tracker-block-sub">Los resultados se marcan solos cuando el partido termina (apuestas registradas desde la calculadora). "EN VIVO" indica un partido en juego.</div>`
+    : `<div class="tracker-block-sub">Apuestas con resultado. Click en "Ver lección" para el análisis de por qué ganaste o perdiste.</div>`;
+  const cols = `<tr><th>Fecha / hora</th><th>Liga</th><th>Partido</th><th>Mercado</th><th>Cuota</th><th>Stake</th><th>Score</th><th>Modo</th><th>Estado</th><th>Ganancia / Pérdida</th><th>Lección</th><th>Acciones</th></tr>`;
+  let rows = '';
+  bets.forEach(b => {
     const pl = b.status==='won' ? `+$${(b.stake*(b.odds-1)).toFixed(2)}` : (b.status==='lost' ? `-$${b.stake.toFixed(2)}` : (b.status==='push' ? '$0.00' : '—'));
-    const plCls = b.status==='won' ? 'pos' : (b.status==='lost' ? 'neg' : 'muted');
-    const lessonHtml = b.lesson ? `<span class="lesson-badge ${LESSON_LABELS[b.lesson].cls}" title="${LESSON_LABELS[b.lesson].desc}">${LESSON_LABELS[b.lesson].name}</span>` : '<span class="muted">—</span>';
-    const modeHtml = b.mode === 'paper' ? '<span class="muted" style="font-size:10px;">paper</span>' : '<span class="info" style="font-size:10px;">real</span>';
-    html += `<tr><td>${b.date}</td><td>${b.sport}</td><td>${b.match}</td><td>${b.pick}</td><td>${b.odds.toFixed(2)}</td><td>$${b.stake.toFixed(2)}</td><td>${b.score ?? '—'}</td><td>${modeHtml}</td><td><span class="status-pill st-${b.status}">${b.status}</span></td><td>${lessonHtml}</td><td class="${plCls}"><strong>${pl}</strong></td><td><div class="row-actions">${b.status==='pending' ? `<button class="icon-btn btn-w" onclick="setStatus('${b.id}','won')">✓</button><button class="icon-btn btn-l" onclick="setStatus('${b.id}','lost')">✕</button><button class="icon-btn" onclick="setStatus('${b.id}','push')">~</button>` : `<button class="icon-btn" onclick="setStatus('${b.id}','pending')">↶</button>`}<button class="icon-btn btn-x" onclick="deleteBet('${b.id}')">🗑</button></div></td></tr>`;
-    if (b.notes) html += `<tr><td colspan="12" style="background:var(--bg);padding:6px 12px 10px;font-size:11px;color:var(--text-2);"><em>"${b.notes}"</em></td></tr>`;
+    const plCls = b.status==='won' ? 'pl-pos' : (b.status==='lost' ? 'pl-neg' : 'muted');
+    const modeHtml = b.mode==='paper' ? '<span class="muted" style="font-size:10px;">paper</span>' : '<span class="info" style="font-size:10px;">real</span>';
+    const tag = (b.auto ? '<span class="auto-tag" title="Resultado automático">AUTO</span>' : '<span class="manual-tag" title="Marcado manual">MANUAL</span>');
+    let estado;
+    if (b.status==='pending' && b.liveStatus==='in') estado = '<span class="live-pill">EN VIVO</span>';
+    else estado = `<span class="status-pill st-${b.status}">${STATUS_ES[b.status]||b.status}</span>`;
+    const lessonCell = (b.status!=='pending')
+      ? `<span class="lesson-link" onclick="openLessonModal('${b.id}')">Ver lección</span>`
+      : '<span class="muted">—</span>';
+    const actions = (b.status==='pending'
+      ? `<button class="icon-btn btn-w" title="Marcar ganada" onclick="setStatus('${b.id}','won')">✓</button><button class="icon-btn btn-l" title="Marcar perdida" onclick="setStatus('${b.id}','lost')">✕</button><button class="icon-btn" title="Marcar nula" onclick="setStatus('${b.id}','push')">~</button>`
+      : `<button class="icon-btn" title="Volver a pendiente" onclick="setStatus('${b.id}','pending')">↶</button>`)
+      + `<button class="icon-btn btn-edit" title="Editar apuesta" onclick="openEditModal('${b.id}')">✎</button>`
+      + `<button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
+    const rowCls = b.status==='won' ? 'bet-settled-won' : (b.status==='lost' ? 'bet-settled-lost' : '');
+    rows += `<tr class="${rowCls}"><td class="cell-when">${betWhenCell(b)}</td><td>${b.sport||'—'}</td><td class="cell-match">${b.match||'—'}${tag}</td><td class="cell-market">${betMarketCell(b)}</td><td>${b.odds.toFixed(2)}</td><td>$${b.stake.toFixed(2)}</td><td>${b.score ?? '—'}</td><td>${modeHtml}</td><td>${estado}</td><td class="${plCls}">${pl}</td><td>${lessonCell}</td><td><div class="row-actions">${actions}</div></td></tr>`;
+    if (b.notes) rows += `<tr><td colspan="12" style="background:var(--bg);padding:6px 12px 10px;font-size:11px;color:var(--text-2);"><em>"${b.notes}"</em></td></tr>`;
   });
-  html += `</tbody></table></div>`;
-  c.innerHTML = html;
+  return header + sub + `<div class="bets-table-wrap"><table class="bets"><thead>${cols}</thead><tbody>${rows}</tbody></table></div>`;
+}
+
+// ---------- MODAL: LECCION DETALLADA ----------
+function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+function buildLessonHTML(b) {
+  const won = b.status==='won', lost = b.status==='lost', push = b.status==='push';
+  const cls = won?'win':(lost?'loss':'');
+  const resWord = won?'GANADA':(lost?'PERDIDA':(push?'NULA (push)':'PENDIENTE'));
+  const pl = won?`+$${(b.stake*(b.odds-1)).toFixed(2)}`:(lost?`-$${b.stake.toFixed(2)}`:'$0.00');
+  let why;
+  if (push) why = 'Resultado nulo: te devuelven el stake íntegro. La línea cayó justo en el número exacto. No es ni acierto ni error.';
+  else if (b.alignment==='aligned' && won) why = 'Seguiste la opción mejor calificada por el modelo y ganaste. El sistema funcionó: la probabilidad estimada se materializó. Este es el patrón que quieres repetir.';
+  else if (b.alignment==='aligned' && lost) why = 'Seguiste al modelo y perdiste. A corto plazo esto es <strong>varianza normal</strong>: incluso una apuesta con 70% de probabilidad pierde 3 de cada 10 veces. Una derrota aislada no significa que el modelo esté mal — no abandones el sistema por esto.';
+  else if (b.alignment==='against' && won) why = 'Fuiste <strong>contra</strong> la recomendación del modelo y ganaste. Pudo ser una buena lectura tuya (algo que el modelo no captura: lesiones, motivación, clima) o pura suerte. Revisa tus notas: si tenías una razón concreta, anota cuál; si no la tenías, trátalo como suerte y no como una señal.';
+  else if (b.alignment==='against' && lost) why = 'Fuiste contra el modelo y perdiste. Este es el patrón más caro a largo plazo. Antes de volver a ir contra el modelo, exígete una razón muy clara y escríbela <em>antes</em> de apostar.';
+  else why = 'Esta apuesta se registró sin modelo (escrita a mano), así que no hay comparación de alineación. Para lecciones más ricas, registra tus apuestas desde la <strong>Calculadora</strong> dentro del detalle de un partido.';
+  const checks = [];
+  if (b.score!=null) checks.push(b.score>=60 ? `El score era ${b.score} (≥ 60): cumplió el mínimo de calidad.` : `El score era ${b.score} (< 60): el modelo no recomendaba apostar este partido.`);
+  else checks.push('No registraste un score del modelo para esta apuesta.');
+  if (b.closingOdds) { const clv=((b.odds/b.closingOdds)-1)*100; checks.push(clv>=0 ? `Tu cuota (${b.odds}) fue MEJOR que la de cierre (${b.closingOdds}): CLV +${clv.toFixed(1)}%. Buena señal de timing.` : `Tu cuota (${b.odds}) fue PEOR que la de cierre (${b.closingOdds}): CLV ${clv.toFixed(1)}%. El mercado se movió en tu contra.`); }
+  else checks.push('No registraste la cuota de cierre — sin ella no se puede medir tu CLV (timing).');
+  return `<button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Lección del partido</h2>
+    <div class="tracker-block-sub" style="margin-bottom:4px;">${b.match||''} · ${b.sport||''}</div>
+    <div class="lesson-section ${cls}">
+      <div class="lh">Resultado</div>
+      Apuesta <strong>${resWord}</strong> — ${betMarketCell(b)} @ ${b.odds.toFixed(2)} · stake $${b.stake.toFixed(2)} · Ganancia/Pérdida <strong>${pl}</strong>
+    </div>
+    <div class="lesson-section ${cls}">
+      <div class="lh">Por qué ${won?'ganaste':(lost?'perdiste':'quedó así')}</div>
+      ${why}
+    </div>
+    <div class="lesson-section">
+      <div class="lh">Qué revisar para la próxima</div>
+      ${checks.map(x=>'• '+x).join('<br>')}<br>• Regla de oro: stake fijo de 1–3% del bankroll y solo apuestas con score ≥ 60.
+    </div>
+    ${b.notes?`<div class="lesson-section"><div class="lh">Tus notas al registrar</div><em>"${b.notes}"</em></div>`:''}`;
+}
+function openLessonModal(id) {
+  const b = state.bets.find(x=>x.id===id); if (!b) return;
+  document.getElementById('modal-card').innerHTML = buildLessonHTML(b);
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+// ---------- MODAL: EDITAR APUESTA ----------
+function openEditModal(id) {
+  const b = state.bets.find(x=>x.id===id); if (!b) return;
+  const v = s => (s==null?'':String(s)).replace(/"/g,'&quot;');
+  document.getElementById('modal-card').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Editar apuesta</h2>
+    <div class="tracker-block-sub" style="margin-bottom:12px;">Corrige cualquier dato. Los cambios se guardan y sincronizan.</div>
+    <div class="form-row"><label>Fecha del evento</label><input type="date" id="ed-date" value="${v(b.date)}" /></div>
+    <div class="form-row"><label>Liga / Deporte</label><input type="text" id="ed-sport" value="${v(b.sport)}" /></div>
+    <div class="form-row"><label>Partido</label><input type="text" id="ed-match" value="${v(b.match)}" /></div>
+    <div class="form-row"><label>Mercado</label><input type="text" id="ed-market" value="${v(b.market)}" /></div>
+    <div class="form-row"><label>Selección / línea</label><input type="text" id="ed-pick" value="${v(b.pick)}" /></div>
+    <div class="form-row"><label>Cuota (decimal)</label><input type="number" step="0.01" id="ed-odds" value="${v(b.odds)}" /></div>
+    <div class="form-row"><label>Cuota al cierre</label><input type="number" step="0.01" id="ed-closing" value="${v(b.closingOdds)}" /></div>
+    <div class="form-row"><label>Stake (USD)</label><input type="number" step="0.01" id="ed-stake" value="${v(b.stake)}" /></div>
+    <div class="form-row"><label>Score modelo (0-100)</label><input type="number" id="ed-score" value="${v(b.score)}" /></div>
+    <div class="form-row"><label>Casa de apuestas</label><input type="text" id="ed-book" value="${v(b.book)}" /></div>
+    <div class="form-row"><label>Modo</label><select id="ed-mode"><option value="paper"${b.mode==='paper'?' selected':''}>Simulación (paper)</option><option value="real"${b.mode==='real'?' selected':''}>Apuesta real</option></select></div>
+    <div class="form-row"><label>Notas</label><textarea id="ed-notes" rows="3">${(b.notes||'')}</textarea></div>
+    <div style="display:flex;gap:8px;margin-top:8px;"><button class="btn-primary" onclick="saveEditModal('${b.id}')">Guardar cambios</button><button class="btn-secondary" onclick="closeModal()">Cancelar</button></div>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function saveEditModal(id) {
+  const b = state.bets.find(x=>x.id===id); if (!b) return;
+  const gv = i => document.getElementById(i).value;
+  b.date = gv('ed-date');
+  b.sport = gv('ed-sport').trim();
+  b.match = gv('ed-match').trim();
+  b.market = gv('ed-market').trim();
+  b.pick = gv('ed-pick').trim();
+  const od = parseFloat(gv('ed-odds')); if (od>1) b.odds = od;
+  const cl = parseFloat(gv('ed-closing')); b.closingOdds = (cl>1)?cl:null;
+  const st = parseFloat(gv('ed-stake')); if (st>=0) b.stake = st;
+  const sc = parseInt(gv('ed-score'),10); b.score = isNaN(sc)?null:sc;
+  b.book = gv('ed-book').trim();
+  b.mode = gv('ed-mode');
+  b.notes = gv('ed-notes').trim();
+  // Recalcular el pago si la apuesta ya estaba liquidada
+  if (b.status==='won') b.payout = +(b.stake*b.odds).toFixed(2);
+  else if (b.status==='push') b.payout = b.stake;
+  persistBets();
+  closeModal();
+  renderTracker();
 }
 
 function groupBy(arr, fn) { const m={}; arr.forEach(x=>{const k=fn(x); (m[k]=m[k]||[]).push(x);}); return m; }
@@ -2740,6 +3142,228 @@ function renderTrackerPredictive() {
   c.innerHTML = `<div class="insights">${insights.map(i=>`<div class="insight-card ${i.cls}"><div class="head">${i.head}</div><div class="body">${i.body}</div></div>`).join('')}</div>`;
 }
 
+// ============================================================
+// PRESET ADAPTATIVO + MARCADO AUTOMATICO DE RESULTADOS (Fases A y B)
+// ============================================================
+const ADAPTIVE_BASE = { form:25, strength:25, h2h:15, homeAway:10, context:10, consistency:10, rest:5 };
+const ADAPTIVE_MIN_RESULTS = 20;   // hasta 20 resultados finalizados, usa la base sensata
+const ADAPTIVE_WMIN = 3, ADAPTIVE_WMAX = 40;
+const ADAPTIVE_SENS = 0.012;       // sensibilidad: delta de subscores -> peso
+const ADAPTIVE_EASE = 0.30;        // fraccion del camino al objetivo por cada recalculo
+const WKEYS = ['form','strength','h2h','homeAway','context','consistency','rest'];
+
+function getAdaptiveWeights() {
+  try {
+    const w = JSON.parse(localStorage.getItem('quantAdaptiveWeights'));
+    if (w && WKEYS.every(k => typeof w[k] === 'number')) return w;
+  } catch(e){}
+  return Object.assign({}, ADAPTIVE_BASE);
+}
+function getAdaptiveMeta() {
+  try {
+    const m = JSON.parse(localStorage.getItem('quantAdaptiveMeta'));
+    if (m && typeof m === 'object') return { lastN: m.lastN||0, history: m.history||[] };
+  } catch(e){}
+  return { lastN: 0, history: [] };
+}
+function getOutcomeLog() {
+  try { const o = JSON.parse(localStorage.getItem('quantOutcomeLog')); if (o && typeof o === 'object') return o; } catch(e){}
+  return {};
+}
+
+// Escanea los partidos FINALIZADOS del cronograma cargado y registra, por cada uno
+// de viabilidad media/alta, si el FAVORITO del modelo gano. Incluye tanto partidos
+// donde apostaste como los que no (analisis hipotetico / backtesting).
+function scanShadowOutcomes() {
+  const log = getOutcomeLog();
+  let added = 0;
+  const betGameIds = new Set(state.bets.map(b => b.espnGameId).filter(Boolean));
+  state.games.forEach(g => {
+    if (g.status !== 'post') return;
+    if (!g.viability || g.viability.insufficient || !g.viability.components) return;
+    if (g.viability.total < 55) return;
+    const hs = parseInt(g.home.score,10), as = parseInt(g.away.score,10);
+    if (isNaN(hs) || isNaN(as)) return;
+    if (log[g.id]) return;
+    const favWon = g.viability.favorite === 'home' ? (hs>as) : (as>hs);
+    log[g.id] = {
+      gameId: g.id, sport: g.sport, league: g.league,
+      date: (g.date instanceof Date) ? g.date.toISOString().slice(0,10) : String(g.date).slice(0,10),
+      comp: Object.assign({}, g.viability.components),
+      viability: g.viability.total, favWon: favWon,
+      hadRealBet: betGameIds.has(g.id)
+    };
+    added++;
+  });
+  if (added) lsSet('quantOutcomeLog', JSON.stringify(log));
+  return Object.keys(log).length;
+}
+
+// Calcula el set de pesos OBJETIVO a partir del registro de resultados.
+function computeAdaptiveTarget() {
+  const entries = Object.values(getOutcomeLog());
+  const n = entries.length;
+  if (n < ADAPTIVE_MIN_RESULTS) return { weights: Object.assign({}, ADAPTIVE_BASE), active:false, n };
+  const wins = entries.filter(e => e.favWon), losses = entries.filter(e => !e.favWon);
+  if (!wins.length || !losses.length) return { weights: Object.assign({}, ADAPTIVE_BASE), active:false, n };
+  const mean = (arr,k) => arr.reduce((a,e)=>a+((e.comp && typeof e.comp[k]==='number')?e.comp[k]:50),0)/arr.length;
+  const target = {};
+  WKEYS.forEach(k => {
+    const delta = mean(wins,k) - mean(losses,k);
+    let w = ADAPTIVE_BASE[k] * (1 + delta*ADAPTIVE_SENS);
+    target[k] = Math.max(ADAPTIVE_WMIN, Math.min(ADAPTIVE_WMAX, w));
+  });
+  const sum = WKEYS.reduce((a,k)=>a+target[k],0);
+  WKEYS.forEach(k => { target[k] = Math.round(target[k]/sum*100); });
+  let diff = 100 - WKEYS.reduce((a,k)=>a+target[k],0);
+  if (diff !== 0) target.form += diff;
+  return { weights: target, active:true, n };
+}
+
+// Recalcula los pesos adaptativos (silencioso). Solo ajusta cuando ENTRAN resultados nuevos.
+function recomputeAdaptive() {
+  const tgt = computeAdaptiveTarget();
+  const meta = getAdaptiveMeta();
+  if (tgt.n === meta.lastN) return getAdaptiveWeights();   // sin resultados nuevos: no se mueve
+  const current = getAdaptiveWeights();
+  let next;
+  if (!tgt.active) {
+    next = Object.assign({}, ADAPTIVE_BASE);
+  } else {
+    next = {};
+    WKEYS.forEach(k => {
+      let v = current[k] + (tgt.weights[k]-current[k])*ADAPTIVE_EASE;
+      next[k] = Math.max(ADAPTIVE_WMIN, Math.min(ADAPTIVE_WMAX, Math.round(v)));
+    });
+    let diff = 100 - WKEYS.reduce((a,k)=>a+next[k],0);
+    if (diff !== 0) next.form += diff;
+  }
+  localStorage.setItem('quantAdaptiveWeights', JSON.stringify(next));
+  meta.history.unshift({ ts: new Date().toISOString(), n: tgt.n, active: tgt.active, weights: Object.assign({}, next) });
+  if (meta.history.length > 60) meta.history = meta.history.slice(0,60);
+  meta.lastN = tgt.n;
+  localStorage.setItem('quantAdaptiveMeta', JSON.stringify(meta));
+  if (state.activePreset === 'adaptativo') {
+    state.weights = Object.assign({}, next);
+    localStorage.setItem('quantWeights', JSON.stringify(state.weights));
+    state.games.forEach(g => { if (g.homeStats && g.awayStats) g.viability = computeViability(g.homeStats, g.awayStats, state.weights); });
+    if (typeof renderSchedule === 'function') renderSchedule();
+    if (typeof updateStatBar === 'function') updateStatBar();
+    if (state.selectedGame) renderDetailSummary(state.selectedGame);
+  }
+  scheduleSyncPush();
+  return next;
+}
+
+function resetAdaptive() {
+  if (!confirm('Reiniciar el preset Adaptativo a su base (Balanceado) y borrar el registro de ajustes? El registro de resultados de partidos se conserva.')) return;
+  localStorage.setItem('quantAdaptiveWeights', JSON.stringify(ADAPTIVE_BASE));
+  localStorage.setItem('quantAdaptiveMeta', JSON.stringify({ lastN: 0, history: [] }));
+  if (state.activePreset === 'adaptativo') {
+    state.weights = Object.assign({}, ADAPTIVE_BASE);
+    localStorage.setItem('quantWeights', JSON.stringify(state.weights));
+    recalculateAll();
+  }
+  scheduleSyncPush();
+  if (typeof renderRating === 'function') renderRating();
+}
+
+// ---------- MARCADO AUTOMATICO DE RESULTADOS ----------
+function resolveBetOutcome(bet, ev) {
+  const r = bet.resolve; if (!r) return null;
+  const hs = ev.homeScore, as = ev.awayScore;
+  if (isNaN(hs) || isNaN(as)) return null;
+  if (r.market === 'ml') {
+    if (r.side === 'home') return hs>as ? 'won' : 'lost';
+    if (r.side === 'away') return as>hs ? 'won' : 'lost';
+    if (r.side === 'draw') return hs===as ? 'won' : 'lost';
+  } else if (r.market === 'btts') {
+    const both = hs>0 && as>0;
+    return (r.side==='yes') ? (both?'won':'lost') : (both?'lost':'won');
+  } else if (r.market === 'totals') {
+    const tot = hs+as;
+    if (tot === r.line) return 'push';
+    return (r.side==='over') ? (tot>r.line?'won':'lost') : (tot<r.line?'won':'lost');
+  } else if (r.market === 'spread') {
+    const adj = (r.side==='home') ? hs + r.line : as + r.line;
+    const opp = (r.side==='home') ? as : hs;
+    if (adj === opp) return 'push';
+    return adj>opp ? 'won' : 'lost';
+  }
+  return null;
+}
+function applyAutoStatus(bet, status) {
+  bet.status = status;
+  bet.liveStatus = 'post';
+  bet.autoResolved = true;
+  if (status==='won') bet.payout = +(bet.stake*bet.odds).toFixed(2);
+  else if (status==='lost') bet.payout = 0;
+  else if (status==='push') bet.payout = bet.stake;
+  if (status==='won' || status==='lost') {
+    const won = status==='won';
+    if (bet.alignment==='aligned') bet.lesson = won ? 'validation' : 'variance';
+    else if (bet.alignment==='against') bet.lesson = won ? 'insight' : 'discipline';
+    else bet.lesson = null;
+  } else bet.lesson = null;
+}
+
+let _autoResolveBusy = false;
+async function autoResolveBets() {
+  if (_autoResolveBusy) return;
+  const pend = state.bets.filter(b => b.status==='pending' && b.auto && b.resolve && b.espnGameId && b.espnSport);
+  if (!pend.length) return;
+  _autoResolveBusy = true;
+  try {
+    const bySport = {};
+    pend.forEach(b => { (bySport[b.espnSport] = bySport[b.espnSport] || []).push(b); });
+    let anyChange = false;
+    for (const sport of Object.keys(bySport)) {
+      const group = bySport[sport];
+      const days = group.map(b => b.commence ? new Date(b.commence) : new Date(b.date)).filter(d => !isNaN(d));
+      if (!days.length) continue;
+      const min = new Date(Math.min.apply(null, days.map(d=>d.getTime())));
+      const max = new Date(Math.max.apply(null, days.map(d=>d.getTime())));
+      min.setDate(min.getDate()-1); max.setDate(max.getDate()+1);
+      const data = await fetchScoreboard(sport, fmtDateESPN(min)+'-'+fmtDateESPN(max));
+      if (!data || !data.events) continue;
+      const evMap = {};
+      data.events.forEach(ev => {
+        const comp = ev.competitions && ev.competitions[0]; if (!comp) return;
+        const cs = comp.competitors || [];
+        const home = cs.find(c=>c.homeAway==='home') || cs[0];
+        const away = cs.find(c=>c.homeAway==='away') || cs[1];
+        const sc = c => c ? parseInt((c.score && c.score.value!=null) ? c.score.value : c.score, 10) : NaN;
+        evMap[ev.id] = {
+          state: (comp.status && comp.status.type) ? comp.status.type.state : 'pre',
+          homeScore: sc(home), awayScore: sc(away)
+        };
+      });
+      group.forEach(b => {
+        const ev = evMap[b.espnGameId];
+        if (!ev) return;
+        if (ev.state === 'post') {
+          const outcome = resolveBetOutcome(b, ev);
+          if (outcome) { applyAutoStatus(b, outcome); anyChange = true; }
+        } else if (ev.state === 'in') {
+          if (b.liveStatus !== 'in') { b.liveStatus = 'in'; anyChange = true; }
+        } else {
+          if (b.liveStatus !== 'pre') { b.liveStatus = 'pre'; anyChange = true; }
+        }
+      });
+    }
+    if (anyChange) { persistBets(); renderTracker(); }
+  } catch(e) {
+    /* silencioso: si ESPN falla, las apuestas quedan pendientes */
+  } finally {
+    _autoResolveBusy = false;
+  }
+}
+
+// El preset Adaptativo es el predeterminado y se ajusta solo (Fase B).
+// Este bootstrap corre despues de definir las constantes del motor adaptativo.
+state.activePreset = localStorage.getItem('quantActivePreset') || 'adaptativo';
+if (state.activePreset === 'adaptativo') state.weights = getAdaptiveWeights();
+
 // ---------- TABS ----------
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
@@ -2748,16 +3372,18 @@ document.querySelectorAll('.tab').forEach(t => {
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.tab).classList.add('active');
     if (t.dataset.tab==='tools') renderTools();
-    if (t.dataset.tab==='tracker') renderTracker();
+    if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); }
+    if (t.dataset.tab==='arb') renderArb();
+    if (t.dataset.tab==='education') renderEducation();
   });
 });
-document.querySelectorAll('.subtab').forEach(t => {
+document.querySelectorAll('#arb-subtabs .subtab').forEach(t => {
   t.addEventListener('click', () => {
-    document.querySelectorAll('.subtab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.subpanel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('#arb-subtabs .subtab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.arb-subpanel').forEach(p=>p.classList.remove('active'));
     t.classList.add('active');
-    document.getElementById('sub-'+t.dataset.sub).classList.add('active');
-    if (t.dataset.sub==='arb') renderArb();
+    document.getElementById('arbsub-'+t.dataset.arbsub).classList.add('active');
+    if (t.dataset.arbsub==='scan') renderArb();
   });
 });
 document.querySelectorAll('.sort-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.sort-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.sortMode = b.dataset.sort; renderSchedule(); }));
@@ -2776,7 +3402,6 @@ document.getElementById('sport-select').addEventListener('change', e=>{
 document.getElementById('week-prev').addEventListener('click', ()=>{state.weekOffset--; loadWeek();});
 document.getElementById('week-next').addEventListener('click', ()=>{state.weekOffset++; loadWeek();});
 document.getElementById('refresh-btn').addEventListener('click', ()=>{state.teamCache={}; loadWeek();});
-document.querySelectorAll('input[name="alignment"]').forEach(r => r.addEventListener('change', updateAlignmentPills));
 
 // ============================================================
 // MÓDULO DE SINCRONIZACIÓN EN LA NUBE (Supabase)
@@ -2835,7 +3460,12 @@ function gatherState() {
     customPresets: state.customPresets,
     oddsKey: state.oddsKey,
     oddsCache: state.oddsCache,
-    oddsHistory: state.oddsHistory
+    oddsHistory: state.oddsHistory,
+    outcomeLog: getOutcomeLog(),
+    adaptiveWeights: getAdaptiveWeights(),
+    adaptiveMeta: getAdaptiveMeta(),
+    arbBankroll: getArbBankroll(),
+    activePreset: state.activePreset || 'adaptativo'
   };
 }
 
@@ -2868,6 +3498,14 @@ function mergeBlobs(cloud, local) {
       .sort((a,b) => a.ts - b.ts);
     oddsHistory[k] = merged.slice(-50);
   });
+  // Registro de resultados: union por gameId (igual que apuestas borradas)
+  const outcomeLog = { ...(cloud.outcomeLog||{}), ...(local.outcomeLog||{}) };
+  // Motor adaptativo: nos quedamos con el lado que proceso mas resultados
+  const cM = (cloud.adaptiveMeta && cloud.adaptiveMeta.lastN) || 0;
+  const lM = (local.adaptiveMeta && local.adaptiveMeta.lastN) || 0;
+  const useCloudAdaptive = cM > lM;
+  const adaptiveWeights = useCloudAdaptive ? cloud.adaptiveWeights : (local.adaptiveWeights || cloud.adaptiveWeights || null);
+  const adaptiveMeta    = useCloudAdaptive ? cloud.adaptiveMeta    : (local.adaptiveMeta    || cloud.adaptiveMeta    || null);
   return {
     _v: 1,
     _ts: Date.now(),
@@ -2877,7 +3515,12 @@ function mergeBlobs(cloud, local) {
     customPresets: { ...(cloud.customPresets||{}), ...(local.customPresets||{}) },
     oddsKey: local.oddsKey || cloud.oddsKey || '',
     oddsCache,
-    oddsHistory
+    oddsHistory,
+    outcomeLog,
+    adaptiveWeights,
+    adaptiveMeta,
+    arbBankroll: local.arbBankroll || cloud.arbBankroll || null,
+    activePreset: local.activePreset || cloud.activePreset || 'adaptativo'
   };
 }
 
@@ -2900,6 +3543,12 @@ function applyBlob(blob, rerender) {
     localStorage.setItem('oddsApiKey', state.oddsKey);
     localStorage.setItem('quantOddsCache', JSON.stringify(state.oddsCache));
     localStorage.setItem('quantOddsHistory', JSON.stringify(state.oddsHistory));
+    if (blob.outcomeLog)      localStorage.setItem('quantOutcomeLog', JSON.stringify(blob.outcomeLog));
+    if (blob.adaptiveWeights) localStorage.setItem('quantAdaptiveWeights', JSON.stringify(blob.adaptiveWeights));
+    if (blob.adaptiveMeta)    localStorage.setItem('quantAdaptiveMeta', JSON.stringify(blob.adaptiveMeta));
+    if (blob.arbBankroll)     localStorage.setItem('quantArbBankroll', String(blob.arbBankroll));
+    if (typeof blob.activePreset === 'string') { state.activePreset = blob.activePreset; localStorage.setItem('quantActivePreset', blob.activePreset); }
+    if (state.activePreset === 'adaptativo') { state.weights = getAdaptiveWeights(); localStorage.setItem('quantWeights', JSON.stringify(state.weights)); }
   } catch(e) { console.warn('applyBlob:', e); }
   if (rerender) {
     try {
@@ -3079,7 +3728,14 @@ function renderToolsSync() {
 }
 
 // init
+function updateHeaderHeight() {
+  const h = document.querySelector('.header');
+  if (h) document.documentElement.style.setProperty('--hh', h.offsetHeight + 'px');
+}
+window.addEventListener('resize', updateHeaderHeight);
+
 window.addEventListener('DOMContentLoaded', async () => {
+  updateHeaderHeight();
   syncOddsKeyInputs();
   initFormDefaults();
   renderToolsSync();
@@ -3092,13 +3748,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
   loadWeek();
   renderTracker();
+  autoResolveBets();
 });
 </script>
+
+<!-- MODAL (leccion / edicion) -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card" id="modal-card"></div>
+</div>
 
 <!-- PANTALLA DE ACCESO / SINCRONIZACIÓN -->
 <div class="sync-gate" id="sync-gate">
   <div class="sync-gate-card">
-    <div class="sync-gate-brand"><span class="brand-mark"></span>QUANT.SPORTS</div>
+    <div class="sync-gate-brand"><img class="brand-logo" src="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACwAngDASIAAhEBAxEB/8QAHQABAQEAAgMBAQAAAAAAAAAAAAcIBQYDBAkBAv/EAGMQAAEDAgMDBgcICgsNBgcAAAEAAgMEBQYHEQgSIRMxQVFhsxQiN3F0dbEVMjZSc4GRshYYIzQ4QmKSocEXM1ZydoKltNLT4yQ1VWRlZmeDk5SVotElKFOjwuEnRVRjpPDx/8QAHAEBAAIDAQEBAAAAAAAAAAAAAAECAwQFBgcI/8QAPhEAAgEDAQQHBQYEBgMBAAAAAAECAwQRBRIhMUEGMjNRcbHBE3KBkaEiNDVhstEUQsLwFRYkYnPhQ1KD8f/aAAwDAQACEQMRAD8A2AiItUyhERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBEXX8eYxw9giwyXnEdwjo6Zp3WDnfK/oYxvO5x6vnOg4qQdgTUdaxvjzawxJWzyQYOtFLaqXXRlRWN5ecjoO7ruN83jedTC5Z3ZrXCRz58b3SMnopy2EfQwBXVJldpH0X1CL5wU2cOaFPIJGY6vriOYSVJePodqF3nCG1DmPaJmC8mgv9OD4zZ4BDJp2PjAGvaWlS6TG0jcyKb5O5yYTzKh5C3yvoLuxm9Lbqlw5QAc7mEcHt7RxHSAqQsbWCwREUAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIo9tYY0xLgfAFuumFrl7n1k10ZTySchHLrGYpXEaSNcOdreOmvBZl+2Gzh/df/JtJ/VK8YNrJGTfaLBFNtCZvvqYmOxdq1zwCPc2l5tfklvdRKLjxCeQiIqkhERAEREAREQBERAEREAREQBERAEREAREQBERAEUU2hcc4pwpiC20tgungcM1IZJG+DxSau3yNdXtJ5gpj+zHmP+6P/wDCp/6tatS8hTk4tM9RY9E7y9t416copS728+TNcos25V5nY4veYFotVzvfhFHUSubLH4LC3eAY487WAjiBzFaSWWjWjVWYnL1XSa2l1VSrNNtZ3Z8OaXcERFlOWEREAREQBERAEREAREQBERAEREB69zraW222puNdM2ClpYnTTSu5mMaCXE+YAr5z52ZiXLMjGtReKp8kdBE4x26lJ8WCHXhw+M7gXHpPYAta7ZuIpLJk1PQwSFk14qo6PVvOI+Mj/mIZun98sIHidVnpR5lJM/URfiylT9X4iID3LLc6+zXWmutrq5aStpZBLBNGdHMcOYj/APeK+imRmPoMxsvaO+gMjrmE09fC3mjnaBrp2OBDh2O06F831o/YSxI+jxzd8MySEQXGj5eNpPDlYj0edjnfmhY6kcrJaLNloiLXLhERAZm2i9oO5Yfv9VhHBHIx1VIeTrbjIwSFknTHG0+Lq3mLjrx1GnDVZsveOsaXqRz7riu9Ve9ztkrZNweZuug+YL1ccyvmxrfZpHbz5LjUOces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CyGpfC0yxtPOGuI1AOnQvbRAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAUS2s/wC8Fj9Kk+qFbVEtrP8AvBY/SpPqha932Mju9GfxWj4vyZnZcphD4WWf0+DvGri1ymEPhZZ/T4O8auJHrI+yXHZS8H5G4giBF6M/PwREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAFHc7sirJjyQ3yzvis2JmEPFU1n3KoI5hK0dP5Y49evMrEiklNp5RnLL/AGcI5MRC/ZhTUtdHAGiltdO4uiJHEulcQN4a6ndHA8NSeZaKgiighZDDGyOKNoaxjGgNa0DQAAcwX9oqxSjFRXBGW5uKlzWlWqPMpPLCIikwhERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAXSc2sA/Z7b6Gk91vc7wWV0m94Pyu9qNNNN5ui7sirOCmtmXAz2tzVtaqrUXiS4P8A/SCfa5/54/yZ/ar2rPs/+592o6/7LeV8GnZNue52m9uuB015XhzK4osKtKK5eZ2ZdKdVkmnV4/7Y/sERFsHnwiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgP//Z" alt="QuantSports" /></div>
     <div class="sync-gate-title">Sincronización entre dispositivos</div>
     <p class="sync-gate-text">Escribe tu clave numérica para sincronizar tus apuestas, presets y cuotas en todos tus dispositivos. Usa la <strong>misma clave</strong> en tu iPhone, iPad y laptop.</p>
     <input type="text" inputmode="numeric" pattern="[0-9]*" id="sync-code-input" class="sync-gate-input" placeholder="clave de ~10 dígitos" autocomplete="off" />
