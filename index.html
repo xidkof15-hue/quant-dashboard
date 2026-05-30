@@ -252,6 +252,8 @@
   .btn-secondary:hover { background: var(--surface-hover); }
   .btn-accent { background: var(--c-cobre); color: var(--surface); border: none; padding: 10px 18px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; }
   .btn-accent:hover { opacity: 0.88; }
+  .btn-danger { background: var(--surface); color: var(--c-granate); border: 1px solid var(--c-granate); padding: 9px 18px; font-family: var(--font-body); font-size: 12px; font-weight: 600; cursor: pointer; }
+  .btn-danger:hover { background: var(--c-granate); color: var(--surface); }
   .form-row { display: grid; gap: 6px; }
   .form-row label { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; }
   .add-bet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
@@ -677,8 +679,8 @@
     <div class="stat-bar">
       <div class="stat-cell"><div class="stat-label">Liga</div><div class="stat-value" id="stat-league">—</div><div class="stat-detail" id="stat-league-sub">cargando...</div></div>
       <div class="stat-cell"><div class="stat-label">Partidos</div><div class="stat-value" id="stat-games">0</div><div class="stat-detail" id="stat-games-sub">esta semana</div></div>
-      <div class="stat-cell"><div class="stat-label">Mejor score promedio</div><div class="stat-value" id="stat-avg">—</div><div class="stat-detail">por partido (mejor mercado)</div></div>
-      <div class="stat-cell"><div class="stat-label">Partidos con oportunidad</div><div class="stat-value accent" id="stat-viable">0</div><div class="stat-detail">≥1 mercado score ≥ 60</div></div>
+      <div class="stat-cell"><div class="stat-label">Confianza media</div><div class="stat-value" id="stat-avg">—</div><div class="stat-detail">del mejor mercado por partido</div></div>
+      <div class="stat-cell"><div class="stat-label">Partidos con oportunidad</div><div class="stat-value accent" id="stat-viable">0</div><div class="stat-detail">≥1 mercado recomendado</div></div>
     </div>
     <div class="sort-bar">
       <span class="label">Ordenar por:</span>
@@ -775,6 +777,11 @@
       <div class="block-title">Sincronización entre dispositivos</div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Usa una clave numérica para que tus apuestas, presets y cuotas se compartan entre tu iPhone, iPad y laptop. Escribe la misma clave en cada dispositivo. Cualquiera que conozca la clave puede ver y editar estos datos, así que guárdala como guardarías una contraseña.</p>
       <div id="sync-tools-box"></div>
+    </div>
+    <div class="api-key-form" style="border-color:var(--c-granate);">
+      <div class="block-title" style="color:var(--c-granate);">Zona avanzada</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Borra todo tu histórico y deja la app como recién instalada. Útil para empezar de cero. <strong>No se puede deshacer.</strong></p>
+      <button class="btn-danger" onclick="openClearHistoryModal()">Limpiar histórico (reset)</button>
     </div>
   </section>
 
@@ -1315,23 +1322,19 @@ function gameCardHTML(g) {
     const opp = g.opportunity;
     const band = opportunityBand(opp);
     const dq = opp.dataQuality === 'limited' ? ' <span class="dq-tag" title="Sin cuotas reales para algunas opciones">DATOS PARCIALES</span>' : '';
-    if (band === 'high') {
-      cardBandClass = ' opp-high';
-      oppHtml = `<div class="opp-badge opp-band-high">
-        <div class="opp-line-1"><span class="opp-icon">✓</span><span class="opp-text">${opp.favorableCount} mercado${opp.favorableCount===1?'':'s'} favorable${opp.favorableCount===1?'':'s'}</span><span class="opp-score-pill">${opp.bestScore}</span></div>
-        <div class="opp-line-2">Mejor: ${opp.bestPickLabel}${dq}</div>
-      </div>`;
-    } else if (band === 'mid') {
-      cardBandClass = ' opp-mid';
-      oppHtml = `<div class="opp-badge opp-band-mid">
-        <div class="opp-line-1"><span class="opp-icon">◐</span><span class="opp-text">${opp.favorableCount||1} mercado${(opp.favorableCount||1)===1?'':'s'} medio</span><span class="opp-score-pill">${opp.bestScore}</span></div>
-        <div class="opp-line-2">Mejor: ${opp.bestPickLabel}${dq}</div>
+    const n = opp.recommendedCount || 0;
+    const cv = `Conf ${opp.bestConfidence ?? '—'}${opp.bestValue!=null?` · Val ${opp.bestValue}`:''}`;
+    if (band === 'high' || band === 'mid') {
+      cardBandClass = band === 'high' ? ' opp-high' : ' opp-mid';
+      oppHtml = `<div class="opp-badge opp-band-${band}">
+        <div class="opp-line-1"><span class="opp-icon">${band==='high'?'✓':'◐'}</span><span class="opp-text">${n} mercado${n===1?'':'s'} recomendado${n===1?'':'s'}</span><span class="opp-score-pill">${opp.bestConfidence}</span></div>
+        <div class="opp-line-2">Mejor: ${opp.bestMarketLabel} (${cv}) · ${opp.bestPickLabel}${dq}</div>
       </div>`;
     } else {
       cardBandClass = ' opp-none';
       oppHtml = `<div class="opp-badge opp-band-none">
         <div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin oportunidades claras</span></div>
-        <div class="opp-line-2">Mejor mercado: ${opp.bestPickLabel||'—'} · score ${opp.bestScore||'—'}</div>
+        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor confianza: ${opp.bestMarketLabel} (${cv})`:'Sin mercados calculables'}${dq}</div>
       </div>`;
     }
   } else if (g.viability && g.viability.insufficient) {
@@ -1438,19 +1441,19 @@ function renderDetailSummary(g) {
   const opp = g.opportunity;
   const band = opportunityBand(opp);
   const bcls = band === 'high' ? 'b-alta' : (band === 'mid' ? 'b-media' : 'b-no');
-  const bandLabel = band === 'high' ? 'ALTA OPORTUNIDAD' : (band === 'mid' ? 'OPORTUNIDAD MEDIA' : 'SIN OPORTUNIDAD');
-  // Linea de scores por mercado
-  const marketEntries = Object.entries(opp.markets);
-  const marketChips = marketEntries.map(([k,m]) => {
-    const cls = m.bestScore >= 70 ? 'mc-high' : (m.bestScore >= 60 ? 'mc-mid' : 'mc-low');
+  const n = opp.recommendedCount || 0;
+  const bandLabel = n ? `${n} MERCADO${n===1?'':'S'} RECOMENDADO${n===1?'':'S'}` : 'SIN OPORTUNIDAD';
+  // Chip por mercado: confianza, marcado si está recomendado
+  const marketChips = Object.entries(opp.markets).map(([k,m]) => {
+    const cls = m.recommended ? 'mc-high' : (m.confidence >= CONF_THRESHOLD ? 'mc-mid' : 'mc-low');
     const lab = k==='ou' ? 'OU' : (k==='spread' ? 'SPR' : (k==='btts' ? 'BTTS' : (k==='1x2'||k==='ml' ? '1X2' : k.toUpperCase())));
-    return `<span class="market-chip ${cls}">${lab}<b>${m.bestScore}</b></span>`;
+    return `<span class="market-chip ${cls}" title="Confianza ${m.confidence}${m.value!=null?' · Valor '+m.value:''}${m.recommended?' · RECOMENDADO':''}">${m.recommended?'✓ ':''}${lab}<b>${m.confidence}</b></span>`;
   }).join('');
   el.innerHTML = `
-    <span class="ds-sum-score">${opp.bestScore ?? '—'}</span>
+    <span class="ds-sum-score">${opp.bestConfidence ?? '—'}</span>
     <div class="ds-sum-block">
       <span class="ds-sum-band ${bcls}">${bandLabel}</span>
-      <span class="ds-sum-fav">Mejor: ${opp.bestPickLabel || '—'}</span>
+      <span class="ds-sum-fav">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} (Conf ${opp.bestConfidence}${opp.bestValue!=null?' · Val '+opp.bestValue:''}) · ${opp.bestPickLabel}`:'—'}</span>
     </div>
     <div class="ds-sum-markets">${marketChips}</div>` + renderSignalStrip(g);
 }
@@ -1659,6 +1662,25 @@ function devigProbs(oddsArr) {
   const sum = impl.reduce((a,b)=>a+b,0) || 1;
   return impl.map(x => x/sum);
 }
+// Punto 10: referencia "sharp". The Odds API expone Pinnacle con key 'pinnacle'.
+// Precio de Pinnacle para un outcome concreto, o null si no está disponible.
+function pinnacleOutcomePrice(ev, marketKey, outcomeName, point) {
+  const bm = ((ev && ev.bookmakers) || []).find(b => ((b.key||'').toLowerCase()==='pinnacle') || ((b.title||'').toLowerCase()==='pinnacle'));
+  if (!bm) return null;
+  const m = (bm.markets||[]).find(x => x.key === marketKey);
+  if (!m) return null;
+  const o = (m.outcomes||[]).find(x => x.name === outcomeName && (point==null || x.point === point));
+  return (o && o.price > 1) ? o.price : null;
+}
+// Devig preferente: si TODOS los lados tienen precio de Pinnacle, usa Pinnacle
+// como referencia (true price). Si no, cae al promedio multi-casa.
+function devigRef(sides) {
+  const pins = sides.map(s => s.pin);
+  if (sides.length >= 2 && pins.every(p => typeof p === 'number' && p > 1)) {
+    return { probs: devigProbs(pins), ref: 'pinnacle' };
+  }
+  return { probs: devigProbs(sides.map(s => s.avg)), ref: 'avg' };
+}
 // Lee un mercado h2h o totals de un evento de cuotas
 function readOddsMarket(ev, marketKey) {
   const out = {};
@@ -1696,6 +1718,64 @@ function readSpreads(ev) {
   });
   return byAbs;
 }
+// ============================================================
+// PUNTO 9: EVALUACION POR MERCADO EN DOS FASES
+// Fase A · Confianza (0-100): gate de fiabilidad probabilistica.
+// Fase B · Valor (0-100): sizing economico (solo si pasa Fase A).
+// Ya NO existe un score global del partido: cada mercado se juzga solo.
+// ============================================================
+const CONF_THRESHOLD   = 65;     // umbral de paso de la Fase A
+const DIVERGENCE_HARD  = 0.125;  // 12.5pp -> descarte duro (sobreconfianza del modelo)
+const KELLY_MULT       = 0.25;   // Quarter-Kelly por defecto
+const STAKE_CAP        = 0.025;  // tope absoluto: 2.5% del bankroll por apuesta
+const EDGE_CAP         = 0.10;   // edges > 10% se capan (suele ser error de modelo)
+const PBLEND_MODEL_W   = 0.30;   // el mercado es prior fuerte: 30% modelo / 70% mercado
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+
+// Devuelve { phaseA, recommended, confidence, value, pBlend, divergence, edge, ev1,
+//            kellyFraction, stakeFraction, reason }
+function evaluateMarket(pModel, pMarket, oddsReal, bookCount) {
+  const hasMarket = (pMarket != null) && (oddsReal != null) && oddsReal > 1;
+  const pBlend = hasMarket ? (PBLEND_MODEL_W*pModel + (1-PBLEND_MODEL_W)*pMarket) : pModel;
+  // --- Sin cuota real: no se puede validar contra el mercado ---
+  if (!hasMarket) {
+    const confSolo = Math.round(clamp01((pModel - 0.40) / 0.35) * 60); // tope 60 sin mercado
+    return { phaseA:false, recommended:false, confidence:confSolo, value:null, pBlend,
+      divergence:null, edge:null, ev1:null, kellyFraction:0, stakeFraction:0,
+      reason:'Sin cuota de mercado para validar — provisional (solo modelo).' };
+  }
+  const divergence = Math.abs(pModel - pMarket);
+  // --- FASE A: filtro duro de divergencia ---
+  if (divergence > DIVERGENCE_HARD) {
+    return { phaseA:false, recommended:false, confidence:0, value:null, pBlend, divergence,
+      edge:null, ev1:null, kellyFraction:0, stakeFraction:0,
+      reason:'Modelo y mercado disienten demasiado — probable sobreconfianza del modelo.' };
+  }
+  // --- FASE A: confianza ---
+  const probLevel = clamp01((pBlend - 0.40) / 0.35);            // penaliza prob. baja en absoluto
+  const agreement = clamp01(1 - divergence / DIVERGENCE_HARD);   // acuerdo con el mercado
+  const bookLevel = clamp01((bookCount||0) / 5);                 // mas casas = mas fiable
+  const confidence = Math.round(100 * (0.45*probLevel + 0.40*agreement + 0.15*bookLevel));
+  if (confidence < CONF_THRESHOLD) {
+    return { phaseA:false, recommended:false, confidence, value:null, pBlend, divergence,
+      edge:null, ev1:null, kellyFraction:0, stakeFraction:0,
+      reason:`Confianza ${confidence} < ${CONF_THRESHOLD} — fiabilidad insuficiente.` };
+  }
+  // --- FASE B: valor (sizing) ---
+  const impliedProb = 1 / oddsReal;
+  const edge = pBlend - impliedProb;
+  const ev1  = pBlend * oddsReal - 1;
+  const kellyFraction = Math.max(0, (pBlend * oddsReal - 1) / (oddsReal - 1));
+  const stakeFraction = Math.min(kellyFraction * KELLY_MULT, STAKE_CAP);
+  const cappedEdge = Math.min(Math.max(edge, 0), EDGE_CAP);
+  const edgeComp  = clamp01(cappedEdge / EDGE_CAP);
+  const kellyComp = clamp01(kellyFraction / 0.20);
+  const value = Math.round(100 * (0.6*edgeComp + 0.4*kellyComp));
+  return { phaseA:true, recommended: edge > 0, confidence, value, pBlend, divergence,
+    edge, ev1, kellyFraction, stakeFraction,
+    reason: edge > 0 ? null : 'Pasa fiabilidad pero la cuota no paga (edge ≤ 0).' };
+}
+
 // CALIFICACIÓN nueva: combina CONFIANZA (probabilidad) y VALOR (EV de la cuota real).
 // Mezcla 50/50 el pronóstico del modelo con el de las casas (sin margen).
 // Un valor esperado (EV) negativo baja la nota fuerte — eso la hace conservadora.
@@ -1819,9 +1899,15 @@ function getMarketOptions(g, category) {
 
   const opts = [];
   const push = o => {
-    const ms = marketScore(o.pModel, o.pMarket, o.oddsBest);
-    opts.push({ ...o, prob:o.pModel, score:ms.score, band:bandLetter(ms.score),
-                pBlend:ms.pBlend, edge:ms.edge, ev1:ms.ev1, provisional:ms.provisional });
+    const evx = evaluateMarket(o.pModel, o.pMarket, o.oddsBest, o.bookCount||0);
+    const compatScore = evx.recommended ? Math.round(0.5*evx.confidence + 0.5*(evx.value||0))
+                       : (evx.phaseA ? Math.round(evx.confidence*0.5) : 0);
+    opts.push({ ...o, prob:o.pModel, ref:o.ref||'avg',
+      confidence:evx.confidence, value:evx.value, recommended:evx.recommended, phaseA:evx.phaseA,
+      reason:evx.reason, pBlend:evx.pBlend, divergence:evx.divergence, edge:evx.edge, ev1:evx.ev1,
+      kellyFraction:evx.kellyFraction, stakeFraction:evx.stakeFraction,
+      provisional: o.pMarket==null, score:compatScore,
+      band: evx.recommended ? (evx.confidence>=80?'alta':'media') : 'baja' });
   };
 
   // ===== MONEYLINE / 1X2 =====
@@ -1833,12 +1919,13 @@ function getMarketOptions(g, category) {
       const hb = bestAvgOdds(h2h[ev.home_team]);
       const db = isSoccer ? bestAvgOdds(h2h['Draw']) : null;
       const ab = bestAvgOdds(h2h[ev.away_team]);
-      if (hb) sides.push({ side:'home', ba:hb, name:`Gana ${g.home.name}`, pick:`${g.home.name} gana`, pModel:isSoccer?P.homeWin:pHomeML });
-      if (db) sides.push({ side:'draw', ba:db, name:'Empate', pick:'Empate', pModel:P.draw });
-      if (ab) sides.push({ side:'away', ba:ab, name:`Gana ${g.away.name}`, pick:`${g.away.name} gana`, pModel:isSoccer?P.awayWin:1-pHomeML });
-      const dv = devigProbs(sides.map(s=>s.ba.avg));
+      if (hb) sides.push({ side:'home', ba:hb, oName:ev.home_team, name:`Gana ${g.home.name}`, pick:`${g.home.name} gana`, pModel:isSoccer?P.homeWin:pHomeML });
+      if (db) sides.push({ side:'draw', ba:db, oName:'Draw', name:'Empate', pick:'Empate', pModel:P.draw });
+      if (ab) sides.push({ side:'away', ba:ab, oName:ev.away_team, name:`Gana ${g.away.name}`, pick:`${g.away.name} gana`, pModel:isSoccer?P.awayWin:1-pHomeML });
+      const _src = devigRef(sides.map(s=>({ avg:s.ba.avg, pin:pinnacleOutcomePrice(ev,'h2h',s.oName,null) })));
       sides.forEach((s,i) => push({ key:s.side, name:s.name, trackerPick:s.pick, pModel:s.pModel,
-        pMarket: sides.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+        pMarket: sides.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
+        ref: sides.length>=2 ? _src.ref : 'avg',
         oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:null, noRealOdds:false }));
     } else {
       const list = isSoccer
@@ -1855,15 +1942,16 @@ function getMarketOptions(g, category) {
       points.forEach(L => {
         const lineObj = tot[L];
         const present = [];
-        const ob = bestAvgOdds(lineObj['Over']);  if (ob) present.push({ side:'over', ba:ob });
-        const ub = bestAvgOdds(lineObj['Under']); if (ub) present.push({ side:'under', ba:ub });
-        const dv = devigProbs(present.map(s=>s.ba.avg));
+        const ob = bestAvgOdds(lineObj['Over']);  if (ob) present.push({ side:'over', ba:ob, oName:'Over' });
+        const ub = bestAvgOdds(lineObj['Under']); if (ub) present.push({ side:'under', ba:ub, oName:'Under' });
+        const _src = devigRef(present.map(s=>({ avg:s.ba.avg, pin:pinnacleOutcomePrice(ev,'totals',s.oName,L) })));
         present.forEach((s,i) => {
           const pModel = s.side==='over' ? pOverModel(L) : 1-pOverModel(L);
           push({ key:`${s.side==='over'?'o':'u'}${L}`,
             name:`${s.side==='over'?'Over':'Under'} ${L}`,
             trackerPick:`${s.side==='over'?'Over':'Under'} ${L}`,
-            pModel, pMarket: present.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+            pModel, pMarket: present.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
+            ref: present.length>=2 ? _src.ref : 'avg',
             oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:L, noRealOdds:false });
         });
       });
@@ -1885,10 +1973,10 @@ function getMarketOptions(g, category) {
       absPoints.forEach(abs => {
         const grp = byAbs[abs];
         const present = [];
-        if (grp.home && grp.home.prices.length) present.push({ side:'home', point:grp.home.point, ba:bestAvgOdds(grp.home.prices) });
-        if (grp.away && grp.away.prices.length) present.push({ side:'away', point:grp.away.point, ba:bestAvgOdds(grp.away.prices) });
+        if (grp.home && grp.home.prices.length) present.push({ side:'home', point:grp.home.point, ba:bestAvgOdds(grp.home.prices), oName:ev.home_team });
+        if (grp.away && grp.away.prices.length) present.push({ side:'away', point:grp.away.point, ba:bestAvgOdds(grp.away.prices), oName:ev.away_team });
         const valid = present.filter(s=>s.ba);
-        const dv = devigProbs(valid.map(s=>s.ba.avg));
+        const _src = devigRef(valid.map(s=>({ avg:s.ba.avg, pin:pinnacleOutcomePrice(ev,'spreads',s.oName,s.point) })));
         valid.forEach((s,i) => {
           const teamName = s.side==='home'?g.home.name:g.away.name;
           const sign = s.point<0?'m':'p';
@@ -1896,7 +1984,8 @@ function getMarketOptions(g, category) {
             name:`${teamName} ${s.point>0?'+':''}${s.point}`,
             trackerPick:`${teamName} ${s.point>0?'+':''}${s.point}`,
             pModel:pSpreadModel(s.side, s.point),
-            pMarket: valid.length>=2 ? dv[i] : Math.min(0.98,1/s.ba.avg),
+            pMarket: valid.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
+            ref: valid.length>=2 ? _src.ref : 'avg',
             oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:s.point, noRealOdds:false });
         });
       });
@@ -1925,8 +2014,8 @@ function getMarketOptions(g, category) {
     push({ key:'yes', name:'BTTS Sí (ambos anotan)', trackerPick:'BTTS Sí', pModel:P.bttsYes, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
     push({ key:'no',  name:'BTTS No (al menos uno en cero)', trackerPick:'BTTS No', pModel:P.bttsNo, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
   }
-  // Mejores opciones primero (por calificación)
-  return opts.sort((a,b)=>b.score-a.score);
+  // Mejores opciones primero: recomendadas, luego confianza, luego valor.
+  return opts.sort((a,b)=> (Number(b.recommended)-Number(a.recommended)) || (b.confidence-a.confidence) || ((b.value||0)-(a.value||0)));
 }
 
 // ===== OPPORTUNITY POR MERCADO (punto 7) =====
@@ -1945,42 +2034,46 @@ function computeGameOpportunity(g) {
   for (const c of cats) {
     const opts = getMarketOptions(g, c.key);
     if (!opts || !opts.length) continue;
-    const best = opts[0]; // getMarketOptions ya ordena por score desc
+    const best = opts[0]; // ya ordenado: recomendados primero, luego confianza, luego valor
     if (best.noRealOdds) anyNoRealOdds = true;
     markets[c.key] = {
-      label: c.label,
-      trackerName: c.trackerName,
-      bestScore: best.score,
-      bestOption: best.key,
-      bestPick: best.trackerPick || best.name,
-      bestOdds: best.oddsBest,
+      label: c.label, trackerName: c.trackerName,
+      confidence: best.confidence, value: best.value, recommended: !!best.recommended,
+      reason: best.reason || null,
+      bestOption: best.key, bestPick: best.trackerPick || best.name, bestOdds: best.oddsBest,
       bestEdge: (best.edge != null) ? +(best.edge*100).toFixed(1) : null,
       bestEv:   (best.ev1 != null) ? +(best.ev1*100).toFixed(1) : null,
-      provisional: !!best.provisional,
-      noRealOdds: !!best.noRealOdds,
-      bookCount: best.bookCount || 0,
-      // Top-4 opciones de esta categoria para el detalle
+      stakeFraction: best.stakeFraction || 0,
+      pModel: best.pModel, pMarket: best.pMarket, ref: best.ref || 'avg',
+      divergence: (best.divergence != null) ? +(best.divergence*100).toFixed(1) : null,
+      provisional: !!best.provisional, noRealOdds: !!best.noRealOdds, bookCount: best.bookCount || 0,
+      bestScore: best.confidence,
       topOptions: opts.slice(0,4).map(o => ({
-        key: o.key, name: o.name, trackerPick: o.trackerPick,
-        score: o.score, oddsBest: o.oddsBest, point: o.point,
-        pModel: o.pModel, pMarket: o.pMarket, edge: o.edge, ev1: o.ev1,
-        noRealOdds: !!o.noRealOdds
+        key:o.key, name:o.name, trackerPick:o.trackerPick, confidence:o.confidence, value:o.value,
+        recommended:!!o.recommended, reason:o.reason||null, oddsBest:o.oddsBest, point:o.point,
+        pModel:o.pModel, pMarket:o.pMarket, edge:o.edge, ev1:o.ev1, ref:o.ref||'avg',
+        divergence:(o.divergence!=null)?+(o.divergence*100).toFixed(1):null,
+        stakeFraction:o.stakeFraction||0, score:o.score, noRealOdds:!!o.noRealOdds
       }))
     };
   }
   const entries = Object.entries(markets);
-  entries.sort((a,b)=>b[1].bestScore - a[1].bestScore);
-  const favorableCount = entries.filter(([,m])=>m.bestScore >= 60).length;
-  const best = entries[0] || null;
+  const recommendedCount = entries.filter(([,mk])=>mk.recommended).length;
+  const sorted = entries.slice().sort((a,b)=>
+    (Number(b[1].recommended)-Number(a[1].recommended)) || (b[1].confidence-a[1].confidence) || ((b[1].value||0)-(a[1].value||0)));
+  const best = sorted[0] || null;
   return g.opportunity = {
-    markets,
-    favorableCount,
+    markets, recommendedCount, favorableCount: recommendedCount,
     bestMarket: best ? best[0] : null,
     bestMarketLabel: best ? best[1].label : null,
-    bestScore: best ? best[1].bestScore : null,
+    bestRecommended: best ? best[1].recommended : false,
+    bestConfidence: best ? best[1].confidence : null,
+    bestValue: best ? best[1].value : null,
+    bestScore: best ? best[1].confidence : null,
     bestPickLabel: best ? `${best[1].bestPick}${best[1].bestOdds ? ' @ ' + best[1].bestOdds.toFixed(2) : ''}` : null,
     bestEdge: best ? best[1].bestEdge : null,
     bestEv:   best ? best[1].bestEv : null,
+    bestStakeFraction: best ? best[1].stakeFraction : 0,
     dataQuality: anyNoRealOdds ? 'limited' : 'full'
   };
 }
@@ -1988,10 +2081,9 @@ function computeGameOpportunity(g) {
 // Helper: clasifica la oportunidad para la estetica de la card
 function opportunityBand(opp) {
   if (!opp || !opp.markets || !Object.keys(opp.markets).length) return 'none';
-  if (opp.bestScore == null) return 'none';
-  if (opp.bestScore >= 70) return 'high';
-  if (opp.bestScore >= 60) return 'mid';
-  return 'none';
+  if (!opp.recommendedCount) return 'none';
+  if (opp.bestConfidence != null && opp.bestConfidence >= 80) return 'high';
+  return 'mid';
 }
 
 function renderBetCalculator(g) {
@@ -2006,7 +2098,7 @@ function renderBetCalculator(g) {
         <div class="bet-calc-title">Calculadora de apuesta · ¿Vale la pena?</div>
         <div class="muted" style="font-family:var(--font-mono);font-size:11px;">Implícita · EV · Value · Kelly</div>
       </div>
-      <div class="edu-box"><div class="ttl">¿Cómo se usa?</div>1. <strong>Elige la categoría de mercado</strong> (1X2, Over/Under, BTTS, Spread, Props).<br>2. <strong>Elige la opción específica</strong> que te interesa — cada una tiene su propio score y banda.<br>3. <strong>Pega la cuota</strong> que ves en tu casa y tu bankroll.<br>4. El sistema compara la probabilidad del modelo con la implícita y te da un veredicto.<br>5. Si te convence, click en "Enviar al tracker".</div>
+      <div class="edu-box"><div class="ttl">¿Cómo se usa?</div>1. <strong>Elige la categoría de mercado</strong> (1X2, Over/Under, BTTS, Spread).<br>2. <strong>Elige la opción específica</strong> que te interesa — cada una tiene su propio score y banda.<br>3. <strong>Pega la cuota</strong> que ves en tu casa y tu bankroll.<br>4. El sistema compara la probabilidad del modelo con la implícita y te da un veredicto.<br>5. Si te convence, click en "Registrar apuesta".</div>
       <div class="calc-step">
         <div class="calc-step-label"><span class="num">1</span>Categoría de mercado</div>
         <div class="market-cat-pills" id="calc-cat-pills">
@@ -2135,16 +2227,16 @@ function renderMarketOptionsArea(g) {
   }
   return banner + `<div class="market-options-grid">
     ${opts.map(o => `
-      <div class="market-option ${state.calcMarket.optionKey===o.key?'selected':''}" onclick="selectMarketOption('${o.key}')">
+      <div class="market-option ${state.calcMarket.optionKey===o.key?'selected':''}" onclick="selectMarketOption('${o.key}')" title="${o.recommended?'Recomendado':(o.reason||'')}">
         <div class="market-option-head">
-          <span class="market-option-name">${o.name}</span>
-          <span class="market-option-score s-${o.band}">${o.score}</span>
+          <span class="market-option-name">${o.recommended?'✓ ':''}${o.name}</span>
+          <span class="market-option-score s-${o.band}">${o.confidence}</span>
         </div>
         <div class="market-option-foot">
-          <span class="market-option-prob">Modelo ${(o.pModel*100).toFixed(1)}%${o.pMarket!=null?` · Casas ${(o.pMarket*100).toFixed(1)}%`:''}</span>
+          <span class="market-option-prob">Modelo ${(o.pModel*100).toFixed(1)}%${o.pMarket!=null?` · ${o.ref==='pinnacle'?'Pinnacle':'Casas'} ${(o.pMarket*100).toFixed(1)}%`:''}${o.value!=null?` · Val ${o.value}`:''}</span>
           ${o.oddsBest!=null
             ? `<span class="market-option-band b-${o.band}">@ ${o.oddsBest.toFixed(2)}</span>`
-            : `<span class="market-option-band b-${o.band}">${o.band.toUpperCase()}</span>`}
+            : `<span class="market-option-band b-${o.band}">${o.recommended?'REC':'—'}</span>`}
         </div>
       </div>
     `).join('')}
@@ -2197,7 +2289,7 @@ function updateCalculator() {
   const bankrollInput = parseFloat(document.getElementById('calc-bankroll').value) || 0;
   const out = document.getElementById('calc-output');
   if (!oddsInput || oddsInput <= 1) { out.innerHTML = `<div class="state-msg">Ingresa una cuota válida (> 1) para ver el análisis.</div>`; return; }
-  let pModel = 0, pMarket = null, label = '', categoryLabel = '', bookCount = 0;
+  let pModel = 0, pMarket = null, label = '', categoryLabel = '', bookCount = 0, marketRef = 'avg';
   const cat = state.calcMarket.category;
   const categories = getMarketCategories(g);
   const catObj = categories.find(c=>c.key===cat);
@@ -2212,6 +2304,7 @@ function updateCalculator() {
     pModel = sel.prob;
     pMarket = sel.pMarket;
     bookCount = sel.bookCount || 0;
+    marketRef = sel.ref || 'avg';
     label = sel.trackerPick || sel.name;
   }
   // El campo editable "Selección / línea exacta" tiene prioridad para lo que se REGISTRA
@@ -2219,25 +2312,35 @@ function updateCalculator() {
   const pickLabel = (pickLabelEl && pickLabelEl.value.trim()) ? pickLabelEl.value.trim() : label;
   const bookEl = document.getElementById('calc-book');
   const book = bookEl ? bookEl.value.trim() : '';
-  // Calificación con la cuota REAL que vas a jugar: combina confianza + valor,
-  // mezclando 50/50 la probabilidad del modelo con la de las casas (sin margen).
-  const ms = marketScore(pModel, pMarket, oddsInput);
-  const pBlend = ms.pBlend;
+  // Evaluación de dos fases con la cuota REAL que vas a jugar (punto 9).
+  const ev2 = evaluateMarket(pModel, pMarket, oddsInput, bookCount);
+  const pBlend = ev2.pBlend;
   const hasMarket = pMarket != null;
   const impliedProb = 1 / oddsInput;
   const edge = pBlend - impliedProb;
   const edgePct = edge * 100;
   const evPer1 = pBlend * (oddsInput - 1) - (1 - pBlend);
-  const kelly = oddsInput > 1 ? Math.max(0, (pBlend * oddsInput - 1) / (oddsInput - 1)) : 0;
-  const halfKelly = kelly / 2;
-  const kellyStake = bankrollInput * halfKelly;
+  const confidence = ev2.confidence;
+  const valueScore = ev2.value;
+  // Quarter-Kelly con tope absoluto de 2.5% del bankroll
+  const kellyFraction = ev2.kellyFraction;
+  const stakeFraction = ev2.stakeFraction;        // ya = min(kelly*0.25, 2.5%)
+  const kellyStake = bankrollInput * stakeFraction;
+  const stakeCapped = (kellyFraction * KELLY_MULT) > STAKE_CAP;
   let verdict, verdictClass;
-  if (edgePct >= 5 && evPer1 >= 0.05) { verdict = `✓ VALUE BET — Edge de ${edgePct.toFixed(1)}% sobre la probabilidad combinada. Apuesta favorable.`; verdictClass = 'verdict-value'; }
-  else if (edgePct >= 0) { verdict = `≡ JUSTA — Edge mínimo (${edgePct.toFixed(1)}%). No hay ventaja clara; mejor pasar.`; verdictClass = 'verdict-fair'; }
-  else { verdict = `✕ DESVENTAJA — La cuota es desfavorable (edge ${edgePct.toFixed(1)}%). NO apostar.`; verdictClass = 'verdict-bad'; }
-  const provNote = ms.provisional ? ' · <span style="color:var(--c-cobre);">provisional, sin cuota de mercado</span>' : '';
-  const bandClass = bandLetter(ms.score);
-  state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput, modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: ms.score, bookCount, impliedProb, edge: edgePct, ev: evPer1*100, kelly: halfKelly, kellyStake };
+  if (ev2.recommended) {
+    verdict = `✓ RECOMENDADO — Confianza ${confidence} · Valor ${valueScore}. Edge ${edgePct>=0?'+':''}${edgePct.toFixed(1)}% sobre la probabilidad combinada.`;
+    verdictClass = 'verdict-value';
+  } else if (ev2.phaseA) {
+    verdict = `≡ FIABLE PERO SIN VALOR — Pasa Fase A (Confianza ${confidence}) pero la cuota no paga (edge ${edgePct.toFixed(1)}%). Mejor pasar.`;
+    verdictClass = 'verdict-fair';
+  } else {
+    verdict = `✕ NO RECOMENDADO — ${ev2.reason}`;
+    verdictClass = 'verdict-bad';
+  }
+  const provNote = !hasMarket ? ' · <span style="color:var(--c-cobre);">provisional, sin cuota de mercado</span>' : '';
+  const bandClass = ev2.recommended ? (confidence>=80?'alta':'media') : 'baja';
+  state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput, modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: confidence, confidence, value: valueScore, recommended: ev2.recommended, bookCount, impliedProb, edge: edgePct, ev: evPer1*100, kelly: stakeFraction, kellyStake, stakeFraction };
   // Metadatos estructurados para el marcado automático
   {
     let _sel = null, _opts = null;
@@ -2251,24 +2354,24 @@ function updateCalculator() {
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
     <div class="calc-output">
       <div class="calc-out-cell" style="border-color:var(--border-strong);">
-        <div class="calc-out-label">Calificación · confianza + valor</div>
-        <div class="calc-out-value s-${bandClass}" style="font-size:25px;">${ms.score}</div>
-        <div class="calc-out-desc">0–100${provNote}</div>
+        <div class="calc-out-label">Fase A · Confianza</div>
+        <div class="calc-out-value s-${bandClass}" style="font-size:25px;">${confidence}</div>
+        <div class="calc-out-desc">gate ≥ ${CONF_THRESHOLD}${provNote}</div>
       </div>
+      <div class="calc-out-cell" style="border-color:var(--border-strong);"><div class="calc-out-label">Fase B · Valor</div><div class="calc-out-value s-${bandClass}" style="font-size:25px;">${valueScore!=null?valueScore:'—'}</div><div class="calc-out-desc">${ev2.phaseA?'0–100 (pasó Fase A)':'no evaluado (no pasó Fase A)'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Stake (Quarter-Kelly)</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankrollInput?`= $${kellyStake.toFixed(2)}`:'ingresa bankroll'}${stakeCapped?' · <span style="color:var(--c-cobre);">topado al 2.5%</span>':''}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Prob. del modelo</div><div class="calc-out-value">${(pModel*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que estima el sistema</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Prob. de las casas</div><div class="calc-out-value">${hasMarket?(pMarket*100).toFixed(1)+'%':'—'}</div><div class="calc-out-desc">${hasMarket?`Sin margen · ${bookCount} casa${bookCount===1?'':'s'}`:'API sin cuotas de este mercado'}</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Prob. combinada</div><div class="calc-out-value accent">${(pBlend*100).toFixed(1)}%</div><div class="calc-out-desc">${hasMarket?'Mezcla 50/50 modelo + casas':'= modelo (sin cuota de mercado)'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. de las casas</div><div class="calc-out-value">${hasMarket?(pMarket*100).toFixed(1)+'%':'—'}</div><div class="calc-out-desc">${hasMarket?`Sin margen · ${marketRef==='pinnacle'?'<strong>ref: Pinnacle</strong>':('promedio '+bookCount+' casa'+(bookCount===1?'':'s'))}`:'API sin cuotas de este mercado'}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Prob. combinada</div><div class="calc-out-value accent">${(pBlend*100).toFixed(1)}%</div><div class="calc-out-desc">${hasMarket?'Mezcla 30% modelo / 70% mercado':'= modelo (sin cuota de mercado)'}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Prob. implícita</div><div class="calc-out-value">${(impliedProb*100).toFixed(1)}%</div><div class="calc-out-desc">Lo que afirma tu cuota ${oddsInput}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Edge (ventaja)</div><div class="calc-out-value ${edge>=0?'pos':'neg'}">${edge>=0?'+':''}${edgePct.toFixed(1)}%</div><div class="calc-out-desc">Combinada − Implícita</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">EV por $1 stake</div><div class="calc-out-value ${evPer1>=0?'pos':'neg'}">${evPer1>=0?'+':''}$${evPer1.toFixed(3)}</div><div class="calc-out-desc">Ganancia esperada</div></div>
-      <div class="calc-out-cell"><div class="calc-out-label">Half Kelly (recomendado)</div><div class="calc-out-value accent">${(halfKelly*100).toFixed(1)}%</div><div class="calc-out-desc">${bankrollInput? `= $${kellyStake.toFixed(2)}` : 'Ingresa bankroll'}</div></div>
     </div>
     <div class="edu-box">
       <div class="ttl">Cómo interpretar lo de arriba</div>
-      <strong>Calificación:</strong> combina dos cosas — qué tan probable es ganar (confianza) y si la cuota paga lo suficiente (valor). Una apuesta casi segura pero mal pagada ya no saca nota alta.<br><br>
-      <strong>Modelo vs casas:</strong> el modelo dice <strong>${(pModel*100).toFixed(1)}%</strong>${hasMarket?`, las casas (quitándoles el margen) dicen <strong>${(pMarket*100).toFixed(1)}%</strong>. La <strong>combinada</strong> promedia ambas mitad y mitad — más conservadora que fiarse solo del modelo.`:`. No hay cuotas reales de este mercado en la API, así que se usa solo el modelo (calificación provisional).`}<br><br>
-      <strong>Edge:</strong> diferencia entre la probabilidad combinada y la implícita. Sin un edge positivo (idealmente ≥ 3–5%) no hay value.<br><br>
-      <strong>EV / Kelly:</strong> si apuestas $10, esperas ${evPer1>=0?'ganar':'perder'} ~<strong>$${Math.abs(evPer1*10).toFixed(2)}</strong> de media a largo plazo. Half Kelly sugiere ${(halfKelly*100).toFixed(1)}% del bankroll${bankrollInput?` = $${kellyStake.toFixed(2)}`:''}. Si Kelly es 0, no apuestes.
+      <strong>Dos fases:</strong> primero <strong>Confianza</strong> (¿es fiable la probabilidad?). Si pasa el gate de ${CONF_THRESHOLD} y modelo+mercado no disienten más de 12.5pp, se calcula <strong>Valor</strong> (¿paga la cuota?). Una apuesta solo se recomienda si pasa Fase A y tiene edge positivo.<br><br>
+      <strong>Modelo vs mercado:</strong> el modelo dice <strong>${(pModel*100).toFixed(1)}%</strong>${hasMarket?`, el mercado (sin margen) dice <strong>${(pMarket*100).toFixed(1)}%</strong>. La <strong>combinada</strong> pondera 30% modelo y 70% mercado — el mercado es el prior fuerte.`:`. No hay cuotas reales de este mercado en la API, así que se usa solo el modelo (provisional, no pasa Fase A).`}<br><br>
+      <strong>Stake:</strong> Quarter-Kelly (¼ de Kelly) con tope absoluto del 2.5% del bankroll por apuesta. Si el edge es ≤ 0, el stake es 0.${stakeCapped?' Aquí Kelly pedía más, pero se topó al 2.5%.':''}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       <button class="btn-accent" onclick="prefillBet('calc')">→ Registrar apuesta</button>
@@ -2284,26 +2387,36 @@ function renderTeamBlock(t, s, r) {
 function renderMarketsOverview(g) {
   const opp = g.opportunity;
   if (!opp || !opp.markets || !Object.keys(opp.markets).length) {
-    return `<div class="state-msg">No hay mercados calculables para este partido todavia.</div>`;
+    return `<div class="state-msg">No hay mercados calculables para este partido todavía.</div>`;
   }
-  const entries = Object.entries(opp.markets).sort((a,b)=>b[1].bestScore - a[1].bestScore);
+  const entries = Object.entries(opp.markets).sort((a,b)=>
+    (Number(b[1].recommended)-Number(a[1].recommended)) || (b[1].confidence-a[1].confidence) || ((b[1].value||0)-(a[1].value||0)));
   const rows = entries.map(([k,m]) => {
-    const bandCls = m.bestScore >= 70 ? 'mc-high' : (m.bestScore >= 60 ? 'mc-mid' : 'mc-low');
-    const verdict = m.bestScore >= 70 ? 'APUESTA' : (m.bestScore >= 60 ? 'OPCIONAL' : 'EVITAR');
+    const recCls = m.recommended ? 'mc-high' : (m.confidence>=CONF_THRESHOLD ? 'mc-mid' : 'mc-low');
+    const verdict = m.recommended ? 'RECOMENDADO' : 'NO RECOMENDADO';
     const oddsStr = m.bestOdds ? `@ ${m.bestOdds.toFixed(2)}` : '<span class="muted">cuota manual</span>';
+    const pm = (m.pMarket!=null) ? `${(m.pMarket*100).toFixed(1)}%${m.ref==='pinnacle'?' <span class="muted">(Pin)</span>':''}` : '<span class="muted">—</span>';
+    const dvStr = (m.divergence!=null) ? `${m.divergence.toFixed(1)}pp` : '—';
     const edgeStr = (m.bestEdge != null) ? `${m.bestEdge>=0?'+':''}${m.bestEdge.toFixed(1)}%` : '—';
-    const dqWarn  = m.noRealOdds ? ' <span class="dq-tag">SIN CUOTA REAL</span>' : '';
+    const valStr = (m.value!=null) ? m.value : '—';
+    const stakeStr = m.recommended && m.stakeFraction ? `${(m.stakeFraction*100).toFixed(2)}%` : '—';
+    const reasonRow = !m.recommended && m.reason
+      ? `<tr><td colspan="9" style="background:var(--bg);padding:4px 12px 8px;font-size:11px;color:var(--text-2);"><em>${m.label}: ${m.reason}</em></td></tr>` : '';
     return `<tr>
       <td><strong>${m.label}</strong></td>
-      <td>${m.bestPick}</td>
-      <td>${oddsStr}${dqWarn}</td>
+      <td>${m.bestPick} ${oddsStr}</td>
+      <td>${(m.pModel*100).toFixed(1)}%</td>
+      <td>${pm}</td>
+      <td>${dvStr}</td>
       <td class="${m.bestEdge>=3?'pl-pos':(m.bestEdge<0?'pl-neg':'')}">${edgeStr}</td>
-      <td><span class="market-chip ${bandCls}"><b>${m.bestScore}</b></span></td>
-      <td><span class="market-verdict ${bandCls}">${verdict}</span></td>
-    </tr>`;
+      <td><span class="market-chip ${recCls}"><b>${m.confidence}</b></span></td>
+      <td>${valStr}${stakeStr!=='—'?` <span class="muted">· ${stakeStr}</span>`:''}</td>
+      <td><span class="market-verdict ${recCls}">${verdict}</span></td>
+    </tr>${reasonRow}`;
   }).join('');
-  const dq = opp.dataQuality === 'limited' ? `<div class="small-note" style="margin-bottom:10px;"><strong>Datos parciales:</strong> algunas opciones no tienen cuotas reales de la API. La calificación es del modelo solo (provisional). Carga cuotas en la sección <strong>Cuotas</strong> abajo para mejorar.</div>` : '';
-  return `${dq}<div class="bets-table-wrap"><table class="bets"><thead><tr><th>Mercado</th><th>Mejor opción</th><th>Cuota</th><th>Edge</th><th>Score</th><th>Veredicto</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  const dq = opp.dataQuality === 'limited' ? `<div class="small-note" style="margin-bottom:10px;"><strong>Datos parciales:</strong> algunas opciones no tienen cuotas reales de la API, así que no pasan la Fase A (no se pueden validar contra el mercado). Carga cuotas en la sección <strong>Cuotas</strong> abajo.</div>` : '';
+  const head = `<tr><th>Mercado</th><th>Mejor opción</th><th>Modelo</th><th>Mercado</th><th>Diverg.</th><th>Edge</th><th>Confianza</th><th>Valor</th><th>Veredicto</th></tr>`;
+  return `${dq}<div class="bets-table-wrap"><table class="bets"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
 }
 function renderDescriptive() {
   const c = document.getElementById('ds-descriptivo'); const g = state.selectedGame;
@@ -2312,7 +2425,7 @@ function renderDescriptive() {
   // Punto 7: encabezamos con la tabla resumen por mercado
   c.innerHTML = `
     <h3 style="font-size:16px;font-weight:700;margin:0 0 4px;">Calificación por mercado</h3>
-    <p class="muted" style="font-size:12px;margin-bottom:14px;">Cada mercado se analiza por separado. El partido no se califica como un todo — solo nos importa si <strong>algún mercado vale la apuesta</strong>.</p>
+    <p class="muted" style="font-size:12px;margin-bottom:14px;">Cada mercado se evalúa en dos fases. <strong>Fase A · Confianza</strong> (0–100): ¿es fiable la probabilidad? Pasa con ≥ ${CONF_THRESHOLD} y se descarta si modelo y mercado disienten &gt; 12.5pp. <strong>Fase B · Valor</strong> (0–100): solo para los que pasan, ¿paga la cuota lo suficiente? El partido ya no se califica como un todo.</p>
     ${renderMarketsOverview(g)}
     <h3 style="font-size:16px;font-weight:700;margin:24px 0 4px;">Datos que alimentan el análisis</h3>
     <p class="muted" style="font-size:12px;margin-bottom:8px;">El modelo Poisson usa las lambdas (rate de goles esperado) de cada equipo, moduladas por los 7 pesos del preset activo. Estos son los stats base.</p>
@@ -2349,6 +2462,28 @@ function renderPredictive() {
       <div class="pred-cell"><div class="block-title">Modelo Net Rating</div>${probRow('Local ('+g.home.name+') gana', pH)}${probRow('Visita ('+g.away.name+') gana', 1-pH)}</div>
       <div class="pred-cell"><div class="block-title">Totales esperados</div><div class="prob-row"><span class="prob-label">Pts. local esp.</span><span class="prob-val">${eh.toFixed(1)}</span></div><div class="prob-row"><span class="prob-label">Pts. visita esp.</span><span class="prob-val">${ea.toFixed(1)}</span></div><div class="prob-row"><span class="prob-label">Total esperado</span><span class="prob-val">${(eh+ea).toFixed(1)}</span></div><div class="prob-row"><span class="prob-label">Spread</span><span class="prob-val">${ed>0?'-'+ed.toFixed(1)+' L':'+'+Math.abs(ed).toFixed(1)+' V'}</span></div></div>
     </div><div class="small-note"><strong>Net Rating:</strong> promedio reciente ajustado por ventaja local. Logística sobre el diferencial.</div>`;
+  }
+  // Narrativa por mercado (punto 9): por qué los datos justifican o no la apuesta.
+  const opp = g.opportunity;
+  if (opp && opp.markets && Object.keys(opp.markets).length) {
+    const cards = Object.entries(opp.markets)
+      .sort((a,b)=> (Number(b[1].recommended)-Number(a[1].recommended)) || (b[1].confidence-a[1].confidence))
+      .map(([k,m]) => {
+        const cls = m.recommended ? 'salvia' : (m.confidence>=CONF_THRESHOLD ? 'pizarra' : 'granate');
+        let body;
+        if (m.recommended) {
+          body = `<strong>Recomendado:</strong> ${m.bestPick}${m.bestOdds?` @ ${m.bestOdds.toFixed(2)}`:''}. `
+            + `Modelo ${(m.pModel*100).toFixed(1)}% vs mercado ${m.pMarket!=null?(m.pMarket*100).toFixed(1)+'%':'—'}`
+            + `${m.divergence!=null?` (diverg. ${m.divergence.toFixed(1)}pp)`:''}, edge ${m.bestEdge>=0?'+':''}${m.bestEdge}%. `
+            + `Confianza ${m.confidence} · Valor ${m.value}. La cuota paga por encima de la probabilidad combinada${m.stakeFraction?`, stake sugerido ${(m.stakeFraction*100).toFixed(2)}% del bankroll (Quarter-Kelly)`:''}.`;
+        } else {
+          body = `<strong>No recomendado.</strong> ${m.reason||'Sin valor suficiente.'}`
+            + ` Modelo ${(m.pModel*100).toFixed(1)}%${m.pMarket!=null?` vs mercado ${(m.pMarket*100).toFixed(1)}%`:''}`
+            + `${m.divergence!=null?` (diverg. ${m.divergence.toFixed(1)}pp)`:''}.`;
+        }
+        return `<div class="insight-card ${cls}"><div class="head">${m.recommended?'✓ ':''}${m.label} · Conf ${m.confidence}${m.value!=null?' · Val '+m.value:''}</div><div class="body" style="font-size:13px;">${body}</div></div>`;
+      }).join('');
+    html += `<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px;">Por qué (no) apostar cada mercado</h3><div class="insights">${cards}</div>`;
   }
   // Contra-análisis de la casa (antes vivía en renderDetail)
   html += renderBookmakerCounter(g);
@@ -3214,6 +3349,84 @@ function clearAllDsCache() {
   toast('Caché de fuentes limpio', 'ok');
 }
 
+// ----- PUNTO 8: LIMPIAR HISTORICO (RESET) -----
+// Modal de confirmacion que lista exactamente que se borra y que se conserva.
+function openClearHistoryModal() {
+  document.getElementById('modal-card').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Limpiar histórico</h2>
+    <p style="font-size:13px;color:var(--text-2);margin:8px 0 14px;line-height:1.5;">Deja la app como recién instalada. <strong style="color:var(--c-granate);">No se puede deshacer.</strong></p>
+    <div class="tracker-block-sub" style="margin-bottom:6px;"><strong>Se borrará</strong></div>
+    <ul style="font-size:13px;color:var(--text-2);margin:0 0 14px;padding-left:18px;line-height:1.7;">
+      <li>Todas las apuestas (activas, finalizadas y archivadas)</li>
+      <li>El registro de resultados de partidos</li>
+      <li>Los pesos aprendidos del preset Adaptativo (vuelve a base Balanceada)</li>
+      <li>La caché de cuotas y su histórico</li>
+      <li>La caché de fuentes de datos (clima, lesiones, xG)</li>
+    </ul>
+    <div class="tracker-block-sub" style="margin-bottom:6px;"><strong>Se conserva</strong></div>
+    <ul style="font-size:13px;color:var(--text-2);margin:0 0 14px;padding-left:18px;line-height:1.7;">
+      <li>Tus API keys (The Odds API, API-Football)</li>
+      <li>La sincronización entre dispositivos (tu clave)</li>
+      <li>El bankroll de arbitraje</li>
+      <li>Tus presets personalizados y el preset activo</li>
+    </ul>
+    <p style="font-size:12px;color:var(--text-3);margin-bottom:16px;line-height:1.5;">El estado vacío se enviará a la nube para que tus otros dispositivos sincronizados reciban el reset.</p>
+    <div style="display:flex;gap:8px;"><button class="btn-danger" onclick="confirmClearHistory()">Sí, limpiar todo</button><button class="btn-secondary" onclick="closeModal()">Cancelar</button></div>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+// Sobrescribe directamente el blob de la nube con el estado actual (vacio tras la limpieza).
+// A diferencia de cloudPushNow(), NO hace union-merge: reemplaza la fila para que el
+// reset se propague de verdad.
+async function cloudOverwriteEmpty() {
+  if (!syncCode) return;
+  try {
+    const body = [{ code: syncCode, data: gatherState(), updated_at: new Date().toISOString() }];
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${SYNC_TABLE}`, {
+      method: 'POST',
+      headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(body)
+    });
+    if (r.ok) setSyncStatus('ok', 'Reset sincronizado');
+  } catch(e) { console.warn('cloudOverwriteEmpty:', e); }
+}
+
+function confirmClearHistory() {
+  // Tombstones: marca las apuestas actuales como borradas para que ningun merge futuro las reviva.
+  const ids = (state.bets || []).map(b => b.id).filter(Boolean);
+  state.deletedBets = Array.from(new Set([...(state.deletedBets || []), ...ids])).slice(-500);
+  state.bets = [];
+  state.oddsCache = {};
+  state.oddsHistory = {};
+  state.oddsData = null;
+  // localStorage: borra historico; conserva keys, sync, bankroll, presets, preset activo.
+  localStorage.setItem('quantBets', '[]');
+  localStorage.setItem('quantDeletedBets', JSON.stringify(state.deletedBets));
+  localStorage.removeItem('quantOutcomeLog');
+  localStorage.setItem('quantOddsCache', '{}');
+  localStorage.setItem('quantOddsHistory', '{}');
+  ['weather','injuries','xg'].forEach(k => localStorage.removeItem('quantDataSources_' + k));
+  // Adaptativo vuelve a base Balanceada.
+  localStorage.setItem('quantAdaptiveWeights', JSON.stringify(ADAPTIVE_BASE));
+  localStorage.setItem('quantAdaptiveMeta', JSON.stringify({ lastN: 0, history: [] }));
+  if (state.activePreset === 'adaptativo') {
+    state.weights = Object.assign({}, ADAPTIVE_BASE);
+    localStorage.setItem('quantWeights', JSON.stringify(state.weights));
+  }
+  if (state.games) state.games.forEach(g => { g.signals = null; g.opportunity = null; });
+  // Empuja el estado vacio a la nube (overwrite directo, sin union-merge).
+  cloudOverwriteEmpty();
+  closeModal();
+  try {
+    renderTracker();
+    if (state.games && state.games.length) recalculateAll();
+    if (typeof renderRating === 'function' && document.querySelector('.weights-panel')) renderRating();
+    if (document.getElementById('panel-tools') && document.getElementById('panel-tools').classList.contains('active')) renderTools();
+  } catch(e) { console.warn('confirmClearHistory rerender:', e); }
+  toast('Datos limpiados. La app está como recién instalada.', 'ok');
+}
+
 
 // ============================================================
 // BET TRACKER
@@ -3981,9 +4194,8 @@ function scanShadowOutcomes() {
   state.games.forEach(g => {
     if (g.status !== 'post') return;
     if (!g.viability || g.viability.insufficient || !g.viability.components) return;
-    // Filtro de senal: que el partido tenga oportunidad real (mejor score >= 55)
-    const bs = (g.opportunity && g.opportunity.bestScore != null) ? g.opportunity.bestScore : g.viability.total;
-    if (bs < 55) return;
+    // Filtro de señal (punto 9): solo partidos con al menos un mercado recomendado (pasó Fase A).
+    if (!g.opportunity || !g.opportunity.recommendedCount) return;
     const hs = parseInt(g.home.score,10), as = parseInt(g.away.score,10);
     if (isNaN(hs) || isNaN(as)) return;
     if (log[g.id]) return;
