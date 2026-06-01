@@ -1346,9 +1346,10 @@ function gameCardHTML(g) {
       </div>`;
     } else {
       cardBandClass = ' opp-none';
+      const unrelNote = opp.anyUnreliable ? ' · <span style="color:var(--c-granate);">⚠ cuotas dudosas en algún mercado</span>' : '';
       oppHtml = `<div class="opp-badge opp-band-none">
         <div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin valor hoy</span></div>
-        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor precio: ${opp.bestMarketLabel} · ${probTxt}`:'Sin mercados calculables'}${dq}</div>
+        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor precio: ${opp.bestMarketLabel} · ${probTxt}`:'Sin mercados calculables'}${unrelNote}${dq}</div>
       </div>`;
     }
   } else if (g.viability && g.viability.insufficient) {
@@ -1461,10 +1462,11 @@ function renderDetailSummary(g) {
   const bandLabel = n ? `${n} APUESTA${n===1?'':'S'} CON VALOR` : (band==='est' ? 'ESTIMACIÓN' : 'SIN VALOR HOY');
   // Chip por mercado: prob + EV, marcado si recomendado
   const marketChips = Object.entries(opp.markets).map(([k,m]) => {
-    const cls = m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low');
+    const unrel = m.reliable===false;
+    const cls = unrel ? 'mc-low' : (m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low'));
     const lab = k==='ou' ? 'OU' : (k==='spread' ? 'SPR' : (k==='btts' ? 'BTTS' : (k==='1x2'||k==='ml' ? '1X2' : k.toUpperCase())));
-    const tag = m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : '≈';
-    return `<span class="market-chip ${cls}" title="${m.label}: prob ${m.displayProb!=null?(m.displayProb*100).toFixed(0)+'%':'—'}${m.evPct!=null?' · valor '+(m.evPct>=0?'+':'')+m.evPct+'%':' (estimación)'}${m.recommended?' · CON VALOR':''}">${m.recommended?'✓ ':''}${lab}<b>${tag}</b></span>`;
+    const tag = unrel ? '⚠' : (m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : '≈');
+    return `<span class="market-chip ${cls}" title="${m.label}: ${unrel?'cuotas dudosas (dato poco fiable)':'prob '+(m.displayProb!=null?(m.displayProb*100).toFixed(0)+'%':'—')+(m.evPct!=null?' · valor '+(m.evPct>=0?'+':'')+m.evPct+'%':' (estimación)')+(m.recommended?' · CON VALOR':'')}">${unrel?'⚠ ':(m.recommended?'✓ ':'')}${lab}<b>${tag}</b></span>`;
   }).join('');
   const headNum = opp.bestEvPct!=null ? `${opp.bestEvPct>=0?'+':''}${opp.bestEvPct}%` : '—';
   el.innerHTML = `
@@ -1745,6 +1747,10 @@ function readSpreads(ev) {
 const KELLY_MULT  = 0.25;          // Quarter-Kelly por defecto
 const STAKE_CAP   = 0.025;         // tope absoluto: 2.5% del bankroll por apuesta
 const MODEL_DEFAULTS = { evThreshold: 2.5, probFloor: 0.40 }; // exigencia de valor y piso de probabilidad
+// Guardas de sensatez para detectar cuotas mal cargadas/cruzadas en la API:
+const MAX_MARKET_EV = 15;   // % — en modo mercado el edge real es chico (comparar casas); más que esto = sospechoso
+const OVERROUND_MIN = 1.005;// margen mínimo creíble de un mercado de 2+ vías (suma de prob. implícitas)
+const OVERROUND_MAX = 1.35; // margen máximo creíble
 function getModelCfg() {
   try {
     const c = JSON.parse(localStorage.getItem('quantModelCfg'));
@@ -1798,6 +1804,18 @@ function evalOption(o) {
   if (hasMarket) {
     const pFair = o.pMarket;
     const v = valueForOdds(pFair, o.oddsBest);
+    // GUARDA DE SENSATEZ: en modo mercado la prob y la mejor cuota salen del propio mercado,
+    // así que el edge solo puede ser pequeño (comparar casas). Un EV enorme o un margen imposible
+    // = cuotas mal cargadas o cruzadas en la API -> lo marcamos "dato poco fiable" y NO lo recomendamos.
+    let overround = null;
+    if (o.ref !== 'pinnacle' && o.oddsAvg > 1 && pFair > 0) overround = (1 / o.oddsAvg) / pFair;
+    const overroundBad = overround != null && (overround < OVERROUND_MIN || overround > OVERROUND_MAX);
+    const evTooBig = v.evPct != null && v.evPct > MAX_MARKET_EV;
+    if (overroundBad || evTooBig) {
+      return { mode:'market', evaluable:true, reliable:false, displayProb:pFair, marketProb:pFair, oddsBest:o.oddsBest,
+        evPct:v.evPct, edgePct:v.edgePct, kellyFraction:0, stakeFraction:0, recommended:false,
+        reason:'Cuotas inconsistentes entre casas (dato poco fiable de la API). Verifica la cuota real antes de apostar.' };
+    }
     const recommended = (pFair >= cfg.probFloor) && (v.evPct >= cfg.evThreshold);
     let reason = null;
     if (!recommended) {
@@ -1805,11 +1823,11 @@ function evalOption(o) {
         ? `Probabilidad baja (${(pFair*100).toFixed(0)}%) — muy arriesgada.`
         : `Sin valor suficiente: la mejor cuota da ${v.evPct>=0?'+':''}${v.evPct.toFixed(1)}% (umbral ${cfg.evThreshold}%).`;
     }
-    return { mode:'market', evaluable:true, displayProb:pFair, marketProb:pFair, oddsBest:o.oddsBest,
+    return { mode:'market', evaluable:true, reliable:true, displayProb:pFair, marketProb:pFair, oddsBest:o.oddsBest,
       evPct:v.evPct, edgePct:v.edgePct, kellyFraction:v.kellyFraction, stakeFraction:v.stakeFraction,
       recommended, reason };
   }
-  return { mode:'estimation', evaluable:false, displayProb:o.pModel, marketProb:null, oddsBest:null,
+  return { mode:'estimation', evaluable:false, reliable:true, displayProb:o.pModel, marketProb:null, oddsBest:null,
     evPct:null, edgePct:null, kellyFraction:0, stakeFraction:0, recommended:false,
     reason:'Sin cuota de la API — escribe tu cuota en la calculadora para evaluar el valor.' };
 }
@@ -1951,7 +1969,7 @@ function getMarketOptions(g, category) {
     const e = evalOption(o);
     const compatScore = e.recommended ? Math.round(50 + Math.min(50, (e.evPct||0)*5)) : 0;
     opts.push({ ...o, prob:o.pModel, ref:o.ref||'avg',
-      mode:e.mode, evaluable:e.evaluable, displayProb:e.displayProb, marketProb:e.marketProb,
+      mode:e.mode, evaluable:e.evaluable, reliable:e.reliable, displayProb:e.displayProb, marketProb:e.marketProb,
       recommended:e.recommended, reason:e.reason, evPct:e.evPct, edgePct:e.edgePct,
       kellyFraction:e.kellyFraction, stakeFraction:e.stakeFraction,
       provisional: o.pMarket==null, score:compatScore,
@@ -2086,7 +2104,7 @@ function computeGameOpportunity(g) {
     if (best.noRealOdds || best.mode === 'estimation') anyNoRealOdds = true;
     markets[c.key] = {
       label: c.label, trackerName: c.trackerName,
-      mode: best.mode, evaluable: !!best.evaluable, recommended: !!best.recommended, reason: best.reason || null,
+      mode: best.mode, evaluable: !!best.evaluable, reliable: best.reliable !== false, recommended: !!best.recommended, reason: best.reason || null,
       bestOption: best.key, bestPick: best.trackerPick || best.name, bestOdds: best.oddsBest,
       displayProb: best.displayProb, marketProb: best.marketProb, pModel: best.pModel, ref: best.ref || 'avg',
       evPct: (best.evPct != null) ? +best.evPct.toFixed(1) : null,
@@ -2094,7 +2112,7 @@ function computeGameOpportunity(g) {
       stakeFraction: best.stakeFraction || 0, bookCount: best.bookCount || 0,
       provisional: !!best.provisional, noRealOdds: !!best.noRealOdds,
       topOptions: opts.slice(0,4).map(o => ({
-        key:o.key, name:o.name, trackerPick:o.trackerPick, mode:o.mode, recommended:!!o.recommended,
+        key:o.key, name:o.name, trackerPick:o.trackerPick, mode:o.mode, recommended:!!o.recommended, reliable:o.reliable!==false,
         reason:o.reason||null, oddsBest:o.oddsBest, point:o.point, displayProb:o.displayProb,
         marketProb:o.marketProb, pModel:o.pModel, ref:o.ref||'avg',
         evPct:(o.evPct!=null)?+o.evPct.toFixed(1):null, edgePct:(o.edgePct!=null)?+o.edgePct.toFixed(1):null,
@@ -2105,11 +2123,12 @@ function computeGameOpportunity(g) {
   const entries = Object.entries(markets);
   const recommendedCount = entries.filter(([,mk])=>mk.recommended).length;
   const anyEstimation = entries.some(([,mk])=>mk.mode==='estimation');
+  const anyUnreliable = entries.some(([,mk])=>mk.reliable===false);
   const sorted = entries.slice().sort((a,b)=>
     (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)) || ((b[1].displayProb||0)-(a[1].displayProb||0)));
   const best = sorted[0] || null;
   return g.opportunity = {
-    markets, recommendedCount, favorableCount: recommendedCount, anyEstimation,
+    markets, recommendedCount, favorableCount: recommendedCount, anyEstimation, anyUnreliable,
     bestMarket: best ? best[0] : null,
     bestMarketLabel: best ? best[1].label : null,
     bestMode: best ? best[1].mode : null,
@@ -2280,15 +2299,15 @@ function renderMarketOptionsArea(g) {
   }
   return banner + `<div class="market-options-grid">
     ${opts.map(o => `
-      <div class="market-option ${state.calcMarket.optionKey===o.key?'selected':''}" onclick="selectMarketOption('${o.key}')" title="${o.recommended?'Apuesta con valor':(o.reason||'')}">
+      <div class="market-option ${state.calcMarket.optionKey===o.key?'selected':''}" onclick="selectMarketOption('${o.key}')" title="${o.reliable===false?(o.reason||'Dato poco fiable'):(o.recommended?'Apuesta con valor':(o.reason||''))}">
         <div class="market-option-head">
-          <span class="market-option-name">${o.recommended?'✓ ':''}${o.name}</span>
-          <span class="market-option-score s-${o.band}">${o.evPct!=null?(o.evPct>=0?'+':'')+o.evPct.toFixed(1)+'%':'≈'}</span>
+          <span class="market-option-name">${o.reliable===false?'⚠ ':(o.recommended?'✓ ':'')}${o.name}</span>
+          <span class="market-option-score s-${o.reliable===false?'baja':o.band}">${o.reliable===false?'⚠':(o.evPct!=null?(o.evPct>=0?'+':'')+o.evPct.toFixed(1)+'%':'≈')}</span>
         </div>
         <div class="market-option-foot">
-          <span class="market-option-prob">${o.mode==='estimation'?'Estimación':(o.ref==='pinnacle'?'Mercado (Pin)':'Mercado')} ${(o.displayProb*100).toFixed(1)}%${o.evPct!=null?` · valor ${o.evPct>=0?'+':''}${o.evPct.toFixed(1)}%`:''}</span>
+          <span class="market-option-prob">${o.reliable===false?'Dato poco fiable — verifica la cuota real':((o.mode==='estimation'?'Estimación':(o.ref==='pinnacle'?'Mercado (Pin)':'Mercado'))+' '+(o.displayProb*100).toFixed(1)+'%'+(o.evPct!=null?` · valor ${o.evPct>=0?'+':''}${o.evPct.toFixed(1)}%`:''))}</span>
           ${o.oddsBest!=null
-            ? `<span class="market-option-band b-${o.band}">@ ${o.oddsBest.toFixed(2)}</span>`
+            ? `<span class="market-option-band b-${o.reliable===false?'baja':o.band}">@ ${o.oddsBest.toFixed(2)}</span>`
             : `<span class="market-option-band b-${o.band}">manual</span>`}
         </div>
       </div>
@@ -2375,15 +2394,23 @@ function updateCalculator() {
   const impliedProb = 1 / oddsInput;
   const v = valueForOdds(pRef, oddsInput);             // valor con TU cuota
   const evPct = v.evPct, edgePct = v.edgePct;
-  const kellyFraction = v.kellyFraction, stakeFraction = v.stakeFraction;
+  const kellyFraction = v.kellyFraction;
+  // Guarda de sensatez: mercado marcado como poco fiable, o un valor imposiblemente alto a tu cuota
+  const marketUnreliable = !isEstimation && selC && selC.reliable === false;
+  const evImplausible = !isEstimation && evPct != null && evPct > MAX_MARKET_EV;
+  const blocked = marketUnreliable || evImplausible;
+  const stakeFraction = blocked ? 0 : v.stakeFraction;
   const kellyStake = bankrollInput * stakeFraction;
-  const stakeCapped = (kellyFraction * KELLY_MULT) > STAKE_CAP;
-  const recommended = !isEstimation && (pRef >= cfg.probFloor) && (evPct >= cfg.evThreshold);
+  const stakeCapped = !blocked && (kellyFraction * KELLY_MULT) > STAKE_CAP;
+  const recommended = !blocked && !isEstimation && (pRef >= cfg.probFloor) && (evPct >= cfg.evThreshold);
   let shopNote = '';
-  if (!isEstimation && oddsBestAvail && oddsBestAvail > oddsInput + 0.01)
+  if (!isEstimation && !blocked && oddsBestAvail && oddsBestAvail > oddsInput + 0.01)
     shopNote = `Hay mejor cuota disponible: <strong>@${oddsBestAvail.toFixed(2)}</strong> (tú pusiste @${oddsInput.toFixed(2)}).`;
   let verdict, verdictClass;
-  if (isEstimation) {
+  if (blocked) {
+    verdict = `⚠ DATO POCO FIABLE — Las cuotas de este mercado no son consistentes (probable error de la API). No te fíes del valor mostrado; confirma la cuota real en tu casa antes de apostar.`;
+    verdictClass = 'verdict-bad';
+  } else if (isEstimation) {
     verdict = `≈ ESTIMACIÓN — Sin cuotas de la API; probabilidad propia ${(pRef*100).toFixed(0)}% (menos confiable). A tu cuota el valor es ${evPct>=0?'+':''}${evPct.toFixed(1)}%.`;
     verdictClass = (evPct>=cfg.evThreshold) ? 'verdict-fair' : 'verdict-bad';
   } else if (recommended) {
@@ -2396,25 +2423,25 @@ function updateCalculator() {
     verdict = `≡ SIN VALOR — A tu cuota el valor es ${evPct>=0?'+':''}${evPct.toFixed(1)}% (umbral ${cfg.evThreshold}%). ${shopNote||'Busca una cuota más alta o pasa.'}`;
     verdictClass = 'verdict-fair';
   }
-  const bandClass = recommended ? 'alta' : (isEstimation ? 'media' : 'baja');
+  const bandClass = blocked ? 'baja' : (recommended ? 'alta' : (isEstimation ? 'media' : 'baja'));
   const probLabel = isEstimation ? 'Estimación propia' : (marketRef==='pinnacle' ? 'Mercado · Pinnacle' : `Mercado · consenso ${bookCount} casa${bookCount===1?'':'s'}`);
   state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput,
-    modelProb: pModel, marketProb: pMarket, blendProb: pRef, score: Math.round(pRef*100),
-    recommended, evPct, edgePct, mode: isEstimation?'estimation':'market',
-    bookCount, impliedProb, edge: edgePct, ev: evPct, kelly: stakeFraction, kellyStake, stakeFraction };
+    modelProb: pModel, marketProb: pMarket, blendProb: pRef, score: blocked ? null : Math.round(pRef*100),
+    recommended, reliable: !blocked, evPct: blocked ? null : evPct, edgePct, mode: isEstimation?'estimation':'market',
+    bookCount, impliedProb, edge: edgePct, ev: blocked ? null : evPct, kelly: stakeFraction, kellyStake, stakeFraction };
   state.lastCalc.meta = buildCalcMeta(g, cat, selC, _opts, pickLabel);
   out.innerHTML = `
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
     <div class="calc-output">
       <div class="calc-out-cell" style="border-color:var(--border-strong);">
         <div class="calc-out-label">Probabilidad</div>
-        <div class="calc-out-value" style="font-size:25px;">${(pRef*100).toFixed(1)}%</div>
-        <div class="calc-out-desc">${probLabel}</div>
+        <div class="calc-out-value" style="font-size:25px;">${blocked?'<span style=\'color:var(--c-granate);\'>⚠</span>':(pRef*100).toFixed(1)+'%'}</div>
+        <div class="calc-out-desc">${blocked?'dato poco fiable':probLabel}</div>
       </div>
       <div class="calc-out-cell" style="border-color:var(--border-strong);">
         <div class="calc-out-label">Valor a tu cuota</div>
-        <div class="calc-out-value ${evPct>=0?'pos':'neg'}" style="font-size:25px;">${evPct>=0?'+':''}${evPct.toFixed(1)}%</div>
-        <div class="calc-out-desc">${isEstimation?'estimación (ojo)':(recommended?'apuesta con valor':'umbral '+cfg.evThreshold+'%')}</div>
+        <div class="calc-out-value ${blocked?'neg':(evPct>=0?'pos':'neg')}" style="font-size:25px;">${blocked?'⚠':(evPct>=0?'+':'')+evPct.toFixed(1)+'%'}</div>
+        <div class="calc-out-desc">${blocked?'no confiable':(isEstimation?'estimación (ojo)':(recommended?'apuesta con valor':'umbral '+cfg.evThreshold+'%'))}</div>
       </div>
       <div class="calc-out-cell"><div class="calc-out-label">Stake (Quarter-Kelly)</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankrollInput?`= $${kellyStake.toFixed(2)}`:'ingresa bankroll'}${stakeCapped?' · <span style="color:var(--c-cobre);">topado al 2.5%</span>':''}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Tu cuota</div><div class="calc-out-value">@${oddsInput.toFixed(2)}</div><div class="calc-out-desc">implícita ${(impliedProb*100).toFixed(1)}%</div></div>
@@ -2445,11 +2472,12 @@ function renderMarketsOverview(g) {
   const entries = Object.entries(opp.markets).sort((a,b)=>
     (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)));
   const rows = entries.map(([k,m]) => {
-    const recCls = m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low');
-    const verdict = m.recommended ? 'CON VALOR' : (m.mode==='estimation' ? 'ESTIMACIÓN' : 'SIN VALOR');
+    const unrel = m.reliable===false;
+    const recCls = unrel ? 'mc-low' : (m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low'));
+    const verdict = unrel ? '⚠ DATO DUDOSO' : (m.recommended ? 'CON VALOR' : (m.mode==='estimation' ? 'ESTIMACIÓN' : 'SIN VALOR'));
     const oddsStr = m.bestOdds ? `@ ${m.bestOdds.toFixed(2)}${m.ref==='pinnacle'?' <span class="muted">(Pin)</span>':''}` : '<span class="muted">cuota manual</span>';
-    const probStr = (m.displayProb!=null) ? `${(m.displayProb*100).toFixed(1)}%` : '—';
-    const evStr = (m.evPct != null) ? `${m.evPct>=0?'+':''}${m.evPct.toFixed(1)}%` : '<span class="muted">—</span>';
+    const probStr = unrel ? '<span class="muted">⚠</span>' : ((m.displayProb!=null) ? `${(m.displayProb*100).toFixed(1)}%` : '—');
+    const evStr = unrel ? '<span class="muted">⚠</span>' : ((m.evPct != null) ? `${m.evPct>=0?'+':''}${m.evPct.toFixed(1)}%` : '<span class="muted">—</span>');
     const stakeStr = m.recommended && m.stakeFraction ? `${(m.stakeFraction*100).toFixed(2)}%` : '—';
     const probLabel = m.mode==='estimation' ? 'estimación' : 'mercado';
     const reasonRow = !m.recommended && m.reason
@@ -2518,10 +2546,12 @@ function renderPredictive() {
     const cards = Object.entries(opp.markets)
       .sort((a,b)=> (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)))
       .map(([k,m]) => {
-        const cls = m.recommended ? 'salvia' : (m.mode==='estimation' ? 'pizarra' : 'granate');
+        const cls = m.reliable===false ? 'granate' : (m.recommended ? 'salvia' : (m.mode==='estimation' ? 'pizarra' : 'granate'));
         const probTxt = m.displayProb!=null ? (m.displayProb*100).toFixed(1)+'%' : '—';
         let body;
-        if (m.recommended) {
+        if (m.reliable===false) {
+          body = `<strong>⚠ Dato poco fiable.</strong> Las cuotas de este mercado no son consistentes entre casas (probable error de la API), así que el valor que saldría sería falso. No apostar con este dato: confirma la cuota real en tu casa y úsala en la calculadora.`;
+        } else if (m.recommended) {
           body = `<strong>Apostar:</strong> ${m.bestPick}${m.bestOdds?` @ ${m.bestOdds.toFixed(2)}`:''}. `
             + `Probabilidad del mercado ${probTxt} (${m.ref==='pinnacle'?'ref. Pinnacle':'consenso de casas'}). `
             + `La mejor cuota disponible paga <strong>${m.evPct>=0?'+':''}${m.evPct}%</strong> por encima del precio justo: ahí está el valor. `
@@ -2532,8 +2562,8 @@ function renderPredictive() {
         } else {
           body = `<strong>No apostar.</strong> ${m.reason||'Sin valor suficiente.'} Probabilidad del mercado ${probTxt} para ${m.bestPick}.`;
         }
-        const tag = m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : 'est.';
-        return `<div class="insight-card ${cls}"><div class="head">${m.recommended?'✓ ':''}${m.label} · valor ${tag}</div><div class="body" style="font-size:13px;">${body}</div></div>`;
+        const tag = m.reliable===false ? '⚠ dudoso' : (m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : 'est.');
+        return `<div class="insight-card ${cls}"><div class="head">${m.reliable===false?'⚠ ':(m.recommended?'✓ ':'')}${m.label} · ${m.reliable===false?tag:'valor '+tag}</div><div class="body" style="font-size:13px;">${body}</div></div>`;
       }).join('');
     html += `<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px;">Por qué (no) apostar cada mercado</h3><div class="insights">${cards}</div>`;
   }
