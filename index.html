@@ -590,6 +590,43 @@
   .bankroll-box input { background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-1); padding: 9px 12px; font-family: var(--font-mono); font-size: 15px; width: 100%; }
   .arb-subpanel { display: none; }
   .arb-subpanel.active { display: block; }
+  /* ===== Tarjetas de mercado: arriba PROBABILIDAD, abajo VALOR ===== */
+  .mkt-overview-note { font-size: 12px; color: var(--text-3); margin: 0 0 12px; line-height: 1.5; }
+  .mkt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(258px, 1fr)); gap: 14px; margin: 6px 0 20px; }
+  .mkt-card { border: 1px solid var(--border-strong); background: var(--surface); display: flex; flex-direction: column; overflow: hidden; }
+  .mkt-card.mkt-unrel { border-color: var(--c-granate); }
+  .mkt-card-head { padding: 9px 13px; font-size: 12px; font-weight: 800; letter-spacing: 0.03em; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--surface-2); }
+  .mkt-card-pick { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-2); font-weight: 600; text-align: right; }
+  .mkt-manual { background: var(--c-pizarra); color: #fff; font-size: 9px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 6px; margin-left: 4px; vertical-align: middle; }
+  /* TOP - probabilidad */
+  .mkt-prob { padding: 20px 14px 16px; text-align: center; }
+  .mkt-prob.t-alta { background: var(--c-salvia-t); }
+  .mkt-prob.t-media { background: var(--c-cobre-t); }
+  .mkt-prob.t-baja { background: var(--surface); }
+  .mkt-prob.t-dudoso { background: var(--c-granate-t); }
+  .mkt-prob-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 6px; }
+  .mkt-prob-value { font-family: var(--font-mono); font-size: 46px; font-weight: 800; line-height: 1; color: var(--text-1); }
+  .mkt-prob.t-alta .mkt-prob-value { color: var(--c-salvia); }
+  .mkt-prob.t-media .mkt-prob-value { color: var(--c-cobre); }
+  .mkt-prob.t-baja .mkt-prob-value { color: var(--text-3); }
+  .mkt-prob.t-dudoso .mkt-prob-value { color: var(--c-granate); }
+  .mkt-prob-tier { display: inline-block; margin-top: 10px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.1em; padding: 4px 11px; }
+  .prob-alta { background: var(--c-salvia); color: #fff; }
+  .prob-media { background: var(--c-cobre); color: #fff; }
+  .prob-baja { background: var(--surface-2); color: var(--text-3); }
+  .prob-dudoso { background: var(--c-granate); color: #fff; }
+  .mkt-prob-sub { font-size: 10px; color: var(--text-3); margin-top: 9px; font-family: var(--font-mono); }
+  /* BOTTOM - valor */
+  .mkt-val { padding: 12px 14px 13px; border-top: 2px solid var(--border-strong); }
+  .mkt-val.v-positivo { background: var(--c-salvia-t); }
+  .mkt-val.v-neutro { background: var(--surface-2); }
+  .mkt-val.v-negativo { background: var(--c-granate-t); }
+  .mkt-val-head { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: 8px; font-weight: 700; }
+  .mkt-val-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-family: var(--font-mono); font-size: 12px; margin: 4px 0; }
+  .mkt-val-row .l { color: var(--text-3); font-weight: 500; }
+  .mkt-val-label { font-size: 11px; font-weight: 700; margin-top: 8px; color: var(--text-2); }
+  .mkt-val-note { font-size: 11px; color: var(--text-2); line-height: 1.5; }
+
   /* ===== TABLA DE HISTORIAL (rediseno) ===== */
   .tracker-block-title { font-size: 15px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; margin: 26px 0 4px; display: flex; align-items: center; gap: 10px; }
   .tracker-block-title .count { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: var(--surface); background: var(--c-carbon); padding: 2px 9px; }
@@ -679,20 +716,14 @@
     <div class="stat-bar">
       <div class="stat-cell"><div class="stat-label">Liga</div><div class="stat-value" id="stat-league">—</div><div class="stat-detail" id="stat-league-sub">cargando...</div></div>
       <div class="stat-cell"><div class="stat-label">Partidos</div><div class="stat-value" id="stat-games">0</div><div class="stat-detail" id="stat-games-sub">esta semana</div></div>
-      <div class="stat-cell"><div class="stat-label">Apuestas con valor</div><div class="stat-value accent" id="stat-avg">—</div><div class="stat-detail">total esta semana</div></div>
-      <div class="stat-cell"><div class="stat-label">Partidos con valor</div><div class="stat-value" id="stat-viable">0</div><div class="stat-detail">≥1 apuesta con valor</div></div>
+      <div class="stat-cell"><div class="stat-label">Mercados prob. alta</div><div class="stat-value accent" id="stat-avg">—</div><div class="stat-detail">≥ 60% esta semana</div></div>
+      <div class="stat-cell"><div class="stat-label">Partidos destacados</div><div class="stat-value" id="stat-viable">0</div><div class="stat-detail">≥1 mercado prob. alta</div></div>
     </div>
     <div class="sort-bar">
       <span class="label">Ordenar por:</span>
       <button class="sort-btn active" data-sort="opportunity">Oportunidad ↓</button>
       <button class="sort-btn" data-sort="time">Cronológico</button>
       <button class="sort-btn" data-sort="no-opportunity">Sin oportunidad primero</button>
-    </div>
-    <div class="exigencia-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:6px;">
-      <span class="label" style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3);">Exigencia de valor</span>
-      <input type="range" id="ev-threshold" min="0" max="10" step="0.5" style="flex:1;min-width:120px;max-width:280px;" oninput="onEvThresholdInput(this.value)" />
-      <span id="ev-threshold-val" style="font-family:var(--font-mono);font-size:13px;font-weight:600;min-width:84px;">valor ≥ 2.5%</span>
-      <span class="muted" style="font-size:11px;">menos = más apuestas · más = más exigente</span>
     </div>
     <div id="schedule-content"><div class="state-msg"><span class="loader"></span>Conectando a fuentes de datos...</div></div>
     <div class="detail" id="detail">
@@ -1330,26 +1361,28 @@ function gameCardHTML(g) {
     const band = opportunityBand(opp);
     const dq = opp.dataQuality === 'limited' ? ' <span class="dq-tag" title="Sin cuotas reales para algunas opciones">DATOS PARCIALES</span>' : '';
     const n = opp.recommendedCount || 0;
-    const evTxt = opp.bestEvPct!=null ? `${opp.bestEvPct>=0?'+':''}${opp.bestEvPct}%` : '';
     const probTxt = opp.bestProb!=null ? `prob ${(opp.bestProb*100).toFixed(0)}%` : '';
+    const valTxt = (opp.bestValueTier==='positivo' && opp.bestEvPct!=null) ? ` · valor +${opp.bestEvPct}%` : '';
+    const probPct = opp.bestProb!=null ? `${(opp.bestProb*100).toFixed(0)}%` : '—';
     if (band === 'high' || band === 'mid') {
       cardBandClass = band === 'high' ? ' opp-high' : ' opp-mid';
+      const txt = band==='high' ? `${n} con probabilidad alta` : `Probabilidad media`;
       oppHtml = `<div class="opp-badge opp-band-${band}">
-        <div class="opp-line-1"><span class="opp-icon">${band==='high'?'✓':'◐'}</span><span class="opp-text">${n} apuesta${n===1?'':'s'} con valor</span><span class="opp-score-pill">${evTxt}</span></div>
-        <div class="opp-line-2">Mejor: ${opp.bestMarketLabel} · ${probTxt} · valor ${evTxt} · ${opp.bestPickLabel}${dq}</div>
+        <div class="opp-line-1"><span class="opp-icon">${band==='high'?'✓':'◐'}</span><span class="opp-text">${txt}</span><span class="opp-score-pill">${probPct}</span></div>
+        <div class="opp-line-2">Mejor: ${opp.bestMarketLabel} · ${probTxt}${valTxt} · ${opp.bestPickLabel}${dq}</div>
       </div>`;
     } else if (band === 'est') {
       cardBandClass = ' opp-none';
       oppHtml = `<div class="opp-badge opp-band-none">
         <div class="opp-line-1"><span class="opp-icon">≈</span><span class="opp-text">Estimación (sin cuotas API)</span></div>
-        <div class="opp-line-2">Abre el partido e ingresa tu cuota para evaluar el valor${dq}</div>
+        <div class="opp-line-2">Abre el partido · usa Carga manual para las cuotas de Oddspedia${dq}</div>
       </div>`;
     } else {
       cardBandClass = ' opp-none';
       const unrelNote = opp.anyUnreliable ? ' · <span style="color:var(--c-granate);">⚠ cuotas dudosas en algún mercado</span>' : '';
       oppHtml = `<div class="opp-badge opp-band-none">
-        <div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin valor hoy</span></div>
-        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor precio: ${opp.bestMarketLabel} · ${probTxt}`:'Sin mercados calculables'}${unrelNote}${dq}</div>
+        <div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin probabilidad destacada</span></div>
+        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} · ${probTxt}`:'Sin mercados calculables'}${unrelNote}${dq}</div>
       </div>`;
     }
   } else if (g.viability && g.viability.insufficient) {
@@ -1429,7 +1462,6 @@ function selectGame(id) {
   document.getElementById('schedule-content').style.display = 'none';
   document.querySelector('#panel-schedule .stat-bar').style.display = 'none';
   document.querySelector('#panel-schedule .sort-bar').style.display = 'none';
-  { const eb = document.querySelector('#panel-schedule .exigencia-bar'); if (eb) eb.style.display = 'none'; }
   document.querySelector('#panel-schedule .section-title').style.display = 'none';
   document.querySelector('#panel-schedule .section-sub').style.display = 'none';
   renderDetail(); // construye solo el esqueleto colapsado; las secciones se rinden al abrirlas
@@ -1442,7 +1474,6 @@ function backToSchedule() {
   document.getElementById('schedule-content').style.display = '';
   document.querySelector('#panel-schedule .stat-bar').style.display = '';
   document.querySelector('#panel-schedule .sort-bar').style.display = '';
-  { const eb = document.querySelector('#panel-schedule .exigencia-bar'); if (eb) eb.style.display = 'flex'; }
   document.querySelector('#panel-schedule .section-title').style.display = '';
   document.querySelector('#panel-schedule .section-sub').style.display = '';
   document.querySelectorAll('.game-card').forEach(el=>el.classList.remove('selected'));
@@ -1459,21 +1490,21 @@ function renderDetailSummary(g) {
   const band = opportunityBand(opp);
   const bcls = band === 'high' ? 'b-alta' : (band === 'mid' ? 'b-media' : 'b-no');
   const n = opp.recommendedCount || 0;
-  const bandLabel = n ? `${n} APUESTA${n===1?'':'S'} CON VALOR` : (band==='est' ? 'ESTIMACIÓN' : 'SIN VALOR HOY');
-  // Chip por mercado: prob + EV, marcado si recomendado
+  const bandLabel = n ? `${n} PROBABILIDAD ALTA` : (band==='mid' ? 'PROBABILIDAD MEDIA' : (band==='est' ? 'ESTIMACIÓN' : 'SIN DESTACAR'));
+  // Chip por mercado: probabilidad (lo que decides), ✓ si es ALTA
   const marketChips = Object.entries(opp.markets).map(([k,m]) => {
     const unrel = m.reliable===false;
-    const cls = unrel ? 'mc-low' : (m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low'));
+    const cls = unrel ? 'mc-low' : (m.recommended ? 'mc-high' : (m.probTier==='media' || m.mode==='estimation' ? 'mc-mid' : 'mc-low'));
     const lab = k==='ou' ? 'OU' : (k==='spread' ? 'SPR' : (k==='btts' ? 'BTTS' : (k==='1x2'||k==='ml' ? '1X2' : k.toUpperCase())));
-    const tag = unrel ? '⚠' : (m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : '≈');
-    return `<span class="market-chip ${cls}" title="${m.label}: ${unrel?'cuotas dudosas (dato poco fiable)':'prob '+(m.displayProb!=null?(m.displayProb*100).toFixed(0)+'%':'—')+(m.evPct!=null?' · valor '+(m.evPct>=0?'+':'')+m.evPct+'%':' (estimación)')+(m.recommended?' · CON VALOR':'')}">${unrel?'⚠ ':(m.recommended?'✓ ':'')}${lab}<b>${tag}</b></span>`;
+    const tag = unrel ? '⚠' : (m.displayProb!=null ? `${(m.displayProb*100).toFixed(0)}%` : '≈');
+    return `<span class="market-chip ${cls}" title="${m.label}: ${unrel?'cuotas dudosas (dato poco fiable)':'prob '+(m.displayProb!=null?(m.displayProb*100).toFixed(0)+'%':'—')+(m.evPct!=null?' · valor '+(m.evPct>=0?'+':'')+m.evPct+'%':' (estimación)')+(m.recommended?' · PROB ALTA':'')}">${unrel?'⚠ ':(m.recommended?'✓ ':'')}${lab}<b>${tag}</b></span>`;
   }).join('');
-  const headNum = opp.bestEvPct!=null ? `${opp.bestEvPct>=0?'+':''}${opp.bestEvPct}%` : '—';
+  const headNum = opp.bestProb!=null ? `${(opp.bestProb*100).toFixed(0)}%` : '—';
   el.innerHTML = `
     <span class="ds-sum-score">${headNum}</span>
     <div class="ds-sum-block">
       <span class="ds-sum-band ${bcls}">${bandLabel}</span>
-      <span class="ds-sum-fav">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} · prob ${opp.bestProb!=null?(opp.bestProb*100).toFixed(0)+'%':'—'}${opp.bestEvPct!=null?' · valor '+(opp.bestEvPct>=0?'+':'')+opp.bestEvPct+'%':''} · ${opp.bestPickLabel}`:'—'}</span>
+      <span class="ds-sum-fav">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} · prob ${opp.bestProb!=null?(opp.bestProb*100).toFixed(0)+'%':'—'}${(opp.bestValueTier==='positivo'&&opp.bestEvPct!=null)?' · valor +'+opp.bestEvPct+'%':''} · ${opp.bestPickLabel}`:'—'}</span>
     </div>
     <div class="ds-sum-markets">${marketChips}</div>` + renderSignalStrip(g);
 }
@@ -1669,10 +1700,14 @@ function bandLetter(score) { return score >= 70 ? 'alta' : (score >= 55 ? 'media
 
 // ---------- CUOTAS REALES + CALIFICACIÓN (confianza + valor) ----------
 // Mejor cuota y promedio de un conjunto de precios de varias casas
-function bestAvgOdds(prices) {
-  const arr = (prices||[]).filter(x => typeof x === 'number' && x > 1);
+function bestAvgOdds(rows) {
+  const arr = (rows||[]).map(r => (typeof r === 'number') ? { price:r, book:null } : r)
+                        .filter(r => r && typeof r.price === 'number' && r.price > 1);
   if (!arr.length) return null;
-  return { best: Math.max(...arr), avg: arr.reduce((a,b)=>a+b,0)/arr.length, count: arr.length };
+  let best = arr[0];
+  for (const r of arr) if (r.price > best.price) best = r;
+  return { best: best.price, bestBook: best.book || null,
+           avg: arr.reduce((a,r)=>a+r.price,0)/arr.length, count: arr.length };
 }
 // Quita el margen de la casa ("vig"): normaliza prob. implícitas para que sumen 1
 function devigProbs(oddsArr) {
@@ -1707,11 +1742,11 @@ function readOddsMarket(ev, marketKey) {
     if (!m) return;
     (m.outcomes||[]).forEach(o => {
       if (marketKey === 'h2h') {
-        (out[o.name] = out[o.name] || []).push(o.price);
+        (out[o.name] = out[o.name] || []).push({ price:o.price, book:bm.title||bm.key||'?' });
       } else {
         if (o.point == null) return;
         out[o.point] = out[o.point] || {};
-        (out[o.point][o.name] = out[o.point][o.name] || []).push(o.price);
+        (out[o.point][o.name] = out[o.point][o.name] || []).push({ price:o.price, book:bm.title||bm.key||'?' });
       }
     });
   });
@@ -1730,7 +1765,7 @@ function readSpreads(ev) {
       const abs = Math.abs(o.point);
       byAbs[abs] = byAbs[abs] || { home:null, away:null };
       const slot = byAbs[abs][side] || { point:o.point, prices:[] };
-      slot.point = o.point; slot.prices.push(o.price);
+      slot.point = o.point; slot.prices.push({ price:o.price, book:bm.title||bm.key||'?' });
       byAbs[abs][side] = slot;
     });
   });
@@ -1746,44 +1781,15 @@ function readSpreads(ev) {
 // ============================================================
 const KELLY_MULT  = 0.25;          // Quarter-Kelly por defecto
 const STAKE_CAP   = 0.025;         // tope absoluto: 2.5% del bankroll por apuesta
-const MODEL_DEFAULTS = { evThreshold: 2.5, probFloor: 0.40 }; // exigencia de valor y piso de probabilidad
 // Guardas de sensatez para detectar cuotas mal cargadas/cruzadas en la API:
+const BLEND_MARKET_WEIGHT = 0.75; // probabilidad combinada = 75% mercado + 25% modelo (ajustable)
+const PROB_ALTA = 0.60;     // umbral para marcar probabilidad ALTA (verde fuerte)
+const PROB_MEDIA = 0.45;    // umbral para MEDIA; por debajo = BAJA
+const VALUE_POS = 1.0;      // % EV desde el que el valor se considera positivo
+const VALUE_NEU = -2.0;     // % EV: entre VALUE_NEU y VALUE_POS = neutro; por debajo = negativo (NO veta)
 const MAX_MARKET_EV = 15;   // % — en modo mercado el edge real es chico (comparar casas); más que esto = sospechoso
 const OVERROUND_MIN = 1.005;// margen mínimo creíble de un mercado de 2+ vías (suma de prob. implícitas)
 const OVERROUND_MAX = 1.35; // margen máximo creíble
-function getModelCfg() {
-  try {
-    const c = JSON.parse(localStorage.getItem('quantModelCfg'));
-    if (c && typeof c.evThreshold === 'number')
-      return { evThreshold:c.evThreshold, probFloor:(typeof c.probFloor==='number'?c.probFloor:MODEL_DEFAULTS.probFloor) };
-  } catch(e){}
-  return { ...MODEL_DEFAULTS };
-}
-function setModelEvThreshold(v) {
-  const cfg = getModelCfg(); cfg.evThreshold = Math.max(0, Math.min(15, +v));
-  localStorage.setItem('quantModelCfg', JSON.stringify(cfg));
-}
-// Slider de exigencia: re-evalúa todos los partidos en vivo y refresca la vista.
-let _evThrTimer = null;
-function onEvThresholdInput(v) {
-  const lbl = document.getElementById('ev-threshold-val');
-  if (lbl) lbl.textContent = `valor ≥ ${(+v).toFixed(1)}%`;
-  setModelEvThreshold(v);
-  clearTimeout(_evThrTimer);
-  _evThrTimer = setTimeout(() => {
-    if (typeof recalculateAll === 'function' && state.games && state.games.length) recalculateAll();
-    if (state.selectedGame && document.getElementById('detail').classList.contains('active')) {
-      renderDetailSummary(state.selectedGame);
-    }
-  }, 220);
-}
-function initEvThresholdControl() {
-  const cfg = getModelCfg();
-  const el = document.getElementById('ev-threshold');
-  const lbl = document.getElementById('ev-threshold-val');
-  if (el) el.value = cfg.evThreshold;
-  if (lbl) lbl.textContent = `valor ≥ ${cfg.evThreshold.toFixed(1)}%`;
-}
 
 // Valor de una cuota concreta contra una probabilidad de referencia.
 function valueForOdds(pRef, odds) {
@@ -1799,37 +1805,38 @@ function valueForOdds(pRef, odds) {
 // Modo mercado: prob = mercado, valor = mejor cuota vs precio justo, recomendar si pasa exigencia.
 // Modo estimación (sin cuota API): prob = modelo, valor no calculable sin cuota manual.
 function evalOption(o) {
-  const cfg = getModelCfg();
   const hasMarket = (o.pMarket != null) && (o.oddsBest != null) && o.oddsBest > 1;
   if (hasMarket) {
-    const pFair = o.pMarket;
-    const v = valueForOdds(pFair, o.oddsBest);
-    // GUARDA DE SENSATEZ: en modo mercado la prob y la mejor cuota salen del propio mercado,
-    // así que el edge solo puede ser pequeño (comparar casas). Un EV enorme o un margen imposible
-    // = cuotas mal cargadas o cruzadas en la API -> lo marcamos "dato poco fiable" y NO lo recomendamos.
+    const pMarket = o.pMarket;
+    const pModel = (o.pModel != null) ? o.pModel : pMarket;
+    // PROBABILIDAD COMBINADA: mercado (manda) + tus variables (modelo)
+    const pBlend = Math.max(0, Math.min(1, BLEND_MARKET_WEIGHT * pMarket + (1 - BLEND_MARKET_WEIGHT) * pModel));
+    // GUARDA DE SENSATEZ (sobre el dato del MERCADO, no sobre la mezcla):
     let overround = null;
-    if (o.ref !== 'pinnacle' && o.oddsAvg > 1 && pFair > 0) overround = (1 / o.oddsAvg) / pFair;
+    if (o.ref !== 'pinnacle' && o.oddsAvg > 1 && pMarket > 0) overround = (1 / o.oddsAvg) / pMarket;
     const overroundBad = overround != null && (overround < OVERROUND_MIN || overround > OVERROUND_MAX);
-    const evTooBig = v.evPct != null && v.evPct > MAX_MARKET_EV;
-    if (overroundBad || evTooBig) {
-      return { mode:'market', evaluable:true, reliable:false, displayProb:pFair, marketProb:pFair, oddsBest:o.oddsBest,
-        evPct:v.evPct, edgePct:v.edgePct, kellyFraction:0, stakeFraction:0, recommended:false,
+    const mktEv = (pMarket * o.oddsBest - 1) * 100;
+    if (overroundBad || mktEv > MAX_MARKET_EV) {
+      return { mode:'market', evaluable:true, reliable:false, displayProb:pBlend, marketProb:pMarket, modelProb:pModel,
+        probTier:'baja', evPct:null, edgePct:null, kellyFraction:0, stakeFraction:0, valueTier:'na',
+        bestOdds:o.oddsBest, bestBook:o.bestBook||null, recommended:false,
         reason:'Cuotas inconsistentes entre casas (dato poco fiable de la API). Verifica la cuota real antes de apostar.' };
     }
-    const recommended = (pFair >= cfg.probFloor) && (v.evPct >= cfg.evThreshold);
-    let reason = null;
-    if (!recommended) {
-      reason = (pFair < cfg.probFloor)
-        ? `Probabilidad baja (${(pFair*100).toFixed(0)}%) — muy arriesgada.`
-        : `Sin valor suficiente: la mejor cuota da ${v.evPct>=0?'+':''}${v.evPct.toFixed(1)}% (umbral ${cfg.evThreshold}%).`;
-    }
-    return { mode:'market', evaluable:true, reliable:true, displayProb:pFair, marketProb:pFair, oddsBest:o.oddsBest,
-      evPct:v.evPct, edgePct:v.edgePct, kellyFraction:v.kellyFraction, stakeFraction:v.stakeFraction,
-      recommended, reason };
+    // VALOR: con la probabilidad combinada y la mejor cuota disponible (solo dimensiona el stake)
+    const v = valueForOdds(pBlend, o.oddsBest);
+    const probTier = pBlend >= PROB_ALTA ? 'alta' : (pBlend >= PROB_MEDIA ? 'media' : 'baja');
+    const valueTier = v.evPct >= VALUE_POS ? 'positivo' : (v.evPct >= VALUE_NEU ? 'neutro' : 'negativo');
+    return { mode:'market', evaluable:true, reliable:true, displayProb:pBlend, marketProb:pMarket, modelProb:pModel,
+      probTier, evPct:v.evPct, edgePct:v.edgePct, kellyFraction:v.kellyFraction, stakeFraction:v.stakeFraction,
+      valueTier, bestOdds:o.oddsBest, bestBook:o.bestBook||null, recommended: probTier==='alta', reason:null };
   }
-  return { mode:'estimation', evaluable:false, reliable:true, displayProb:o.pModel, marketProb:null, oddsBest:null,
-    evPct:null, edgePct:null, kellyFraction:0, stakeFraction:0, recommended:false,
-    reason:'Sin cuota de la API — escribe tu cuota en la calculadora para evaluar el valor.' };
+  // Modo estimación (sin cuotas de la API): probabilidad propia, valor requiere cuota manual
+  const pModel = o.pModel;
+  const probTier = pModel >= PROB_ALTA ? 'alta' : (pModel >= PROB_MEDIA ? 'media' : 'baja');
+  return { mode:'estimation', evaluable:false, reliable:true, displayProb:pModel, marketProb:null, modelProb:pModel,
+    probTier, evPct:null, edgePct:null, kellyFraction:0, stakeFraction:0, valueTier:'na',
+    bestOdds:null, bestBook:null, recommended:false,
+    reason:'Sin cuota de la API — usa Carga manual o escribe tu cuota en la calculadora para evaluar el valor.' };
 }
 
 // CALIFICACIÓN nueva: combina CONFIANZA (probabilidad) y VALOR (EV de la cuota real).
@@ -1920,7 +1927,8 @@ function getMarketOptions(g, category) {
     const ck = getCachedOdds(ODDS_SPORT_MAP[state.sport]);
     if (ck && ck.data) state.oddsData = ck.data;
   }
-  const ev = matchOddsEvent(g);
+  let ev = matchOddsEvent(g);
+  if (!ev) ev = manualOddsEvent(g);   // respaldo: cuotas cargadas a mano (Oddspedia)
   const isSoccer = g.sport.startsWith('soccer');
   const sc = sportScale(g.sport);
 
@@ -1967,13 +1975,13 @@ function getMarketOptions(g, category) {
   const opts = [];
   const push = o => {
     const e = evalOption(o);
-    const compatScore = e.recommended ? Math.round(50 + Math.min(50, (e.evPct||0)*5)) : 0;
-    opts.push({ ...o, prob:o.pModel, ref:o.ref||'avg',
-      mode:e.mode, evaluable:e.evaluable, reliable:e.reliable, displayProb:e.displayProb, marketProb:e.marketProb,
+    opts.push({ ...o, prob:o.pModel, ref:o.ref||'avg', manual: (e.bestBook === 'Manual (Oddspedia)'),
+      mode:e.mode, evaluable:e.evaluable, reliable:e.reliable, displayProb:e.displayProb,
+      marketProb:e.marketProb, modelProb:e.modelProb, probTier:e.probTier, valueTier:e.valueTier,
       recommended:e.recommended, reason:e.reason, evPct:e.evPct, edgePct:e.edgePct,
-      kellyFraction:e.kellyFraction, stakeFraction:e.stakeFraction,
-      provisional: o.pMarket==null, score:compatScore,
-      band: e.recommended ? 'alta' : (e.mode==='estimation' ? 'media' : 'baja') });
+      kellyFraction:e.kellyFraction, stakeFraction:e.stakeFraction, bestOdds:e.bestOdds, bestBook:e.bestBook,
+      provisional: o.pMarket==null, score: e.displayProb!=null?Math.round(e.displayProb*100):0,
+      band: e.reliable===false ? 'baja' : e.probTier });
   };
 
   // ===== MONEYLINE / 1X2 =====
@@ -1992,7 +2000,7 @@ function getMarketOptions(g, category) {
       sides.forEach((s,i) => push({ key:s.side, name:s.name, trackerPick:s.pick, pModel:s.pModel,
         pMarket: sides.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
         ref: sides.length>=2 ? _src.ref : 'avg',
-        oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:null, noRealOdds:false }));
+        oddsBest:s.ba.best, bestBook:s.ba.bestBook, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:null, noRealOdds:false }));
     } else {
       const list = isSoccer
         ? [['home',`Gana ${g.home.name}`,`${g.home.name} gana`,P.homeWin],['draw','Empate','Empate',P.draw],['away',`Gana ${g.away.name}`,`${g.away.name} gana`,P.awayWin]]
@@ -2018,7 +2026,7 @@ function getMarketOptions(g, category) {
             trackerPick:`${s.side==='over'?'Over':'Under'} ${L}`,
             pModel, pMarket: present.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
             ref: present.length>=2 ? _src.ref : 'avg',
-            oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:L, noRealOdds:false });
+            oddsBest:s.ba.best, bestBook:s.ba.bestBook, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:L, noRealOdds:false });
         });
       });
     } else {
@@ -2052,7 +2060,7 @@ function getMarketOptions(g, category) {
             pModel:pSpreadModel(s.side, s.point),
             pMarket: valid.length>=2 ? _src.probs[i] : Math.min(0.98,1/s.ba.avg),
             ref: valid.length>=2 ? _src.ref : 'avg',
-            oddsBest:s.ba.best, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:s.point, noRealOdds:false });
+            oddsBest:s.ba.best, bestBook:s.ba.bestBook, oddsAvg:s.ba.avg, bookCount:s.ba.count, point:s.point, noRealOdds:false });
         });
       });
     } else if (isSoccer) {
@@ -2080,8 +2088,8 @@ function getMarketOptions(g, category) {
     push({ key:'yes', name:'BTTS Sí (ambos anotan)', trackerPick:'BTTS Sí', pModel:P.bttsYes, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
     push({ key:'no',  name:'BTTS No (al menos uno en cero)', trackerPick:'BTTS No', pModel:P.bttsNo, pMarket:null, oddsBest:null, oddsAvg:null, bookCount:0, point:null, noRealOdds:true });
   }
-  // Mejores primero: recomendadas, luego mayor valor (EV%), luego mayor probabilidad.
-  return opts.sort((a,b)=> (Number(b.recommended)-Number(a.recommended)) || ((b.evPct==null?-999:b.evPct)-(a.evPct==null?-999:a.evPct)) || ((b.displayProb||0)-(a.displayProb||0)));
+  // Mejores primero: por PROBABILIDAD combinada (lo que decides tú), luego por valor.
+  return opts.sort((a,b)=> (Number(b.reliable!==false)-Number(a.reliable!==false)) || ((b.displayProb||0)-(a.displayProb||0)) || ((b.evPct==null?-999:b.evPct)-(a.evPct==null?-999:a.evPct)));
 }
 
 // ===== OPPORTUNITY POR MERCADO (punto 7) =====
@@ -2105,16 +2113,18 @@ function computeGameOpportunity(g) {
     markets[c.key] = {
       label: c.label, trackerName: c.trackerName,
       mode: best.mode, evaluable: !!best.evaluable, reliable: best.reliable !== false, recommended: !!best.recommended, reason: best.reason || null,
-      bestOption: best.key, bestPick: best.trackerPick || best.name, bestOdds: best.oddsBest,
-      displayProb: best.displayProb, marketProb: best.marketProb, pModel: best.pModel, ref: best.ref || 'avg',
+      probTier: best.probTier || 'baja', valueTier: best.valueTier || 'na', manual: !!best.manual,
+      bestOption: best.key, bestPick: best.trackerPick || best.name, bestOdds: best.oddsBest, bestBook: best.bestBook || null,
+      displayProb: best.displayProb, marketProb: best.marketProb, modelProb: best.modelProb, pModel: best.pModel, ref: best.ref || 'avg',
       evPct: (best.evPct != null) ? +best.evPct.toFixed(1) : null,
       edgePct: (best.edgePct != null) ? +best.edgePct.toFixed(1) : null,
       stakeFraction: best.stakeFraction || 0, bookCount: best.bookCount || 0,
       provisional: !!best.provisional, noRealOdds: !!best.noRealOdds,
       topOptions: opts.slice(0,4).map(o => ({
         key:o.key, name:o.name, trackerPick:o.trackerPick, mode:o.mode, recommended:!!o.recommended, reliable:o.reliable!==false,
-        reason:o.reason||null, oddsBest:o.oddsBest, point:o.point, displayProb:o.displayProb,
-        marketProb:o.marketProb, pModel:o.pModel, ref:o.ref||'avg',
+        probTier:o.probTier||'baja', valueTier:o.valueTier||'na', manual:!!o.manual,
+        reason:o.reason||null, oddsBest:o.oddsBest, bestBook:o.bestBook||null, point:o.point, displayProb:o.displayProb,
+        marketProb:o.marketProb, modelProb:o.modelProb, pModel:o.pModel, ref:o.ref||'avg',
         evPct:(o.evPct!=null)?+o.evPct.toFixed(1):null, edgePct:(o.edgePct!=null)?+o.edgePct.toFixed(1):null,
         stakeFraction:o.stakeFraction||0, noRealOdds:!!o.noRealOdds
       }))
@@ -2124,17 +2134,22 @@ function computeGameOpportunity(g) {
   const recommendedCount = entries.filter(([,mk])=>mk.recommended).length;
   const anyEstimation = entries.some(([,mk])=>mk.mode==='estimation');
   const anyUnreliable = entries.some(([,mk])=>mk.reliable===false);
+  const reliableMedia = entries.filter(([,mk])=>mk.reliable!==false && mk.mode==='market' && (mk.probTier==='alta'||mk.probTier==='media')).length;
   const sorted = entries.slice().sort((a,b)=>
-    (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)) || ((b[1].displayProb||0)-(a[1].displayProb||0)));
+    (Number(b[1].reliable!==false)-Number(a[1].reliable!==false)) || ((b[1].displayProb||0)-(a[1].displayProb||0)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)));
   const best = sorted[0] || null;
   return g.opportunity = {
-    markets, recommendedCount, favorableCount: recommendedCount, anyEstimation, anyUnreliable,
+    markets, recommendedCount, favorableCount: recommendedCount, altaCount: recommendedCount,
+    reliableMedia, anyEstimation, anyUnreliable,
     bestMarket: best ? best[0] : null,
     bestMarketLabel: best ? best[1].label : null,
     bestMode: best ? best[1].mode : null,
     bestRecommended: best ? best[1].recommended : false,
+    bestProbTier: best ? best[1].probTier : null,
+    bestValueTier: best ? best[1].valueTier : null,
     bestProb: best ? best[1].displayProb : null,
     bestEvPct: best ? best[1].evPct : null,
+    bestBook: best ? best[1].bestBook : null,
     bestScore: best ? (best[1].displayProb!=null?Math.round(best[1].displayProb*100):null) : null,
     bestPickLabel: best ? `${best[1].bestPick}${best[1].bestOdds ? ' @ ' + best[1].bestOdds.toFixed(2) : ''}` : null,
     bestStakeFraction: best ? best[1].stakeFraction : 0,
@@ -2145,7 +2160,8 @@ function computeGameOpportunity(g) {
 // Helper: clasifica la oportunidad para la estetica de la card
 function opportunityBand(opp) {
   if (!opp || !opp.markets || !Object.keys(opp.markets).length) return 'none';
-  if (opp.recommendedCount) return (opp.bestEvPct != null && opp.bestEvPct >= 5) ? 'high' : 'mid';
+  if (opp.recommendedCount) return 'high';     // hay mercado(s) con probabilidad ALTA
+  if (opp.reliableMedia) return 'mid';         // probabilidad media
   if (opp.anyEstimation) return 'est';
   return 'none';
 }
@@ -2385,73 +2401,74 @@ function updateCalculator() {
   const bookEl = document.getElementById('calc-book');
   const book = bookEl ? bookEl.value.trim() : '';
   // Evaluación de dos fases con la cuota REAL que vas a jugar (punto 9).
-  const cfg = getModelCfg();
   const _opts = (cat!=='props') ? getMarketOptions(g, cat) : [];
   const selC = _opts.find(o=>o.key===state.calcMarket.optionKey) || _opts[0] || null;
   const isEstimation = !selC || selC.mode === 'estimation' || pMarket == null;
-  const pRef = isEstimation ? pModel : pMarket;        // probabilidad de referencia
+  // PROBABILIDAD COMBINADA: mercado (manda) + tus variables; en estimación, solo el modelo
+  const pBlend = isEstimation ? pModel
+    : Math.max(0, Math.min(1, BLEND_MARKET_WEIGHT*pMarket + (1-BLEND_MARKET_WEIGHT)*pModel));
   const oddsBestAvail = selC ? selC.oddsBest : null;
+  const bestBookAvail = selC ? selC.bestBook : null;
   const impliedProb = 1 / oddsInput;
-  const v = valueForOdds(pRef, oddsInput);             // valor con TU cuota
+  const v = valueForOdds(pBlend, oddsInput);           // valor a TU cuota (solo dimensiona stake)
   const evPct = v.evPct, edgePct = v.edgePct;
   const kellyFraction = v.kellyFraction;
-  // Guarda de sensatez: mercado marcado como poco fiable, o un valor imposiblemente alto a tu cuota
+  // Guarda de sensatez (dato roto), NO un juicio de valor:
   const marketUnreliable = !isEstimation && selC && selC.reliable === false;
   const evImplausible = !isEstimation && evPct != null && evPct > MAX_MARKET_EV;
   const blocked = marketUnreliable || evImplausible;
   const stakeFraction = blocked ? 0 : v.stakeFraction;
   const kellyStake = bankrollInput * stakeFraction;
   const stakeCapped = !blocked && (kellyFraction * KELLY_MULT) > STAKE_CAP;
-  const recommended = !blocked && !isEstimation && (pRef >= cfg.probFloor) && (evPct >= cfg.evThreshold);
+  const probTier = pBlend >= PROB_ALTA ? 'alta' : (pBlend >= PROB_MEDIA ? 'media' : 'baja');
+  const valueTier = blocked ? 'na' : (evPct >= VALUE_POS ? 'positivo' : (evPct >= VALUE_NEU ? 'neutro' : 'negativo'));
+  const recommended = !blocked && probTier === 'alta';
   let shopNote = '';
   if (!isEstimation && !blocked && oddsBestAvail && oddsBestAvail > oddsInput + 0.01)
-    shopNote = `Hay mejor cuota disponible: <strong>@${oddsBestAvail.toFixed(2)}</strong> (tú pusiste @${oddsInput.toFixed(2)}).`;
+    shopNote = `Hay mejor cuota: <strong>${bestBookAvail?bestBookAvail+' ':''}@${oddsBestAvail.toFixed(2)}</strong> (tú pusiste @${oddsInput.toFixed(2)}).`;
+  // VEREDICTO: 1) probabilidad (tu decisión) · 2) valor (solo stake). Nunca "no apuestes" por valor flojo.
   let verdict, verdictClass;
   if (blocked) {
-    verdict = `⚠ DATO POCO FIABLE — Las cuotas de este mercado no son consistentes (probable error de la API). No te fíes del valor mostrado; confirma la cuota real en tu casa antes de apostar.`;
+    verdict = `⚠ DATO POCO FIABLE — Las cuotas no son consistentes (probable error de la API). Confirma el precio real; no te fíes del valor mostrado.`;
     verdictClass = 'verdict-bad';
   } else if (isEstimation) {
-    verdict = `≈ ESTIMACIÓN — Sin cuotas de la API; probabilidad propia ${(pRef*100).toFixed(0)}% (menos confiable). A tu cuota el valor es ${evPct>=0?'+':''}${evPct.toFixed(1)}%.`;
-    verdictClass = (evPct>=cfg.evThreshold) ? 'verdict-fair' : 'verdict-bad';
-  } else if (recommended) {
-    verdict = `✓ APOSTAR — Valor ${evPct>=0?'+':''}${evPct.toFixed(1)}% a tu cuota. El mercado le da ${(pRef*100).toFixed(0)}% de probabilidad.`;
-    verdictClass = 'verdict-value';
-  } else if (pRef < cfg.probFloor) {
-    verdict = `✕ MUY ARRIESGADA — Probabilidad ${(pRef*100).toFixed(0)}%, por debajo de tu piso (${(cfg.probFloor*100).toFixed(0)}%).`;
-    verdictClass = 'verdict-bad';
-  } else {
-    verdict = `≡ SIN VALOR — A tu cuota el valor es ${evPct>=0?'+':''}${evPct.toFixed(1)}% (umbral ${cfg.evThreshold}%). ${shopNote||'Busca una cuota más alta o pasa.'}`;
+    verdict = `≈ ESTIMACIÓN — Probabilidad propia ${(pBlend*100).toFixed(0)}% (sin cuotas API, menos confiable). Carga la cuota para ver valor y stake.`;
     verdictClass = 'verdict-fair';
+  } else {
+    const probTxt = probTier==='alta' ? `Probabilidad ALTA (${(pBlend*100).toFixed(0)}%): argumento sólido para apostar.`
+      : (probTier==='media' ? `Probabilidad MEDIA (${(pBlend*100).toFixed(0)}%): decisión tuya.`
+      : `Probabilidad BAJA (${(pBlend*100).toFixed(0)}%): arriesgada, pero tú decides.`);
+    const valTxt = valueTier==='positivo' ? `El precio acompaña (valor ${evPct>=0?'+':''}${evPct.toFixed(1)}%) → stake sugerido ${(stakeFraction*100).toFixed(2)}%.`
+      : (valueTier==='neutro' ? `Precio justo (valor ${evPct>=0?'+':''}${evPct.toFixed(1)}%) → stake plano.`
+      : `Precio flojo (valor ${evPct.toFixed(1)}%) → stake mínimo o busca mejor cuota. ${shopNote}`);
+    verdict = `${probTier==='alta'?'✓ ':''}${probTxt} ${valTxt}`;
+    verdictClass = probTier==='alta' ? 'verdict-value' : 'verdict-fair';
   }
-  const bandClass = blocked ? 'baja' : (recommended ? 'alta' : (isEstimation ? 'media' : 'baja'));
-  const probLabel = isEstimation ? 'Estimación propia' : (marketRef==='pinnacle' ? 'Mercado · Pinnacle' : `Mercado · consenso ${bookCount} casa${bookCount===1?'':'s'}`);
+  const bandClass = blocked ? 'baja' : probTier;
+  const probLabel = isEstimation ? 'Estimación propia' : (marketRef==='pinnacle' ? 'Mercado (Pinnacle) + tus variables' : 'Mercado + tus variables');
   state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput,
-    modelProb: pModel, marketProb: pMarket, blendProb: pRef, score: blocked ? null : Math.round(pRef*100),
-    recommended, reliable: !blocked, evPct: blocked ? null : evPct, edgePct, mode: isEstimation?'estimation':'market',
+    modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: blocked ? null : Math.round(pBlend*100),
+    recommended, reliable: !blocked, probTier, valueTier, evPct: blocked ? null : evPct, edgePct, mode: isEstimation?'estimation':'market',
     bookCount, impliedProb, edge: edgePct, ev: blocked ? null : evPct, kelly: stakeFraction, kellyStake, stakeFraction };
   state.lastCalc.meta = buildCalcMeta(g, cat, selC, _opts, pickLabel);
   out.innerHTML = `
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
     <div class="calc-output">
-      <div class="calc-out-cell" style="border-color:var(--border-strong);">
-        <div class="calc-out-label">Probabilidad</div>
-        <div class="calc-out-value" style="font-size:25px;">${blocked?'<span style=\'color:var(--c-granate);\'>⚠</span>':(pRef*100).toFixed(1)+'%'}</div>
-        <div class="calc-out-desc">${blocked?'dato poco fiable':probLabel}</div>
+      <div class="calc-out-cell" style="border-color:var(--border-strong);grid-column:span 2;">
+        <div class="calc-out-label">Probabilidad de que ocurra</div>
+        <div class="calc-out-value" style="font-size:34px;color:${blocked?'var(--c-granate)':(probTier==='alta'?'var(--c-salvia)':(probTier==='media'?'var(--c-cobre)':'var(--text-2)'))};">${blocked?'⚠':(pBlend*100).toFixed(1)+'%'}</div>
+        <div class="calc-out-desc">${blocked?'dato poco fiable':probLabel+' · '+(probTier==='alta'?'ALTA':(probTier==='media'?'MEDIA':'BAJA'))}</div>
       </div>
-      <div class="calc-out-cell" style="border-color:var(--border-strong);">
-        <div class="calc-out-label">Valor a tu cuota</div>
-        <div class="calc-out-value ${blocked?'neg':(evPct>=0?'pos':'neg')}" style="font-size:25px;">${blocked?'⚠':(evPct>=0?'+':'')+evPct.toFixed(1)+'%'}</div>
-        <div class="calc-out-desc">${blocked?'no confiable':(isEstimation?'estimación (ojo)':(recommended?'apuesta con valor':'umbral '+cfg.evThreshold+'%'))}</div>
-      </div>
-      <div class="calc-out-cell"><div class="calc-out-label">Stake (Quarter-Kelly)</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankrollInput?`= $${kellyStake.toFixed(2)}`:'ingresa bankroll'}${stakeCapped?' · <span style="color:var(--c-cobre);">topado al 2.5%</span>':''}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Stake sugerido</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankrollInput?`= $${kellyStake.toFixed(2)}`:'ingresa bankroll'}${stakeCapped?' · <span style="color:var(--c-cobre);">tope 2.5%</span>':''}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Valor a tu cuota</div><div class="calc-out-value ${blocked?'neg':(evPct>=0?'pos':'neg')}">${blocked?'⚠':(evPct>=0?'+':'')+evPct.toFixed(1)+'%'}</div><div class="calc-out-desc">${blocked?'no confiable':(isEstimation?'estimación':'solo stake')}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Tu cuota</div><div class="calc-out-value">@${oddsInput.toFixed(2)}</div><div class="calc-out-desc">implícita ${(impliedProb*100).toFixed(1)}%</div></div>
-      ${!isEstimation ? `<div class="calc-out-cell"><div class="calc-out-label">Mejor cuota disponible</div><div class="calc-out-value ${oddsBestAvail&&oddsBestAvail>oddsInput+0.01?'pos':''}">${oddsBestAvail?'@'+oddsBestAvail.toFixed(2):'—'}</div><div class="calc-out-desc">${shopNote?'puedes mejorar tu precio':'tu cuota es la mejor o similar'}</div></div>` : ''}
+      ${!isEstimation ? `<div class="calc-out-cell"><div class="calc-out-label">Mejor casa / cuota</div><div class="calc-out-value ${oddsBestAvail&&oddsBestAvail>oddsInput+0.01?'pos':''}" style="font-size:14px;line-height:1.3;">${oddsBestAvail?(bestBookAvail?bestBookAvail+'<br>':'')+'@'+oddsBestAvail.toFixed(2):'—'}</div><div class="calc-out-desc">${shopNote?'puedes mejorar tu precio':'donde más paga'}</div></div>` : ''}
     </div>
     <div class="edu-box">
       <div class="ttl">Cómo leer esto</div>
-      <strong>Probabilidad:</strong> ${isEstimation?'la estima nuestro modelo propio porque no hay cuotas de la API — es menos confiable.':'sale del mercado (cuotas sin margen, '+(marketRef==='pinnacle'?'referencia Pinnacle':'consenso de casas')+'). Nos fiamos del mercado.'}<br><br>
-      <strong>Valor:</strong> compara lo que paga tu cuota contra esa probabilidad. Si una casa paga más de lo que vale, ahí está la ganancia esperada. ${shopNote?'<br><br><strong>Tip:</strong> '+shopNote:''}<br><br>
-      <strong>Stake:</strong> Quarter-Kelly (¼ de Kelly) con tope del 2.5% del bankroll. Si no hay valor, el stake es 0.
+      <strong>Probabilidad (tu decisión):</strong> ${isEstimation?'la estima el modelo propio (sin cuotas API — menos confiable).':'combina el mercado ('+(marketRef==='pinnacle'?'ref. Pinnacle':'consenso')+') con tus variables. Es tu razón para apostar.'}<br><br>
+      <strong>Valor (solo el stake):</strong> compara lo que paga tu cuota contra esa probabilidad, y te dice qué casa paga mejor. No te quita una apuesta con buena probabilidad — solo decide cuánto poner. ${shopNote?'<br><strong>Tip:</strong> '+shopNote:''}<br><br>
+      <strong>Stake:</strong> Quarter-Kelly (¼ de Kelly), tope 2.5% del bankroll. Si el precio está flojo, el stake baja, pero la apuesta sigue siendo válida si la probabilidad te respalda.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;">
       <button class="btn-accent" onclick="prefillBet('calc')">→ Registrar apuesta</button>
@@ -2470,30 +2487,112 @@ function renderMarketsOverview(g) {
     return `<div class="state-msg">No hay mercados calculables para este partido todavía.</div>`;
   }
   const entries = Object.entries(opp.markets).sort((a,b)=>
-    (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)));
-  const rows = entries.map(([k,m]) => {
+    (Number(b[1].reliable!==false)-Number(a[1].reliable!==false)) || ((b[1].displayProb||0)-(a[1].displayProb||0)));
+  const cards = entries.map(([k,m]) => {
     const unrel = m.reliable===false;
-    const recCls = unrel ? 'mc-low' : (m.recommended ? 'mc-high' : (m.mode==='estimation' ? 'mc-mid' : 'mc-low'));
-    const verdict = unrel ? '⚠ DATO DUDOSO' : (m.recommended ? 'CON VALOR' : (m.mode==='estimation' ? 'ESTIMACIÓN' : 'SIN VALOR'));
-    const oddsStr = m.bestOdds ? `@ ${m.bestOdds.toFixed(2)}${m.ref==='pinnacle'?' <span class="muted">(Pin)</span>':''}` : '<span class="muted">cuota manual</span>';
-    const probStr = unrel ? '<span class="muted">⚠</span>' : ((m.displayProb!=null) ? `${(m.displayProb*100).toFixed(1)}%` : '—');
-    const evStr = unrel ? '<span class="muted">⚠</span>' : ((m.evPct != null) ? `${m.evPct>=0?'+':''}${m.evPct.toFixed(1)}%` : '<span class="muted">—</span>');
-    const stakeStr = m.recommended && m.stakeFraction ? `${(m.stakeFraction*100).toFixed(2)}%` : '—';
-    const probLabel = m.mode==='estimation' ? 'estimación' : 'mercado';
-    const reasonRow = !m.recommended && m.reason
-      ? `<tr><td colspan="7" style="background:var(--bg);padding:4px 12px 8px;font-size:11px;color:var(--text-2);"><em>${m.label}: ${m.reason}</em></td></tr>` : '';
-    return `<tr>
-      <td><strong>${m.label}</strong></td>
-      <td>${m.bestPick} ${oddsStr}</td>
-      <td>${probStr} <span class="muted">${probLabel}</span></td>
-      <td class="${m.evPct>=2.5?'pl-pos':(m.evPct<0?'pl-neg':'')}">${evStr}</td>
-      <td>${stakeStr}</td>
-      <td><span class="market-verdict ${recCls}">${verdict}</span></td>
-    </tr>${reasonRow}`;
+    const isEst = m.mode==='estimation';
+    const tierCls = unrel ? 'dudoso' : m.probTier;
+    const tierLabel = unrel ? '⚠ DATO DUDOSO'
+      : (m.probTier==='alta' ? 'PROBABILIDAD ALTA' : (m.probTier==='media' ? 'PROBABILIDAD MEDIA' : 'PROBABILIDAD BAJA'));
+    const probValue = (unrel || m.displayProb==null) ? '—' : (m.displayProb*100).toFixed(0)+'%';
+    const probSub = isEst ? 'estimación propia (sin cuotas API)'
+      : (unrel ? 'verifica la cuota real'
+      : `mercado ${m.marketProb!=null?(m.marketProb*100).toFixed(0)+'%':'—'} · modelo ${m.modelProb!=null?(m.modelProb*100).toFixed(0)+'%':'—'}`);
+    let valCls, valHead, valBody;
+    if (isEst) {
+      valCls='neutro'; valHead='VALOR · estimación';
+      valBody = `<div class="mkt-val-note">Sin cuotas de la API. Usa <strong>Carga manual</strong> (cuota de Oddspedia) o la calculadora para medir el valor y el stake.</div>`;
+    } else if (unrel) {
+      valCls='negativo'; valHead='VALOR · dudoso';
+      valBody = `<div class="mkt-val-note">No te fíes del valor: las cuotas no son consistentes entre casas. Confirma el precio real antes de apostar.</div>`;
+    } else {
+      valCls = m.valueTier; valHead='VALOR';
+      const evTxt = m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : '—';
+      const houseTxt = m.bestBook ? `${m.bestBook} @ ${m.bestOdds.toFixed(2)}` : (m.bestOdds ? `@ ${m.bestOdds.toFixed(2)}` : '—');
+      const stakeTxt = m.stakeFraction ? `${(m.stakeFraction*100).toFixed(2)}%` : '—';
+      const valLabel = m.valueTier==='positivo' ? 'El precio acompaña — buen momento'
+        : (m.valueTier==='neutro' ? 'Precio justo — stake plano' : 'Precio flojo — stake mínimo o busca mejor cuota');
+      valBody = `
+        <div class="mkt-val-row"><span class="l">Valor (EV)</span><span class="${m.evPct>=0?'pos':'neg'}">${evTxt}</span></div>
+        <div class="mkt-val-row"><span class="l">Mejor casa</span><span>${houseTxt}</span></div>
+        <div class="mkt-val-row"><span class="l">Stake sugerido</span><span class="accent">${stakeTxt}</span></div>
+        <div class="mkt-val-label">${valLabel}</div>`;
+    }
+    return `<div class="mkt-card${unrel?' mkt-unrel':''}">
+      <div class="mkt-card-head"><span>${m.label}${m.manual?'<span class="mkt-manual">MANUAL</span>':''}</span><span class="mkt-card-pick">${m.bestPick}</span></div>
+      <div class="mkt-prob t-${tierCls}">
+        <div class="mkt-prob-label">Probabilidad de que ocurra</div>
+        <div class="mkt-prob-value">${probValue}</div>
+        <div class="mkt-prob-tier prob-${tierCls}">${tierLabel}</div>
+        <div class="mkt-prob-sub">${probSub}</div>
+      </div>
+      <div class="mkt-val v-${valCls}">
+        <div class="mkt-val-head">${valHead}</div>
+        ${valBody}
+      </div>
+    </div>`;
   }).join('');
-  const dq = opp.dataQuality === 'limited' ? `<div class="small-note" style="margin-bottom:10px;"><strong>Sin cuotas API en algún mercado:</strong> ahí entra el <strong>Modo Estimación</strong> (modelo propio, menos confiable). Escribe la cuota en la <strong>Calculadora</strong> para medir el valor.</div>` : '';
-  const head = `<tr><th>Mercado</th><th>Mejor opción</th><th>Probabilidad</th><th>Valor (EV)</th><th>Stake</th><th>Veredicto</th></tr>`;
-  return `${dq}<div class="bets-table-wrap"><table class="bets"><thead>${head}</thead><tbody>${rows}</tbody></table></div>`;
+  const note = `<p class="mkt-overview-note">Arriba, la <strong>probabilidad de que ocurra</strong> (mercado + tus variables): tu razón para apostar. Abajo, el <strong>valor</strong>: qué casa paga mejor y cuánto poner. El valor nunca te quita una apuesta con buena probabilidad — solo dimensiona el stake.</p>`;
+  const dq = opp.dataQuality === 'limited' ? `<div class="small-note" style="margin-bottom:10px;">Algún mercado no tiene cuotas en la API (Modo Estimación). Usa <strong>Carga manual</strong> para cargar las de Oddspedia y obtener su lectura completa.</div>` : '';
+  return `${note}${dq}<div class="mkt-grid">${cards}</div>`;
+}
+
+// ---------- CARGA MANUAL DE CUOTAS (Oddspedia) ----------
+function refreshOpenDetailSections() {
+  const g = state.selectedGame; if (!g) return;
+  computeGameOpportunity(g);
+  renderDetailSummary(g);
+  document.querySelectorAll('.detail-section[data-section]').forEach(sec => {
+    if (sec.dataset.rendered) renderSectionContent(sec.dataset.section);
+  });
+}
+function openManualOddsModal(id) {
+  const g = state.games.find(x => x.id === id); if (!g) return;
+  const mo = getManualOdds(id) || {};
+  const ml = mo.ml || {}, ou = mo.ou || {};
+  const isSoccer = g.sport && g.sport.startsWith('soccer');
+  const val = x => (x==null || x==='') ? '' : x;
+  document.getElementById('modal-card').innerHTML = `
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <h2>Carga manual de cuotas</h2>
+    <div class="tracker-block-sub" style="margin-bottom:6px;">${g.home.name} vs ${g.away.name}</div>
+    <p class="muted" style="font-size:12px;margin-bottom:16px;">Para partidos que la API no reconoce. Copia las cuotas <strong>decimales</strong> de Oddspedia. Se tratan como una casa más ("Manual (Oddspedia)") y el partido obtiene su lectura de probabilidad + valor. Deja en blanco lo que no tengas.</p>
+    <div class="block-title" style="margin-bottom:8px;">Ganador (Moneyline / 1X2)</div>
+    <div class="add-bet-grid" style="margin-bottom:16px;">
+      <div class="form-row"><label>${g.home.name} (local)</label><input type="number" step="0.01" min="1" id="mo-ml-home" value="${val(ml.home)}" placeholder="1.90" /></div>
+      ${isSoccer?`<div class="form-row"><label>Empate</label><input type="number" step="0.01" min="1" id="mo-ml-draw" value="${val(ml.draw)}" placeholder="3.40" /></div>`:''}
+      <div class="form-row"><label>${g.away.name} (visita)</label><input type="number" step="0.01" min="1" id="mo-ml-away" value="${val(ml.away)}" placeholder="2.00" /></div>
+    </div>
+    <div class="block-title" style="margin-bottom:8px;">Totales (Over/Under)</div>
+    <div class="add-bet-grid" style="margin-bottom:8px;">
+      <div class="form-row"><label>Línea</label><input type="number" step="0.5" id="mo-ou-line" value="${val(ou.line)}" placeholder="2.5" /></div>
+      <div class="form-row"><label>Over</label><input type="number" step="0.01" min="1" id="mo-ou-over" value="${val(ou.over)}" placeholder="1.90" /></div>
+      <div class="form-row"><label>Under</label><input type="number" step="0.01" min="1" id="mo-ou-under" value="${val(ou.under)}" placeholder="1.90" /></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;">
+      <button class="btn-primary" onclick="saveManualOdds('${id}')">Guardar y calcular</button>
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      ${getManualOdds(id)?`<button class="btn-secondary" style="margin-left:auto;color:var(--c-granate);border-color:var(--c-granate);" onclick="deleteManualOdds('${id}')">Borrar carga manual</button>`:''}
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+function saveManualOdds(id) {
+  const num = i => { const v = parseFloat(document.getElementById(i).value); return isNaN(v)?null:v; };
+  const ml = { home:num('mo-ml-home'), away:num('mo-ml-away') };
+  const drawEl = document.getElementById('mo-ml-draw'); if (drawEl) ml.draw = num('mo-ml-draw');
+  const ou = { line:num('mo-ou-line'), over:num('mo-ou-over'), under:num('mo-ou-under') };
+  const obj = {};
+  if ((ml.home>1?1:0) + (ml.away>1?1:0) + (ml.draw>1?1:0) >= 2) obj.ml = ml;
+  if (ou.line!=null && (ou.over>1 || ou.under>1) && (ou.over>1?1:0)+(ou.under>1?1:0)>=2) obj.ou = ou;
+  if (!Object.keys(obj).length) { alert('Carga al menos dos cuotas de un mismo mercado (ej. local y visita, o over y under con su línea).'); return; }
+  setManualOdds(id, obj);
+  closeModal();
+  refreshOpenDetailSections();
+}
+function deleteManualOdds(id) {
+  setManualOdds(id, null);
+  closeModal();
+  refreshOpenDetailSections();
 }
 function renderDescriptive() {
   const c = document.getElementById('ds-descriptivo'); const g = state.selectedGame;
@@ -2501,8 +2600,9 @@ function renderDescriptive() {
   if (!g.viability||g.viability.insufficient) { c.innerHTML = `<div class="state-msg">Datos insuficientes.</div>`; return; }
   // Punto 7: encabezamos con la tabla resumen por mercado
   c.innerHTML = `
-    <h3 style="font-size:16px;font-weight:700;margin:0 0 4px;">Calificación por mercado</h3>
-    <p class="muted" style="font-size:12px;margin-bottom:14px;">Modelo <strong>mercado primero</strong>: la <strong>probabilidad</strong> de cada resultado sale del mercado (cuotas sin margen, Pinnacle preferido). El <strong>valor</strong> aparece cuando alguna casa paga mejor que ese precio justo — no le ganamos al mercado, le compramos barato. En ligas sin cuotas se usa el <strong>Modo Estimación</strong> (modelo propio, menos confiable).</p>
+    <h3 style="font-size:16px;font-weight:700;margin:0 0 4px;">Probabilidad y valor por mercado</h3>
+    <p class="muted" style="font-size:12px;margin-bottom:10px;">Cada tarjeta separa lo que importa: arriba la <strong>probabilidad de que ocurra</strong> (mercado + tus variables) — tu razón para apostar; abajo el <strong>valor</strong> — qué casa paga mejor y cuánto poner. Si la API no reconoce al partido, usa <strong>Carga manual</strong> con las cuotas de Oddspedia.</p>
+    <div style="margin-bottom:14px;"><button class="btn-secondary" type="button" onclick="openManualOddsModal('${g.id}')" style="font-size:12px;">✎ Carga manual de cuotas (Oddspedia)</button>${getManualOdds(g.id)?' <span class="muted" style="font-size:11px;">· tienes cuotas manuales cargadas</span>':''}</div>
     ${renderMarketsOverview(g)}
     <h3 style="font-size:16px;font-weight:700;margin:24px 0 4px;">Datos que alimentan el análisis</h3>
     <p class="muted" style="font-size:12px;margin-bottom:8px;">El modelo Poisson usa las lambdas (rate de goles esperado) de cada equipo, moduladas por los 7 pesos del preset activo. Estos son los stats base.</p>
@@ -2546,24 +2646,25 @@ function renderPredictive() {
     const cards = Object.entries(opp.markets)
       .sort((a,b)=> (Number(b[1].recommended)-Number(a[1].recommended)) || ((b[1].evPct==null?-999:b[1].evPct)-(a[1].evPct==null?-999:a[1].evPct)))
       .map(([k,m]) => {
-        const cls = m.reliable===false ? 'granate' : (m.recommended ? 'salvia' : (m.mode==='estimation' ? 'pizarra' : 'granate'));
+        const cls = m.reliable===false ? 'granate' : (m.recommended ? 'salvia' : (m.probTier==='media' ? 'cobre' : 'pizarra'));
         const probTxt = m.displayProb!=null ? (m.displayProb*100).toFixed(1)+'%' : '—';
         let body;
+        const houseTxt = m.bestBook ? `${m.bestBook} @ ${m.bestOdds.toFixed(2)}` : (m.bestOdds?`@ ${m.bestOdds.toFixed(2)}`:'cuota manual');
+        const valLine = m.evPct!=null
+          ? `Valor a la mejor cuota (${houseTxt}): <strong>${m.evPct>=0?'+':''}${m.evPct}%</strong>${m.valueTier==='positivo'?' — el precio acompaña':(m.valueTier==='neutro'?' — precio justo':' — precio flojo, stake mínimo o busca mejor cuota')}. Stake sugerido ${(m.stakeFraction*100).toFixed(2)}%.`
+          : '';
         if (m.reliable===false) {
-          body = `<strong>⚠ Dato poco fiable.</strong> Las cuotas de este mercado no son consistentes entre casas (probable error de la API), así que el valor que saldría sería falso. No apostar con este dato: confirma la cuota real en tu casa y úsala en la calculadora.`;
+          body = `<strong>⚠ Dato poco fiable.</strong> Las cuotas de este mercado no son consistentes entre casas (probable error de la API). Confirma el precio real en tu casa antes de apostar.`;
         } else if (m.recommended) {
-          body = `<strong>Apostar:</strong> ${m.bestPick}${m.bestOdds?` @ ${m.bestOdds.toFixed(2)}`:''}. `
-            + `Probabilidad del mercado ${probTxt} (${m.ref==='pinnacle'?'ref. Pinnacle':'consenso de casas'}). `
-            + `La mejor cuota disponible paga <strong>${m.evPct>=0?'+':''}${m.evPct}%</strong> por encima del precio justo: ahí está el valor. `
-            + `Stake sugerido ${(m.stakeFraction*100).toFixed(2)}% del bankroll (Quarter-Kelly, tope 2.5%).`;
+          body = `<strong>Probabilidad ALTA: ${probTxt}</strong> para ${m.bestPick} (mercado + tus variables). Argumento sólido para apostar. ${valLine}`;
         } else if (m.mode==='estimation') {
-          body = `<strong>Estimación (sin cuotas de la API).</strong> El modelo propio estima ${probTxt} para ${m.bestPick}. `
-            + `Es menos confiable: escribe tu cuota en la Calculadora para ver si hay valor.`;
+          body = `<strong>Estimación (sin cuotas de la API).</strong> El modelo propio estima ${probTxt} para ${m.bestPick}. Menos confiable: usa Carga manual o la calculadora para medir el valor.`;
         } else {
-          body = `<strong>No apostar.</strong> ${m.reason||'Sin valor suficiente.'} Probabilidad del mercado ${probTxt} para ${m.bestPick}.`;
+          const t = m.probTier==='media' ? 'media' : 'baja';
+          body = `<strong>Probabilidad ${t}: ${probTxt}</strong> para ${m.bestPick}. Tú decides si te alcanza el argumento. ${valLine}`;
         }
-        const tag = m.reliable===false ? '⚠ dudoso' : (m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : 'est.');
-        return `<div class="insight-card ${cls}"><div class="head">${m.reliable===false?'⚠ ':(m.recommended?'✓ ':'')}${m.label} · ${m.reliable===false?tag:'valor '+tag}</div><div class="body" style="font-size:13px;">${body}</div></div>`;
+        const tag = m.reliable===false ? '⚠ dudoso' : (m.displayProb!=null ? `${(m.displayProb*100).toFixed(0)}%` : 'est.');
+        return `<div class="insight-card ${cls}"><div class="head">${m.reliable===false?'⚠ ':(m.recommended?'✓ ':'')}${m.label} · ${m.reliable===false?tag:'prob '+tag}</div><div class="body" style="font-size:13px;">${body}</div></div>`;
       }).join('');
     html += `<h3 style="font-size:16px;font-weight:700;margin:24px 0 8px;">Por qué (no) apostar cada mercado</h3><div class="insights">${cards}</div>`;
   }
@@ -2782,6 +2883,38 @@ function teamsOverlap(a, b) {
   const at = a.split(' ').filter(w => w.length > 2);
   const bt = b.split(' ').filter(w => w.length > 2);
   return at.some(w => bt.includes(w));
+}
+function getAllManualOdds() {
+  try { return JSON.parse(localStorage.getItem('quantManualOdds')||'{}') || {}; } catch(e){ return {}; }
+}
+function getManualOdds(id) { return getAllManualOdds()[id] || null; }
+function setManualOdds(id, obj) {
+  const all = getAllManualOdds();
+  if (obj && Object.keys(obj).length) all[id] = { ...obj, _ts: Date.now() };
+  else delete all[id];
+  lsSet('quantManualOdds', JSON.stringify(all));
+}
+// Construye un "evento de cuotas" a partir de la carga manual (Oddspedia), como una casa más.
+function manualOddsEvent(g) {
+  const mo = getManualOdds(g.id);
+  if (!mo) return null;
+  const markets = [];
+  if (mo.ml) {
+    const outs = [];
+    if (+mo.ml.home > 1) outs.push({ name:g.home.name, price:+mo.ml.home });
+    if (+mo.ml.away > 1) outs.push({ name:g.away.name, price:+mo.ml.away });
+    if (+mo.ml.draw > 1) outs.push({ name:'Draw', price:+mo.ml.draw });
+    if (outs.length >= 2) markets.push({ key:'h2h', outcomes:outs });
+  }
+  if (mo.ou && mo.ou.line !== '' && mo.ou.line != null && !isNaN(+mo.ou.line)) {
+    const outs = [];
+    if (+mo.ou.over > 1)  outs.push({ name:'Over',  price:+mo.ou.over,  point:+mo.ou.line });
+    if (+mo.ou.under > 1) outs.push({ name:'Under', price:+mo.ou.under, point:+mo.ou.line });
+    if (outs.length >= 2) markets.push({ key:'totals', outcomes:outs });
+  }
+  if (!markets.length) return null;
+  return { home_team:g.home.name, away_team:g.away.name, commence_time:g.commence||null,
+           _manual:true, bookmakers:[{ key:'manual', title:'Manual (Oddspedia)', markets }] };
 }
 function matchOddsEvent(g) {
   if (!state.oddsData || !g) return null;
@@ -3450,6 +3583,7 @@ function confirmClearHistory() {
   localStorage.removeItem('quantOutcomeLog');
   localStorage.setItem('quantOddsCache', '{}');
   localStorage.setItem('quantOddsHistory', '{}');
+  localStorage.setItem('quantManualOdds', '{}');
   ['weather','injuries','xg'].forEach(k => localStorage.removeItem('quantDataSources_' + k));
   // Adaptativo vuelve a base Balanceada.
   localStorage.setItem('quantAdaptiveWeights', JSON.stringify(ADAPTIVE_BASE));
@@ -3818,7 +3952,7 @@ function betMarketCell(b) {
 }
 // ----------------- FILTROS -----------------
 // Estado de filtros (no se persiste; solo durante la sesion)
-state.trackerFilters = state.trackerFilters || { league: 'all', market: 'all', range: 'all', mode: 'all', alignment: 'all' };
+state.trackerFilters = state.trackerFilters || { league: 'all', market: 'all', from: '', to: '', q: '', sortDir: 'desc' };
 
 // Mapa de mercados normalizados (sin Props)
 function normalizeMarketKey(b) {
@@ -3843,14 +3977,22 @@ function withinRange(b, range) {
   if (!ref || isNaN(ref)) return true;
   return (Date.now() - ref.getTime()) <= days*86400000;
 }
+function betDateObj(b) {
+  return b.commence ? new Date(b.commence) : (b.date ? new Date(b.date+'T12:00:00') : null);
+}
 function applyTrackerFilters(bets) {
   const f = state.trackerFilters;
+  const q = (f.q||'').trim().toLowerCase();
   return bets.filter(b => {
     if (f.league !== 'all' && (b.sport||'') !== f.league) return false;
     if (f.market !== 'all' && normalizeMarketKey(b) !== f.market) return false;
-    if (!withinRange(b, f.range)) return false;
-    if (f.mode !== 'all' && (b.mode||'paper') !== f.mode) return false;
-    if (f.alignment !== 'all' && (b.alignment||'na') !== f.alignment) return false;
+    const d = betDateObj(b);
+    if (f.from && d) { if (d < new Date(f.from+'T00:00:00')) return false; }
+    if (f.to && d) { if (d > new Date(f.to+'T23:59:59')) return false; }
+    if (q) {
+      const hay = [b.match,b.pick,b.market,b.sport,b.book,b.notes].filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     return true;
   });
 }
@@ -3875,31 +4017,26 @@ function renderTrackerFilterBar() {
             ${opt('all','Todos',f.market)}${opt('1x2','1X2',f.market)}${opt('ou','Totales',f.market)}${opt('spread','Spread',f.market)}${opt('btts','BTTS',f.market)}
           </select>
         </label>
-        <label class="tf-cell"><span>Rango</span>
-          <select onchange="setTrackerFilter('range', this.value)">
-            ${opt('all','Todo',f.range)}${opt('7d','7 días',f.range)}${opt('30d','30 días',f.range)}
-          </select>
-        </label>
-        <label class="tf-cell"><span>Modo</span>
-          <select onchange="setTrackerFilter('mode', this.value)">
-            ${opt('all','Ambos',f.mode)}${opt('real','Real',f.mode)}${opt('paper','Paper',f.mode)}
-          </select>
-        </label>
-        <label class="tf-cell"><span>Alineación</span>
-          <select onchange="setTrackerFilter('alignment', this.value)">
-            ${opt('all','Todas',f.alignment)}${opt('aligned','Con modelo',f.alignment)}${opt('against','Contra modelo',f.alignment)}${opt('na','Sin modelo',f.alignment)}
-          </select>
-        </label>
+        <label class="tf-cell"><span>Desde</span><input type="date" value="${f.from||''}" onchange="setTrackerFilter('from', this.value)"></label>
+        <label class="tf-cell"><span>Hasta</span><input type="date" value="${f.to||''}" onchange="setTrackerFilter('to', this.value)"></label>
+        <label class="tf-cell" style="flex:1;min-width:150px;"><span>Buscar</span><input type="text" id="tracker-search" placeholder="equipo, casa, nota..." value="${(f.q||'').replace(/"/g,'&quot;')}" oninput="setTrackerFilter('q', this.value)"></label>
+        <button class="btn-secondary" type="button" onclick="toggleTrackerSort()" style="font-size:11px;padding:7px 13px;align-self:end;">Fecha ${f.sortDir==='asc'?'↑':'↓'}</button>
         <button class="btn-secondary" type="button" onclick="clearTrackerFilters()" style="font-size:11px;padding:7px 13px;align-self:end;">Limpiar</button>
       </div>
     </div>`;
 }
 function setTrackerFilter(key, val) {
   state.trackerFilters[key] = val;
+  // Para la búsqueda por texto: solo re-renderizar las filas (no la barra) para no perder el foco
+  if (key === 'q') renderTrackerListBody();
+  else renderTrackerList();
+}
+function toggleTrackerSort() {
+  state.trackerFilters.sortDir = state.trackerFilters.sortDir === 'asc' ? 'desc' : 'asc';
   renderTrackerList();
 }
 function clearTrackerFilters() {
-  state.trackerFilters = { league: 'all', market: 'all', range: 'all', mode: 'all', alignment: 'all' };
+  state.trackerFilters = { league: 'all', market: 'all', from: '', to: '', q: '', sortDir: 'desc' };
   renderTracker();
 }
 
@@ -3913,19 +4050,24 @@ function toggleTrackerBlock(key) {
 
 function renderTrackerList() {
   renderTrackerFilterBar();
+  renderTrackerListBody();
+}
+function renderTrackerListBody() {
   const c = document.getElementById('tracker-list');
+  if (!c) return;
   if (!state.bets.length) { c.innerHTML = `<div class="empty-tracker"><div class="ic">▦</div>Sin apuestas registradas todavía.<br>Registra apuestas desde la calculadora de cada partido (Cronograma → click → calculadora), o con el botón <strong>+ Registrar manualmente</strong> arriba.</div>`; return; }
-  // Cronologico desc por fecha del evento (mas reciente primero)
-  const sortDesc = (a,b) => {
-    const da = a.commence ? new Date(a.commence) : (a.date ? new Date(a.date+'T12:00:00') : new Date(0));
-    const db = b.commence ? new Date(b.commence) : (b.date ? new Date(b.date+'T12:00:00') : new Date(0));
-    return db - da;
+  // Orden por fecha del evento, dirección configurable (por defecto: más reciente arriba)
+  const dir = state.trackerFilters.sortDir === 'asc' ? 1 : -1;
+  const sortFn = (a,b) => {
+    const da = betDateObj(a) || new Date(0);
+    const db = betDateObj(b) || new Date(0);
+    return (db - da) * dir;
   };
   const filtered = applyTrackerFilters(state.bets);
-  const pending = filtered.filter(b => b.status==='pending').sort(sortDesc);
-  const won  = filtered.filter(b => b.status==='won').sort(sortDesc);
-  const lost = filtered.filter(b => b.status==='lost').sort(sortDesc);
-  const push = filtered.filter(b => b.status==='push').sort(sortDesc);
+  const pending = filtered.filter(b => b.status==='pending').sort(sortFn);
+  const won  = filtered.filter(b => b.status==='won').sort(sortFn);
+  const lost = filtered.filter(b => b.status==='lost').sort(sortFn);
+  const push = filtered.filter(b => b.status==='push').sort(sortFn);
   let html = '';
   html += trackerBlock('pending', 'Pendientes y activas', pending, 'open', 'Los resultados se marcan solos cuando el partido termina (apuestas registradas desde la calculadora). "EN VIVO" indica un partido en juego.');
   html += trackerBlock('won', 'Ganadas', won, state.trackerOpen.won ? 'open' : 'closed', 'Apuestas con resultado positivo. Click en "Ver lección" para el análisis.');
@@ -4575,6 +4717,7 @@ function gatherState() {
     adaptiveWeights: getAdaptiveWeights(),
     adaptiveMeta: getAdaptiveMeta(),
     arbBankroll: getArbBankroll(),
+    manualOdds: getAllManualOdds(),
     activePreset: state.activePreset || 'adaptativo'
   };
 }
@@ -4610,6 +4753,11 @@ function mergeBlobs(cloud, local) {
   });
   // Registro de resultados: union por gameId (igual que apuestas borradas)
   const outcomeLog = { ...(cloud.outcomeLog||{}), ...(local.outcomeLog||{}) };
+  // Cuotas manuales: union por id, gana la entrada con _ts más reciente
+  const manualOdds = { ...(cloud.manualOdds||{}) };
+  Object.entries(local.manualOdds||{}).forEach(([k,v]) => {
+    if (!manualOdds[k] || (v && v._ts||0) >= (manualOdds[k]._ts||0)) manualOdds[k] = v;
+  });
   // Motor adaptativo: nos quedamos con el lado que proceso mas resultados
   const cM = (cloud.adaptiveMeta && cloud.adaptiveMeta.lastN) || 0;
   const lM = (local.adaptiveMeta && local.adaptiveMeta.lastN) || 0;
@@ -4630,6 +4778,7 @@ function mergeBlobs(cloud, local) {
     adaptiveWeights,
     adaptiveMeta,
     arbBankroll: local.arbBankroll || cloud.arbBankroll || null,
+    manualOdds,
     activePreset: local.activePreset || cloud.activePreset || 'adaptativo'
   };
 }
@@ -4657,6 +4806,7 @@ function applyBlob(blob, rerender) {
     if (blob.adaptiveWeights) localStorage.setItem('quantAdaptiveWeights', JSON.stringify(blob.adaptiveWeights));
     if (blob.adaptiveMeta)    localStorage.setItem('quantAdaptiveMeta', JSON.stringify(blob.adaptiveMeta));
     if (blob.arbBankroll)     localStorage.setItem('quantArbBankroll', String(blob.arbBankroll));
+    if (blob.manualOdds)      localStorage.setItem('quantManualOdds', JSON.stringify(blob.manualOdds));
     if (typeof blob.activePreset === 'string') { state.activePreset = blob.activePreset; localStorage.setItem('quantActivePreset', blob.activePreset); }
     if (state.activePreset === 'adaptativo') { state.weights = getAdaptiveWeights(); localStorage.setItem('quantWeights', JSON.stringify(state.weights)); }
   } catch(e) { console.warn('applyBlob:', e); }
@@ -4846,7 +4996,6 @@ window.addEventListener('resize', updateHeaderHeight);
 
 window.addEventListener('DOMContentLoaded', async () => {
   updateHeaderHeight();
-  initEvThresholdControl();
   syncOddsKeyInputs();
   renderToolsSync();
   if (syncCode) {
