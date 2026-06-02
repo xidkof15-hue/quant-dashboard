@@ -792,6 +792,12 @@
       <div id="tools-odds-status" style="margin-top:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-3);"></div>
     </div>
     <div class="api-key-form">
+      <div class="block-title">Bankroll de referencia <span class="muted" style="text-transform:none;letter-spacing:0;">(para las alertas de stake)</span></div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Tu capital total para apuestas. Se usa solo para avisarte si un stake es <strong>alto, óptimo o bajo</strong> — nunca te impide registrar. Se guarda en tu navegador y se sincroniza.</p>
+      <input type="number" id="tools-bankroll" step="1" min="0" placeholder="500" onchange="saveBankrollSetting(this.value)" />
+      <div id="tools-bankroll-status" style="margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--text-3);"></div>
+    </div>
+    <div class="api-key-form">
       <div class="block-title">API Key — API-Football (lesiones y alineaciones) <span class="muted" style="text-transform:none;letter-spacing:0;">(opcional)</span></div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Registro gratis en <a href="https://dashboard.api-football.com/register" target="_blank">dashboard.api-football.com</a> (no RapidAPI). 100 requests/día gratis: alcanza para lesiones diarias + alineaciones pre-partido con el caché de 6h. Si la dejas vacía, el sistema funciona igual sin esta señal.</p>
       <input type="text" id="tools-af-key" placeholder="tu API-Football key" />
@@ -1928,7 +1934,8 @@ function getMarketOptions(g, category) {
     if (ck && ck.data) state.oddsData = ck.data;
   }
   let ev = matchOddsEvent(g);
-  if (!ev) ev = manualOddsEvent(g);   // respaldo: cuotas cargadas a mano (Oddspedia)
+  const _mev = manualOddsEvent(g);
+  if (_mev) ev = mergeManualOver(ev, _mev);   // tus cuotas manuales mandan sobre el dato dudoso
   const isSoccer = g.sport.startsWith('soccer');
   const sc = sportScale(g.sport);
 
@@ -2178,7 +2185,7 @@ function renderBetCalculator(g) {
         <div class="bet-calc-title">Calculadora de apuesta · ¿Vale la pena?</div>
         <div class="muted" style="font-family:var(--font-mono);font-size:11px;">Mercado primero · Valor · Kelly</div>
       </div>
-      <div class="edu-box"><div class="ttl">¿Cómo se usa?</div>1. <strong>Elige el mercado</strong> (1X2, Over/Under, BTTS, Spread).<br>2. <strong>Elige la opción</strong> — verás su probabilidad y el valor de la mejor cuota.<br>3. <strong>Escribe la cuota</strong> de tu casa (o la de Oddspedia para LigaPro) y tu bankroll.<br>4. El sistema te dice si esa cuota tiene <strong>valor</strong> frente al precio justo del mercado.<br>5. Si vale la pena, click en "Registrar apuesta".</div>
+      <div class="edu-box"><div class="ttl">¿Cómo se usa?</div>1. <strong>Elige el mercado</strong> (1X2, Over/Under, BTTS, Spread).<br>2. <strong>Elige la opción</strong> — verás su probabilidad y el valor de la mejor cuota.<br>3. <strong>Escribe tu cuota y tu stake</strong> (lo que vas a apostar).<br>4. El sistema te dice si esa cuota tiene <strong>valor</strong> frente al precio justo del mercado.<br>5. Si vale la pena, click en "Registrar apuesta".</div>
       <div class="calc-step">
         <div class="calc-step-label"><span class="num">1</span>Categoría de mercado</div>
         <div class="market-cat-pills" id="calc-cat-pills">
@@ -2208,9 +2215,9 @@ function renderBetCalculator(g) {
             <div class="calc-help">La cuota que ves en tu casa. Ej: 1.85 = ganas $0.85 por cada $1.</div>
           </div>
           <div>
-            <label>Tu bankroll ($)</label>
-            <input type="number" id="calc-bankroll" step="1" min="0" placeholder="500" oninput="updateCalculator()" />
-            <div class="calc-help">Total dedicado a apuestas. Para calcular Kelly stake.</div>
+            <label>Tu stake ($)</label>
+            <input type="number" id="calc-stake" step="0.01" min="0" placeholder="10.00" oninput="updateCalculator()" />
+            <div class="calc-help">Lo que vas a apostar de verdad. Te aviso si es alto, óptimo o bajo — nunca te bloqueo.</div>
           </div>
         </div>
       </div>
@@ -2374,7 +2381,8 @@ function updateCalculator() {
   const oddsEl = document.getElementById('calc-odds');
   if (!oddsEl) return;
   const oddsInput = parseFloat(oddsEl.value);
-  const bankrollInput = parseFloat(document.getElementById('calc-bankroll').value) || 0;
+  const bankroll = getBankroll();
+  const userStake = parseFloat((document.getElementById('calc-stake')||{}).value) || 0;
   const out = document.getElementById('calc-output');
   if (!oddsInput || oddsInput <= 1) { out.innerHTML = `<div class="state-msg">Ingresa una cuota válida (> 1) para ver el análisis.</div>`; return; }
   let pModel = 0, pMarket = null, label = '', categoryLabel = '', bookCount = 0, marketRef = 'avg';
@@ -2418,7 +2426,7 @@ function updateCalculator() {
   const evImplausible = !isEstimation && evPct != null && evPct > MAX_MARKET_EV;
   const blocked = marketUnreliable || evImplausible;
   const stakeFraction = blocked ? 0 : v.stakeFraction;
-  const kellyStake = bankrollInput * stakeFraction;
+  const suggestedStake = bankroll * stakeFraction;
   const stakeCapped = !blocked && (kellyFraction * KELLY_MULT) > STAKE_CAP;
   const probTier = pBlend >= PROB_ALTA ? 'alta' : (pBlend >= PROB_MEDIA ? 'media' : 'baja');
   const valueTier = blocked ? 'na' : (evPct >= VALUE_POS ? 'positivo' : (evPct >= VALUE_NEU ? 'neutro' : 'negativo'));
@@ -2449,21 +2457,50 @@ function updateCalculator() {
   state.lastCalc = { category: cat, categoryLabel, label, pickLabel, book, modelLabel: label, odds: oddsInput,
     modelProb: pModel, marketProb: pMarket, blendProb: pBlend, score: blocked ? null : Math.round(pBlend*100),
     recommended, reliable: !blocked, probTier, valueTier, evPct: blocked ? null : evPct, edgePct, mode: isEstimation?'estimation':'market',
-    bookCount, impliedProb, edge: edgePct, ev: blocked ? null : evPct, kelly: stakeFraction, kellyStake, stakeFraction };
+    bookCount, impliedProb, edge: edgePct, ev: blocked ? null : evPct, kelly: stakeFraction, suggestedStake, userStake, stakeFraction };
   state.lastCalc.meta = buildCalcMeta(g, cat, selC, _opts, pickLabel);
+  const manualCta = (blocked || isEstimation)
+    ? `<div style="margin-top:8px;"><button class="btn-secondary" type="button" onclick="openManualOddsModal('${g.id}')" style="font-size:12px;">✎ Cargar cuotas a mano (Oddspedia)</button> <span class="muted" style="font-size:11px;">${blocked?'reemplazan el dato dudoso con cuotas que verifiques':'consíguelas en Oddspedia y pégalas'}</span></div>`
+    : '';
+  // Alerta de stake (NUNCA bloquea): compara tu stake con lo sugerido o con un stake plano
+  let stakeBanner = '';
+  if (userStake > 0) {
+    const fracUser = bankroll ? userStake / bankroll : null;
+    let tag, cls, msg;
+    if (!bankroll) {
+      tag='LISTO'; cls='neu'; msg=`$${userStake.toFixed(2)} listo para registrar. Fija tu bankroll una vez en Herramientas y te avisaré si el tamaño es alto, óptimo o bajo.`;
+    } else if (blocked) {
+      tag=(fracUser>0.03)?'ALTO':'OJO'; cls=(fracUser>0.03)?'hi':'neu';
+      msg=`$${userStake.toFixed(2)} (${(fracUser*100).toFixed(1)}% del bankroll). El dato es poco fiable: confirma la cuota real (o cárgala a mano) antes de arriesgar.`;
+    } else if (stakeFraction > 0) {
+      const ratio = suggestedStake>0 ? userStake/suggestedStake : 99;
+      if (fracUser>0.05 || ratio>1.5) { tag='ALTO'; cls='hi'; msg=`$${userStake.toFixed(2)} (${(fracUser*100).toFixed(1)}%). El modelo sugiere ~$${suggestedStake.toFixed(2)} (${(stakeFraction*100).toFixed(2)}% del bankroll). Puedes apostar igual; solo arriesgas más de lo óptimo.`; }
+      else if (ratio>=0.6) { tag='ÓPTIMO'; cls='ok'; msg=`$${userStake.toFixed(2)} está en línea con lo sugerido (~$${suggestedStake.toFixed(2)}). Buen tamaño.`; }
+      else { tag='BAJO'; cls='lo'; msg=`$${userStake.toFixed(2)} es conservador (lo sugerido es ~$${suggestedStake.toFixed(2)}). Perfecto si prefieres ir suave.`; }
+    } else {
+      const flat = bankroll*0.01;
+      if (fracUser>0.03) { tag='ALTO'; cls='hi'; msg=`$${userStake.toFixed(2)} (${(fracUser*100).toFixed(1)}%) para una apuesta sin valor de precio. Si apuestas por probabilidad, conviene un stake plano y chico (~$${flat.toFixed(2)} = 1%).`; }
+      else if (fracUser>=0.005) { tag='ÓPTIMO'; cls='ok'; msg=`$${userStake.toFixed(2)} es un stake plano y prudente para apostar por probabilidad aunque el precio no acompañe.`; }
+      else { tag='BAJO'; cls='lo'; msg=`$${userStake.toFixed(2)} — conservador, está bien.`; }
+    }
+    const colors = { hi:'var(--c-cobre)', ok:'var(--c-salvia)', lo:'var(--c-pizarra)', neu:'var(--text-3)' };
+    stakeBanner = `<div class="stake-alert" style="border-left:3px solid ${colors[cls]};background:var(--surface-2);padding:10px 14px;margin-top:12px;font-size:13px;line-height:1.5;"><strong style="color:${colors[cls]};">Tu stake: ${tag}</strong> — ${msg}</div>`;
+  }
   out.innerHTML = `
     <div class="verdict-banner ${verdictClass}">${verdict}</div>
+    ${manualCta}
     <div class="calc-output">
       <div class="calc-out-cell" style="border-color:var(--border-strong);grid-column:span 2;">
         <div class="calc-out-label">Probabilidad de que ocurra</div>
         <div class="calc-out-value" style="font-size:34px;color:${blocked?'var(--c-granate)':(probTier==='alta'?'var(--c-salvia)':(probTier==='media'?'var(--c-cobre)':'var(--text-2)'))};">${blocked?'⚠':(pBlend*100).toFixed(1)+'%'}</div>
         <div class="calc-out-desc">${blocked?'dato poco fiable':probLabel+' · '+(probTier==='alta'?'ALTA':(probTier==='media'?'MEDIA':'BAJA'))}</div>
       </div>
-      <div class="calc-out-cell"><div class="calc-out-label">Stake sugerido</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankrollInput?`= $${kellyStake.toFixed(2)}`:'ingresa bankroll'}${stakeCapped?' · <span style="color:var(--c-cobre);">tope 2.5%</span>':''}</div></div>
+      <div class="calc-out-cell"><div class="calc-out-label">Stake sugerido</div><div class="calc-out-value accent">${(stakeFraction*100).toFixed(2)}%</div><div class="calc-out-desc">${bankroll?`≈ $${suggestedStake.toFixed(2)}`:'fija bankroll en Herramientas'}${stakeCapped?' · <span style="color:var(--c-cobre);">tope 2.5%</span>':''}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Valor a tu cuota</div><div class="calc-out-value ${blocked?'neg':(evPct>=0?'pos':'neg')}">${blocked?'⚠':(evPct>=0?'+':'')+evPct.toFixed(1)+'%'}</div><div class="calc-out-desc">${blocked?'no confiable':(isEstimation?'estimación':'solo stake')}</div></div>
       <div class="calc-out-cell"><div class="calc-out-label">Tu cuota</div><div class="calc-out-value">@${oddsInput.toFixed(2)}</div><div class="calc-out-desc">implícita ${(impliedProb*100).toFixed(1)}%</div></div>
       ${!isEstimation ? `<div class="calc-out-cell"><div class="calc-out-label">Mejor casa / cuota</div><div class="calc-out-value ${oddsBestAvail&&oddsBestAvail>oddsInput+0.01?'pos':''}" style="font-size:14px;line-height:1.3;">${oddsBestAvail?(bestBookAvail?bestBookAvail+'<br>':'')+'@'+oddsBestAvail.toFixed(2):'—'}</div><div class="calc-out-desc">${shopNote?'puedes mejorar tu precio':'donde más paga'}</div></div>` : ''}
     </div>
+    ${stakeBanner}
     <div class="edu-box">
       <div class="ttl">Cómo leer esto</div>
       <strong>Probabilidad (tu decisión):</strong> ${isEstimation?'la estima el modelo propio (sin cuotas API — menos confiable).':'combina el mercado ('+(marketRef==='pinnacle'?'ref. Pinnacle':'consenso')+') con tus variables. Es tu razón para apostar.'}<br><br>
@@ -2501,10 +2538,10 @@ function renderMarketsOverview(g) {
     let valCls, valHead, valBody;
     if (isEst) {
       valCls='neutro'; valHead='VALOR · estimación';
-      valBody = `<div class="mkt-val-note">Sin cuotas de la API. Usa <strong>Carga manual</strong> (cuota de Oddspedia) o la calculadora para medir el valor y el stake.</div>`;
+      valBody = `<div class="mkt-val-note">Sin cuotas de la API. Carga las de Oddspedia para ver valor y stake.</div><button class="btn-secondary" type="button" onclick="openManualOddsModal('${g.id}')" style="font-size:11px;margin-top:8px;">✎ Cargar cuotas a mano</button>`;
     } else if (unrel) {
       valCls='negativo'; valHead='VALOR · dudoso';
-      valBody = `<div class="mkt-val-note">No te fíes del valor: las cuotas no son consistentes entre casas. Confirma el precio real antes de apostar.</div>`;
+      valBody = `<div class="mkt-val-note">Las cuotas no son consistentes entre casas (posible error de la API). Carga tú las cuotas reales y reemplazan a estas.</div><button class="btn-secondary" type="button" onclick="openManualOddsModal('${g.id}')" style="font-size:11px;margin-top:8px;">✎ Cargar cuotas a mano</button>`;
     } else {
       valCls = m.valueTier; valHead='VALOR';
       const evTxt = m.evPct!=null ? `${m.evPct>=0?'+':''}${m.evPct}%` : '—';
@@ -2556,7 +2593,7 @@ function openManualOddsModal(id) {
     <button class="modal-close" onclick="closeModal()">×</button>
     <h2>Carga manual de cuotas</h2>
     <div class="tracker-block-sub" style="margin-bottom:6px;">${g.home.name} vs ${g.away.name}</div>
-    <p class="muted" style="font-size:12px;margin-bottom:16px;">Para partidos que la API no reconoce. Copia las cuotas <strong>decimales</strong> de Oddspedia. Se tratan como una casa más ("Manual (Oddspedia)") y el partido obtiene su lectura de probabilidad + valor. Deja en blanco lo que no tengas.</p>
+    <div class="edu-box" style="margin-bottom:16px;"><div class="ttl">Cómo cargar (fácil)</div>1. Abre <strong>Oddspedia</strong> (o tu casa) y busca el partido.<br>2. Copia las cuotas <strong>decimales</strong> del mercado que te interese.<br>3. Pégalas abajo y dale <strong>Guardar</strong>. Puedes cargar solo lo que tengas — mercado por mercado.<br><br>Tus cuotas se tratan como una casa más ("Manual (Oddspedia)") y <strong>reemplazan cualquier dato dudoso de la API</strong>, así el partido recupera su lectura de probabilidad + valor.</div>
     <div class="block-title" style="margin-bottom:8px;">Ganador (Moneyline / 1X2)</div>
     <div class="add-bet-grid" style="margin-bottom:16px;">
       <div class="form-row"><label>${g.home.name} (local)</label><input type="number" step="0.01" min="1" id="mo-ml-home" value="${val(ml.home)}" placeholder="1.90" /></div>
@@ -2888,6 +2925,8 @@ function getAllManualOdds() {
   try { return JSON.parse(localStorage.getItem('quantManualOdds')||'{}') || {}; } catch(e){ return {}; }
 }
 function getManualOdds(id) { return getAllManualOdds()[id] || null; }
+function getBankroll() { const v = parseFloat(localStorage.getItem('quantBankroll')); return (v>0)?v:0; }
+function setBankroll(v) { if (v>0) lsSet('quantBankroll', String(v)); else lsRemove('quantBankroll'); }
 function setManualOdds(id, obj) {
   const all = getAllManualOdds();
   if (obj && Object.keys(obj).length) all[id] = { ...obj, _ts: Date.now() };
@@ -2915,6 +2954,18 @@ function manualOddsEvent(g) {
   if (!markets.length) return null;
   return { home_team:g.home.name, away_team:g.away.name, commence_time:g.commence||null,
            _manual:true, bookmakers:[{ key:'manual', title:'Manual (Oddspedia)', markets }] };
+}
+// Fusiona: en los mercados que cargaste a mano, reemplaza las cuotas de la API (las dudosas)
+// por las tuyas; el resto de mercados de la API se conservan.
+function mergeManualOver(apiEv, manualEv) {
+  if (!manualEv) return apiEv;
+  if (!apiEv) return manualEv;
+  const manualKeys = new Set((manualEv.bookmakers[0].markets||[]).map(m=>m.key));
+  const books = (apiEv.bookmakers||[]).map(bm => ({
+    ...bm, markets: (bm.markets||[]).filter(m => !manualKeys.has(m.key))
+  })).filter(bm => (bm.markets||[]).length);
+  books.push(manualEv.bookmakers[0]);
+  return { ...apiEv, bookmakers: books, _hasManual:true };
 }
 function matchOddsEvent(g) {
   if (!state.oddsData || !g) return null;
@@ -3463,10 +3514,24 @@ function renderEducation() {
 
 function renderTools() {
   syncOddsKeyInputs();
+  renderBankrollStatus();
   renderAfKeyStatus();
   renderCorsProxyStatus();
   renderDsStatus();
   renderToolsSync();
+}
+function saveBankrollSetting(v) {
+  const n = parseFloat(v);
+  setBankroll(n>0?n:0);
+  renderBankrollStatus();
+  if (state.selectedGame) updateCalculator();
+}
+function renderBankrollStatus() {
+  const inp = document.getElementById('tools-bankroll');
+  const st = document.getElementById('tools-bankroll-status');
+  const b = getBankroll();
+  if (inp && !inp.value && b) inp.value = b;
+  if (st) st.textContent = b ? `✓ Bankroll: $${b.toFixed(2)}. Las alertas de stake están activas.` : 'Sin bankroll — las alertas de stake quedan en pausa (igual puedes registrar cualquier apuesta).';
 }
 function renderAfKeyStatus() {
   const inp = document.getElementById('tools-af-key');
@@ -3744,7 +3809,7 @@ function prefillBet(mode = 'calc') {
     pick: c.pickLabel || c.label,
     odds: c.odds,
     closingOdds: null,
-    stake: (c.kellyStake && c.kellyStake > 0) ? +c.kellyStake.toFixed(2) : 0,
+    stake: (c.userStake && c.userStake > 0) ? +c.userStake.toFixed(2) : ((c.suggestedStake && c.suggestedStake > 0) ? +c.suggestedStake.toFixed(2) : 0),
     score: (c.score != null) ? c.score : (g.viability ? g.viability.total : null),
     book: c.book || '',
     mode: 'real',
@@ -4718,6 +4783,7 @@ function gatherState() {
     adaptiveMeta: getAdaptiveMeta(),
     arbBankroll: getArbBankroll(),
     manualOdds: getAllManualOdds(),
+    bankroll: getBankroll(),
     activePreset: state.activePreset || 'adaptativo'
   };
 }
@@ -4779,6 +4845,7 @@ function mergeBlobs(cloud, local) {
     adaptiveMeta,
     arbBankroll: local.arbBankroll || cloud.arbBankroll || null,
     manualOdds,
+    bankroll: local.bankroll || cloud.bankroll || null,
     activePreset: local.activePreset || cloud.activePreset || 'adaptativo'
   };
 }
@@ -4807,6 +4874,7 @@ function applyBlob(blob, rerender) {
     if (blob.adaptiveMeta)    localStorage.setItem('quantAdaptiveMeta', JSON.stringify(blob.adaptiveMeta));
     if (blob.arbBankroll)     localStorage.setItem('quantArbBankroll', String(blob.arbBankroll));
     if (blob.manualOdds)      localStorage.setItem('quantManualOdds', JSON.stringify(blob.manualOdds));
+    if (blob.bankroll)        localStorage.setItem('quantBankroll', String(blob.bankroll));
     if (typeof blob.activePreset === 'string') { state.activePreset = blob.activePreset; localStorage.setItem('quantActivePreset', blob.activePreset); }
     if (state.activePreset === 'adaptativo') { state.weights = getAdaptiveWeights(); localStorage.setItem('quantWeights', JSON.stringify(state.weights)); }
   } catch(e) { console.warn('applyBlob:', e); }
