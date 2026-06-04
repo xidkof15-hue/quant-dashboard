@@ -163,6 +163,11 @@
   .live-score, .final-score { font-family: var(--font-mono); font-weight: 700; color: var(--text-1); font-size: 11px; margin-left: 6px; letter-spacing: 0; }
   .game-stamp { display: inline-flex; align-items: center; gap: 0; }
   .game-card.is-live { box-shadow: inset 3px 0 0 var(--c-cobre); }
+  .bet-flag { display: inline-block; margin-left: 6px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; color: var(--c-salvia); text-transform: uppercase; }
+  .live-strip { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+  .live-bar { flex: 1; height: 5px; background: var(--surface-2); overflow: hidden; border-radius: 3px; }
+  .live-bar-fill { height: 100%; background: var(--c-cobre); border-radius: 3px; transition: width 0.6s ease; }
+  .live-det { font-family: var(--font-mono); font-size: 10px; color: var(--c-cobre); font-weight: 700; white-space: nowrap; }
   .game-card.is-final { opacity: 0.78; }
   .live-info { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); display: block; margin-top: 2px; }
   /* MSGS */
@@ -668,6 +673,35 @@
   .adaptive-log div { padding: 3px 0; border-bottom: 1px solid var(--border); }
   .preset-btn.adaptive { border-color: var(--c-pizarra); color: var(--c-pizarra); font-weight: 700; }
   .preset-btn.adaptive.active { background: var(--c-pizarra); color: #fff; }
+  /* ===== Temas alternativos (alto contraste / minimal) ===== */
+  body[data-theme="mono"] {
+    --bg:#ffffff; --surface:#ffffff; --surface-hover:#f4f4f4; --surface-2:#ececec;
+    --border:#d0d0d0; --border-strong:#111111;
+    --text-1:#000000; --text-2:#1a1a1a; --text-3:#555555; --text-muted:#888888;
+    --c-carbon:#000000; --c-cobre:#b8540e; --c-salvia:#0a7d3b; --c-granate:#b00020; --c-pizarra:#1f4fd0;
+    --c-cobre-t:rgba(184,84,14,0.12); --c-salvia-t:rgba(10,125,59,0.12); --c-granate-t:rgba(176,0,32,0.12); --c-pizarra-t:rgba(31,79,208,0.12);
+  }
+  body[data-theme="carbon"] {
+    --bg:#0d0d10; --surface:#16161b; --surface-hover:#1e1e24; --surface-2:#23232b;
+    --border:#2c2c34; --border-strong:#50505a;
+    --text-1:#f4f4f6; --text-2:#c9c9d0; --text-3:#8b8b94; --text-muted:#6a6a72;
+    --c-carbon:#f4f4f6; --c-cobre:#f59e0b; --c-salvia:#4ade80; --c-granate:#f87171; --c-pizarra:#60a5fa;
+    --c-cobre-t:rgba(245,158,11,0.16); --c-salvia-t:rgba(74,222,128,0.16); --c-granate-t:rgba(248,113,113,0.16); --c-pizarra-t:rgba(96,165,250,0.16);
+  }
+  /* en oscuro, texto oscuro sobre los acentos brillantes */
+  body[data-theme="carbon"] .prob-alta, body[data-theme="carbon"] .prob-media, body[data-theme="carbon"] .prob-baja,
+  body[data-theme="carbon"] .prob-dudoso, body[data-theme="carbon"] .live-pill, body[data-theme="carbon"] .final-pill,
+  body[data-theme="carbon"] .mkt-manual, body[data-theme="carbon"] .btn-accent { color:#0d0d10 !important; }
+  /* ===== Niveles de animación ===== */
+  body[data-anim="ninguna"] *, body[data-anim="ninguna"] *::before, body[data-anim="ninguna"] *::after { animation: none !important; transition: none !important; }
+  body[data-anim="vivo"] .game-card { animation: cardIn .28s ease both; }
+  body[data-anim="vivo"] .game-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.10); }
+  @keyframes cardIn { from { opacity:0; transform: translateY(7px); } to { opacity:1; transform:none; } }
+  /* selector de estilo en Herramientas */
+  .theme-grid { display:flex; gap:8px; flex-wrap:wrap; }
+  .theme-btn { padding:8px 14px; border:1px solid var(--border); background:var(--surface); color:var(--text-2); cursor:pointer; font-family:var(--font-body); font-size:12px; transition:all .15s; }
+  .theme-btn:hover { background:var(--surface-hover); }
+  .theme-btn.active { background:var(--text-1); color:var(--surface); border-color:var(--text-1); }
 </style>
 </head>
 <body>
@@ -704,7 +738,6 @@
     <button class="tab" data-tab="arb">Arbitraje</button>
     <button class="tab" data-tab="tracker">Mis Apuestas</button>
     <button class="tab" data-tab="tools">Herramientas</button>
-    <button class="tab" data-tab="education">Educación</button>
     <button class="tab" data-tab="apps">Casas</button>
   </div>
 </header>
@@ -723,8 +756,8 @@
     </div>
     <div class="sort-bar">
       <span class="label">Ordenar por:</span>
-      <button class="sort-btn active" data-sort="opportunity">Oportunidad ↓</button>
-      <button class="sort-btn" data-sort="time">Cronológico</button>
+      <button class="sort-btn" data-sort="opportunity">Oportunidad ↓</button>
+      <button class="sort-btn active" data-sort="time">Cronológico</button>
       <button class="sort-btn" data-sort="no-opportunity">Sin oportunidad primero</button>
     </div>
     <div id="schedule-content"><div class="state-msg"><span class="loader"></span>Conectando a fuentes de datos...</div></div>
@@ -786,6 +819,21 @@
   <section class="panel" id="panel-tools">
     <h1 class="section-title">Herramientas</h1>
     <p class="section-sub">Configuración de la app: tu clave de The Odds API y la sincronización entre dispositivos.</p>
+    <div class="api-key-form">
+      <div class="block-title">Estilo y animación</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:8px;">Paleta de colores:</p>
+      <div class="theme-grid" id="theme-grid">
+        <button class="theme-btn" data-theme="calido" onclick="setTheme('calido')">Cálido</button>
+        <button class="theme-btn" data-theme="mono" onclick="setTheme('mono')">Mono · alto contraste</button>
+        <button class="theme-btn" data-theme="carbon" onclick="setTheme('carbon')">Carbón · oscuro</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin:12px 0 8px;">Animaciones:</p>
+      <div class="theme-grid" id="anim-grid">
+        <button class="theme-btn" data-anim="sutil" onclick="setAnim('sutil')">Sutil</button>
+        <button class="theme-btn" data-anim="vivo" onclick="setAnim('vivo')">Vivas</button>
+        <button class="theme-btn" data-anim="ninguna" onclick="setAnim('ninguna')">Ninguna</button>
+      </div>
+    </div>
     <div class="api-key-form">
       <div class="block-title">API Key — The Odds API <span class="muted" style="text-transform:none;letter-spacing:0;">(compartida con la sección Cuotas de cada partido)</span></div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:6px;">Regístrate gratis en <a href="https://the-odds-api.com" target="_blank">the-odds-api.com</a> y pega tu key. Se guarda solo en tu navegador.</p>
@@ -859,30 +907,6 @@
   </section>
 
   <!-- EDUCATION -->
-  <section class="panel" id="panel-education">
-    <h1 class="section-title">Educación</h1>
-    <p class="section-sub">Conceptos clave explicados en lenguaje sencillo, las variables del modelo, y lecciones automáticas a partir de tus propios resultados.</p>
-    <div id="education-dynamic"></div>
-    <h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Glosario de conceptos</h2>
-    <p class="section-sub">Cada término del dashboard explicado con ejemplos numéricos. Vuelve aquí cuando tengas dudas.</p>
-    <div class="insights">
-      <div class="insight-card cobre"><div class="head">◆ Probabilidad implícita</div><div class="body">La probabilidad que <strong>la cuota está afirmando</strong>. Fórmula: <code>1 / cuota</code>.<br><br>Ejemplo: cuota 2.00 → 50%. Cuota 1.50 → 66.7%. Cuota 4.00 → 25%.<br><br>Es lo que la casa cree (o quiere que creas) va a pasar. Tu trabajo: encontrar cuándo tu probabilidad estimada > implícita.</div></div>
-      <div class="insight-card salvia"><div class="head">◆ Value Bet</div><div class="body">Una apuesta donde <strong>tu probabilidad estimada es mayor que la implícita</strong> en la cuota.<br><br>Ejemplo: modelo dice "Arsenal 60%", cuota 2.10 (implica 47.6%) → <strong>value de 12.4 puntos</strong>.<br><br>Encontrar value bets es lo que separa profesionales de casuales.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ Expected Value (EV)</div><div class="body">La ganancia/pérdida promedio a largo plazo. <br><br>Fórmula: <code>EV = (P_ganar × ganancia) − (P_perder × stake)</code>.<br><br>Ejemplo: cuota 2.10, stake $10, P=60%: EV = (0.60×$11) − (0.40×$10) = <strong>+$2.60</strong>.<br><br>Solo apuestas cuando EV > 0.</div></div>
-      <div class="insight-card cobre"><div class="head">◆ Kelly Criterion</div><div class="body">Fórmula para el <strong>stake óptimo</strong> que maximiza crecimiento del bankroll.<br><br>Fórmula: <code>K = (P × cuota − 1) / (cuota − 1)</code><br><br>Ejemplo: P=60%, cuota=2.10 → K = 23.6%.<br><br><strong>Kelly puro es agresivo.</strong> Profesionales usan <em>Half Kelly</em> (mitad) o <em>Quarter Kelly</em>.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ CLV — Closing Line Value</div><div class="body">Diferencia entre tu cuota y la cuota al cierre (justo antes del partido).<br><br>Si frecuentemente apuestas a cuotas mejores que el cierre, eres <strong>sharp</strong>.<br><br>Ejemplo: apostaste a 2.20, cierre fue 1.95 → CLV = +12.8%. <strong>El mejor indicador de habilidad real</strong>, incluso mejor que ROI a corto plazo.</div></div>
-      <div class="insight-card salvia"><div class="head">◆ Sharp vs Square</div><div class="body"><strong>Sharp:</strong> profesional con modelo, disciplina, volumen, gestión de bankroll y CLV positivo.<br><br><strong>Square:</strong> casual que sigue intuición, apuesta a su equipo favorito, no registra.<br><br>El sistema te asigna un Sharp Rating 0-100 basado en ROI, CLV, disciplina y consistencia.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ Vig / Juice / Margen</div><div class="body">La <strong>comisión implícita</strong> de la casa. Si las probabilidades implícitas suman > 100%, el exceso es el vig.<br><br>Ejemplo: 2.00 / 3.40 / 4.00 → 50% + 29.4% + 25% = 104.4% → vig 4.4%.<br><br>Pinnacle: 2-3%. Casas comerciales: 5-10%.</div></div>
-      <div class="insight-card cobre"><div class="head">◆ Line Shopping</div><div class="body">Antes de cada apuesta, comparar la línea en 3-4 casas y apostar en la más alta. Aporta +2-5% de EV anual sin riesgo extra.<br><br>El dashboard lo hace automáticamente: dentro del detalle de cada partido, sección <strong>Cuotas</strong>, con la mejor cuota de cada lado resaltada.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ Arbitraje (Surebet)</div><div class="body">Apostar todos los resultados en distintas casas cuando las probabilidades implícitas suman < 100%. Ganas pase lo que pase.<br><br>Casa A: 2.10 al local, Casa B: 2.10 al visita → 47.6% + 47.6% = 95.2% → arb 4.8%.<br><br><strong>Realidad:</strong> los bookies limitan cuentas. Solo Pinnacle no lo hace.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ Hedging</div><div class="body">Apostar el resultado opuesto a una posición abierta para asegurar ganancia o limitar pérdida.<br><br>Útil cuando una cuota se movió a tu favor. Reduces ganancia máxima pero garantizas no perder.</div></div>
-      <div class="insight-card salvia"><div class="head">◆ Bankroll</div><div class="body">Dinero <strong>separado exclusivamente</strong> para apostar. Nunca lo mezcles con ahorros, gastos o tu plan de inversión a $18K.<br><br>Regla: stake fijo 1-3% del bankroll. Stakes del 10%+ llevan a ruina rápido por varianza.</div></div>
-      <div class="insight-card granate"><div class="head">◆ Varianza</div><div class="body">Fluctuaciones de corto plazo. Puedes tener +15% EV teórico y aun así perder 8 apuestas seguidas. Es matemáticamente normal.<br><br>Disciplina de stake + volumen (50+ apuestas) hacen que el EV positivo se materialice.</div></div>
-      <div class="insight-card cobre"><div class="head">◆ Modelo Poisson (fútbol)</div><div class="body">Modela los goles como distribución Poisson con media λ (lambda) basada en el promedio reciente.<br><br>Permite calcular probabilidad de cada marcador, O/U, BTTS y 1X2 desde una fórmula. Estándar académico.</div></div>
-      <div class="insight-card pizarra"><div class="head">◆ Net Rating (básquet/NFL)</div><div class="body">Diferencia entre puntos anotados y recibidos por cada 100 posesiones. Métrica clave para evaluar fuerza.<br><br>El modelo combina net rating con ventaja local (~4% en NBA) para calcular spread y total esperado.</div></div>
-    </div>
-  </section>
-
   <!-- APPS -->
   <section class="panel" id="panel-apps">
     <h1 class="section-title">Estrategia multi-cuenta</h1>
@@ -928,7 +952,7 @@ const state = {
   games: [],
   selectedGame: null,
   teamCache: {},
-  sortMode: 'opportunity',
+  sortMode: 'time',
   weights: JSON.parse(localStorage.getItem('quantWeights') || 'null') || {...PRESETS.balanceado},
   customPresets: JSON.parse(localStorage.getItem('quantPresets') || '{}'),
   oddsKey: localStorage.getItem('oddsApiKey') || '',
@@ -1357,7 +1381,42 @@ function renderSchedule() {
   }
   c.innerHTML = html;
 }
+// Apuestas activas (pendientes) ligadas a este partido
+function gameActiveBets(g) {
+  if (!g || !state.bets) return 0;
+  const hn=(g.home.name||'').toLowerCase(), an=(g.away.name||'').toLowerCase();
+  return state.bets.filter(b => {
+    if (b.status!=='pending') return false;
+    if (b.espnGameId) return b.espnGameId===g.id;   // con id, manda el id
+    return hn.length>2 && an.length>2 && b.match &&
+      b.match.toLowerCase().includes(hn) && b.match.toLowerCase().includes(an);
+  }).length;
+}
+// Progreso aproximado del partido en vivo (0..1). El usuario aceptó que sea aproximado.
+function gameProgress(g) {
+  if (g.status==='post') return 1;
+  if (g.status!=='in') return 0;
+  const sp = g.sport||''; const per = g.period || 1;
+  let total = 4, plen = null, countUp = false;
+  if (sp.startsWith('soccer')) { total=2; plen=45; countUp=true; }
+  else if (sp.includes('hockey')) { total=3; plen=20; }
+  else if (sp.includes('baseball')) { total=9; plen=null; }
+  else if (sp.includes('basketball')) { total = sp.includes('ncaa')?2:4; plen = sp.includes('ncaa')?20:12; }
+  else if (sp.includes('football')) { total=4; plen=15; }
+  if (countUp) {  // fútbol: el reloj es el minuto total del partido (0-90+)
+    const mm = parseInt((g.clock||'').match(/(\d+)/)?.[1]||'0',10);
+    return Math.min(0.98, Math.max(0.04, mm/90));
+  }
+  let within = 0.5;
+  if (plen) {
+    const m = (g.clock||'').match(/(\d+):(\d+)/);
+    if (m) { const sec = (+m[1])*60 + (+m[2]); within = Math.min(1, Math.max(0, 1 - sec/(plen*60))); }
+  }
+  return Math.min(0.98, Math.max(0.04, (per - 1 + within) / total));
+}
 function gameCardHTML(g) {
+  const activeBets = gameActiveBets(g);
+  const betFlag = activeBets>0 ? ` <span class="bet-flag" title="${activeBets} apuesta(s) activa(s)">● ${activeBets>1?activeBets+' ':''}apostado</span>` : '';
   const time = g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'});
   const dayShort = g.date.toLocaleDateString('es-EC',{day:'2-digit',month:'short',timeZone:'America/Guayaquil'});
   const isLive = g.status==='in', isFinal = g.status==='post';
@@ -1405,8 +1464,7 @@ function gameCardHTML(g) {
   let stamp;
   if (isLive) {
     const sc = `${g.home.score ?? 0}-${g.away.score ?? 0}`;
-    const clk = g.clock ? ` · ${g.clock}` : (g.period ? ` · P${g.period}` : '');
-    stamp = `<span class="live-pill">EN VIVO</span><span class="live-score">${sc}${clk}</span>`;
+    stamp = `<span class="live-pill">● EN VIVO</span><span class="live-score">${sc}</span>`;
   } else if (isFinal) {
     const sc = `${g.home.score ?? 0}-${g.away.score ?? 0}`;
     stamp = `<span class="final-pill">FINAL</span><span class="final-score">${sc}</span>`;
@@ -1415,7 +1473,8 @@ function gameCardHTML(g) {
   } else {
     stamp = `<span class="game-time">${time}</span>`;
   }
-  return `<div class="game-card${cardBandClass}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')"><div class="game-meta"><span>${g.league}</span><span class="game-stamp">${stamp}</span></div><div class="teams"><div class="team-row"><div class="team-name">${g.home.name}</div>${homeR}</div><div class="vs-divider">— VS —</div><div class="team-row"><div class="team-name">${g.away.name}</div>${awayR}</div></div>${oppHtml}</div>`;
+  const liveBar = isLive ? `<div class="live-strip"><div class="live-bar"><div class="live-bar-fill" style="width:${Math.round(gameProgress(g)*100)}%"></div></div><span class="live-det">${g.shortDetail || g.clock || (g.period?'P'+g.period:'')}</span></div>` : '';
+  return `<div class="game-card${cardBandClass}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')"><div class="game-meta"><span>${g.league}${betFlag}</span><span class="game-stamp">${stamp}</span></div><div class="teams"><div class="team-row"><div class="team-name">${g.home.name}</div>${homeR}</div><div class="vs-divider">— VS —</div><div class="team-row"><div class="team-name">${g.away.name}</div>${awayR}</div></div>${liveBar}${oppHtml}</div>`;
 }
 function updateStatBar() {
   const sl = document.querySelector('#sport-select option:checked').textContent;
@@ -1449,6 +1508,30 @@ async function loadWeek() {
   // Resultados finalizados -> registro de outcomes -> ajuste silencioso del preset adaptativo
   scanShadowOutcomes();
   recomputeAdaptive();
+  startLivePolling();
+}
+let __liveTimer = null;
+function stopLivePolling() { if (__liveTimer) { clearInterval(__liveTimer); __liveTimer = null; } }
+function startLivePolling() { stopLivePolling(); __liveTimer = setInterval(refreshLiveScores, 35000); }
+async function refreshLiveScores() {
+  const panel = document.getElementById('panel-schedule');
+  if (!panel || !panel.classList.contains('active')) return;       // solo en Cronograma
+  if (!state.games || !state.games.length) return;
+  const relevant = state.games.some(g => g.status==='in' || (g.status==='pre' && (g.date - Date.now()) < 3600000));
+  if (!relevant) return;                                           // nada en vivo ni por empezar
+  const wr = getWeekRange(state.weekOffset);
+  const data = await fetchScoreboard(state.sport, `${fmtDateESPN(wr.start)}-${fmtDateESPN(wr.end)}`);
+  if (!data) return;
+  const fresh = {}; parseGames(data, state.sport).forEach(f => fresh[f.id] = f);
+  let changed = false;
+  state.games.forEach(g => {
+    const f = fresh[g.id]; if (!f) return;
+    if (g.status!==f.status || g.clock!==f.clock || g.period!==f.period ||
+        g.home.score!==f.home.score || g.away.score!==f.away.score) changed = true;
+    g.status=f.status; g.clock=f.clock; g.period=f.period; g.shortDetail=f.shortDetail;
+    g.home.score=f.home.score; g.away.score=f.away.score;
+  });
+  if (changed && !state.selectedGame) renderSchedule();            // refresca la lista (no si estás dentro de un detalle)
 }
 async function computeGameViability(g) {
   try {
@@ -3452,84 +3535,25 @@ function syncOddsKeyInputs() {
     : 'Estado: sin API key.';
 }
 // Render de la pestaña Herramientas (arbitraje + hedging)
-function renderEducation() {
-  const c = document.getElementById('education-dynamic');
-  if (!c) return;
-  // --- Parte 1: las 7 variables del modelo ---
-  let weightsHtml = `<h2 style="font-size:20px;font-weight:700;margin:6px 0 4px;">Las 7 variables del modelo de viabilidad</h2>
-    <p class="section-sub">El score de viabilidad (0–100) sale de combinar estas 7 variables. Cada una mide algo distinto del partido. En el <strong>Calificador</strong> (dentro del detalle de un partido) puedes darle más o menos peso a cada una — o dejar que el preset Adaptativo lo haga por ti.</p>
-    <div class="insights">` +
-    Object.entries(WEIGHT_INFO).map(([k,info]) =>
-      `<div class="insight-card pizarra"><div class="head">◆ ${info.name}</div><div class="body">${info.desc}<br><br><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-3);">${info.rec}</span></div></div>`
-    ).join('') + `</div>`;
-
-  // --- Parte 2: lecciones aprendidas de tus resultados ---
-  let lessonsHtml = `<h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Lecciones aprendidas de tus apuestas</h2>`;
-  const settled = state.bets.filter(b => b.status!=='pending');
-  if (settled.length < 3) {
-    lessonsHtml += `<p class="section-sub">Cuando tengas al menos 3 apuestas finalizadas, aquí aparecerán lecciones automáticas basadas en tus resultados reales. Llevas ${settled.length}.</p>`;
-    c.innerHTML = weightsHtml + lessonsHtml;
-    return;
-  }
-  lessonsHtml += `<p class="section-sub">Generadas automáticamente a partir de tus ${settled.length} apuestas finalizadas. Se actualizan solas con cada nuevo resultado.</p>`;
-  const cards = [];
-  // Conteo de tipos de leccion
-  const withLesson = settled.filter(b => b.lesson);
-  const cnt = { validation:0, variance:0, insight:0, discipline:0 };
-  withLesson.forEach(b => { if (cnt[b.lesson]!=null) cnt[b.lesson]++; });
-  const overall = aggMetrics(settled);
-  // Leccion: disciplina
-  if (cnt.discipline >= 2) {
-    cards.push({ cls:'granate', head:'✕ Cuidado con la indisciplina', body:`Tienes <strong>${cnt.discipline}</strong> apuestas donde fuiste <strong>contra</strong> el modelo y perdiste. Es el patrón más caro a largo plazo. Antes de volver a ir contra el modelo, escribe una razón concreta — si no la tienes, mejor sigue la recomendación.` });
-  } else if (withLesson.length >= 3 && cnt.validation >= cnt.discipline) {
-    cards.push({ cls:'salvia', head:'✓ Vas por buen camino', body:`De tus apuestas con modelo, la mayoría son <strong>validaciones</strong> (seguiste al modelo y ganaste) y muy pocas indisciplinas. Ese es exactamente el perfil de un apostador disciplinado. Manténlo.` });
-  }
-  // Leccion: varianza
-  if (cnt.variance >= 3) {
-    cards.push({ cls:'pizarra', head:'≡ La varianza es normal', body:`Tienes <strong>${cnt.variance}</strong> apuestas donde seguiste al modelo y aún así perdiste. Eso NO significa que el modelo falle: hasta una apuesta con 70% de probabilidad pierde 3 de cada 10 veces. Lo que te protege es el stake disciplinado, no acertar siempre.` });
-  }
-  // Leccion: intuicion
-  if (cnt.insight >= 2) {
-    cards.push({ cls:'cobre', head:'◆ Tu intuición acertó varias veces', body:`Fuiste contra el modelo y ganaste <strong>${cnt.insight}</strong> veces. Puede ser lectura real (algo que el modelo no ve) o suerte. Revisa las notas de esas apuestas: si había una razón repetida, quizá valga subir ese factor en el Calificador.` });
-  }
-  // Leccion: mejor / peor mercado
-  const byMarket = groupBy(settled, b => b.market || '—');
-  const mkts = Object.entries(byMarket).filter(([_,a]) => a.length>=3).map(([k,a]) => ({k, ...aggMetrics(a)}));
-  if (mkts.length) {
-    mkts.sort((a,b)=>b.roi-a.roi);
-    const best = mkts[0];
-    if (best.roi > 0.03) cards.push({ cls:'salvia', head:'▲ Tu mercado más rentable', body:`En <strong>${best.k}</strong> llevas ${best.n} apuestas con ROI <strong>${(best.roi*100).toFixed(1)}%</strong> (acierto ${(best.winRate*100).toFixed(0)}%). Parece tu zona de ventaja — considera enfocar ahí.` });
-    const worst = mkts[mkts.length-1];
-    if (worst.roi < -0.05 && worst.k !== best.k) cards.push({ cls:'granate', head:'▼ Tu mercado más flojo', body:`En <strong>${worst.k}</strong> llevas ${worst.n} apuestas con ROI <strong>${(worst.roi*100).toFixed(1)}%</strong>. Si el patrón se mantiene, considera dejar ese mercado o revisar cómo lo analizas.` });
-  }
-  // Leccion: score
-  const withScore = settled.filter(b => b.score!=null);
-  if (withScore.length >= 4) {
-    const hi = aggMetrics(withScore.filter(b=>b.score>=60));
-    const lo = aggMetrics(withScore.filter(b=>b.score<60));
-    if (hi.settled >= 2 && lo.settled >= 2) {
-      cards.push({ cls: hi.roi>lo.roi?'salvia':'pizarra', head:'◈ El score sí importa', body:`Apuestas con score ≥ 60: ROI ${(hi.roi*100).toFixed(1)}% (${hi.settled} apuestas). Apuestas con score < 60: ROI ${(lo.roi*100).toFixed(1)}% (${lo.settled} apuestas). ${hi.roi>lo.roi?'Confirma la regla: apuesta solo con score ≥ 60.':'Por ahora la diferencia no es clara — necesitas más muestra.'}` });
-    }
-  }
-  // Leccion: el preset adaptativo
-  const nOut = Object.keys(getOutcomeLog()).length;
-  cards.push({ cls:'pizarra', head:'◉ Tu preset Adaptativo', body: nOut < ADAPTIVE_MIN_RESULTS
-    ? `El modelo lleva <strong>${nOut}</strong> resultados analizados (de ${ADAPTIVE_MIN_RESULTS} necesarios). Cuando llegue a ${ADAPTIVE_MIN_RESULTS}, empezará a afinar los 7 pesos solo, comparando qué factores predijeron mejor los partidos que ganaste.`
-    : `El modelo ya ajusta los pesos con <strong>${nOut}</strong> resultados. Cada semana que revisas el cronograma, aprende un poco más. Puedes ver y reiniciar esos ajustes en el Calificador.` });
-  // Resumen general
-  cards.push({ cls: overall.roi>=0?'salvia':'granate', head:'◉ Resumen', body:`En total: ${overall.settled} apuestas finalizadas, acierto ${(overall.winRate*100).toFixed(0)}%, ROI <strong>${(overall.roi*100).toFixed(1)}%</strong>. ${overall.settled<20?'Aún es muestra chica — apunta a 30+ para sacar conclusiones firmes.':(overall.roi>=0?'Vas en positivo; mantén la disciplina de stake.':'Vas en negativo; considera bajar stakes y revisar tu proceso.')}` });
-
-  lessonsHtml += `<div class="insights">` + cards.map(x => `<div class="insight-card ${x.cls}"><div class="head">${x.head}</div><div class="body">${x.body}</div></div>`).join('') + `</div>`;
-  c.innerHTML = weightsHtml + lessonsHtml;
-}
 
 function renderTools() {
   syncOddsKeyInputs();
+  renderThemeControls();
   renderBaseStakeStatus();
   renderAfKeyStatus();
   renderCorsProxyStatus();
   renderDsStatus();
   renderToolsSync();
+}
+function applyTheme(t) { document.body.setAttribute('data-theme', t || 'calido'); }
+function applyAnim(a) { document.body.setAttribute('data-anim', a || 'sutil'); }
+function setTheme(t) { lsSet('quantTheme', t); applyTheme(t); renderThemeControls(); }
+function setAnim(a) { lsSet('quantAnim', a); applyAnim(a); renderThemeControls(); }
+function renderThemeControls() {
+  const th = localStorage.getItem('quantTheme') || 'calido';
+  const an = localStorage.getItem('quantAnim') || 'sutil';
+  document.querySelectorAll('#theme-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===th));
+  document.querySelectorAll('#anim-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.anim===an));
 }
 function saveBaseStakeSetting(v) {
   const n = parseFloat(v);
@@ -4681,7 +4705,6 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.tab==='tools') renderTools();
     if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); }
     if (t.dataset.tab==='arb') renderArb();
-    if (t.dataset.tab==='education') renderEducation();
   });
 });
 document.querySelectorAll('#arb-subtabs .subtab').forEach(t => {
@@ -4796,6 +4819,8 @@ function gatherState() {
     manualOdds: getAllManualOdds(),
     bankroll: getBankroll(),
     baseStake: getBaseStake(),
+    theme: localStorage.getItem('quantTheme') || null,
+    anim: localStorage.getItem('quantAnim') || null,
     activePreset: state.activePreset || 'adaptativo'
   };
 }
@@ -4859,6 +4884,8 @@ function mergeBlobs(cloud, local) {
     manualOdds,
     bankroll: local.bankroll || cloud.bankroll || null,
     baseStake: local.baseStake || cloud.baseStake || null,
+    theme: local.theme || cloud.theme || null,
+    anim: local.anim || cloud.anim || null,
     activePreset: local.activePreset || cloud.activePreset || 'adaptativo'
   };
 }
@@ -4889,6 +4916,8 @@ function applyBlob(blob, rerender) {
     if (blob.manualOdds)      localStorage.setItem('quantManualOdds', JSON.stringify(blob.manualOdds));
     if (blob.bankroll)        localStorage.setItem('quantBankroll', String(blob.bankroll));
     if (blob.baseStake)       localStorage.setItem('quantBaseStake', String(blob.baseStake));
+    if (blob.theme)           { localStorage.setItem('quantTheme', blob.theme); applyTheme(blob.theme); }
+    if (blob.anim)            { localStorage.setItem('quantAnim', blob.anim); applyAnim(blob.anim); }
     if (typeof blob.activePreset === 'string') { state.activePreset = blob.activePreset; localStorage.setItem('quantActivePreset', blob.activePreset); }
     if (state.activePreset === 'adaptativo') { state.weights = getAdaptiveWeights(); localStorage.setItem('quantWeights', JSON.stringify(state.weights)); }
   } catch(e) { console.warn('applyBlob:', e); }
@@ -5077,6 +5106,8 @@ function updateHeaderHeight() {
 window.addEventListener('resize', updateHeaderHeight);
 
 window.addEventListener('DOMContentLoaded', async () => {
+  applyTheme(localStorage.getItem('quantTheme') || 'calido');
+  applyAnim(localStorage.getItem('quantAnim') || 'sutil');
   updateHeaderHeight();
   syncOddsKeyInputs();
   renderToolsSync();
