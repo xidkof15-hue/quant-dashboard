@@ -761,7 +761,7 @@
   /* Botones de liga con logo: blanco y negro apagado, color encendido */
   .lg-grid { display:flex; flex-wrap:wrap; gap:8px; }
   .lg-btn { display:inline-flex; align-items:center; gap:8px; padding:7px 13px 7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--surface); cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-3); filter:grayscale(1); opacity:0.55; transition:filter .18s, opacity .18s, border-color .18s, box-shadow .18s, transform .12s; }
-  .lg-btn:hover { opacity:0.85; transform:translateY(-1px); }
+  .lg-btn:hover { opacity:0.85; transform:translateY(-1px) scale(1.04); }
   .lg-btn.on { filter:none; opacity:1; color:var(--text-1); border-color:var(--c-salvia); box-shadow:0 0 0 1px var(--c-salvia) inset; }
   .lg-logo { width:22px; height:22px; border-radius:5px; object-fit:contain; flex-shrink:0; background:#fff; }
   .lg-badge { width:22px; height:22px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:9.5px; font-weight:800; flex-shrink:0; letter-spacing:0.02em; }
@@ -791,6 +791,19 @@
   }
   .today-row { display:flex; gap:12px; align-items:center; background:var(--surface); border:1px solid var(--border); padding:12px 14px; margin-bottom:8px; flex-wrap:wrap; }
   .today-row.t-off { opacity:0.45; }
+  /* === Animaciones integradas (elegidas) === */
+  @keyframes blurIn { from { opacity:0; filter:blur(9px); transform:translateY(7px); } to { opacity:1; filter:blur(0); transform:none; } }
+  .anim-in { animation: blurIn .5s both; }
+  .anim-in:nth-child(2){animation-delay:.05s} .anim-in:nth-child(3){animation-delay:.10s} .anim-in:nth-child(4){animation-delay:.15s}
+  .anim-in:nth-child(5){animation-delay:.20s} .anim-in:nth-child(6){animation-delay:.25s} .anim-in:nth-child(7){animation-delay:.30s}
+  .anim-in:nth-child(8){animation-delay:.35s} .anim-in:nth-child(9){animation-delay:.40s} .anim-in:nth-child(n+10){animation-delay:.45s}
+  .grow-hover { transition: transform .16s ease, box-shadow .16s ease; }
+  .grow-hover:hover { transform: scale(1.025); }
+  @keyframes gradFlow { to { background-position:200% center; } }
+  .grad-val { background:linear-gradient(90deg,var(--c-salvia),var(--c-coral),var(--c-salvia)); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation:gradFlow 3s linear infinite; font-weight:800; }
+  @keyframes skelShimmer { 0%{background-position:-320px 0;} 100%{background-position:320px 0;} }
+  .skel-row { height:62px; border-radius:10px; margin-bottom:8px; background:linear-gradient(90deg,#e3e8ef 25%,#eef2f7 50%,#e3e8ef 75%); background-size:320px 100%; animation:skelShimmer 1.2s infinite linear; }
+  @media (prefers-reduced-motion: reduce) { .anim-in,.grad-val,.skel-row,.grow-hover { animation:none!important; transition:none!important; } }
   .tr-prob { font-family:var(--font-mono); font-size:22px; font-weight:800; min-width:50px; text-align:center; }
   .tr-prob.alta { color:var(--c-salvia); } .tr-prob.media { color:var(--c-cobre); } .tr-prob.baja { color:var(--text-3); }
   .tr-body { flex:1; min-width:0; }
@@ -1737,7 +1750,7 @@ function renderTodayLeagues() {
 let todayGames = [];
 async function loadToday() {
   const c = document.getElementById('today-content');
-  c.innerHTML = `<div class="state-msg"><span class="loader"></span>Cargando partidos de hoy...</div>`;
+  c.innerHTML = `<div class="small-note" style="margin-bottom:10px;">Cargando partidos de hoy…</div>` + '<div class="skel-row"></div>'.repeat(4);
   const d = new Date(); const ds = fmtDateESPN(d);
   const leagues = getTodayLeagues();
   todayGames = [];
@@ -1748,6 +1761,7 @@ async function loadToday() {
   if (!todayGames.length) { c.innerHTML = `<div class="state-msg">No hay partidos pendientes hoy en tus ligas seleccionadas.</div>`; return; }
   c.innerHTML = `<div class="state-msg"><span class="loader"></span>Calculando probabilidades (${todayGames.length} partidos)...</div>`;
   await Promise.all(todayGames.map(g => computeGameViability(g)));
+  window.__animateToday = true;
   renderTodayPicks();
 }
 function buildTodayPicks() {
@@ -1807,6 +1821,12 @@ function toggleTodayPick(id) {
   const g = todayGames.find(x=>x.id===id); if (g) g.__off = !g.__off;
   renderTodayPicks();
 }
+function animateCount(el){
+  const tgt=parseFloat(el.dataset.count); if(isNaN(tgt)) return;
+  const suf=el.dataset.suffix||''; const dur=600, t0=performance.now();
+  (function step(t){ const k=Math.min(1,(t-t0)/dur); el.textContent=Math.round(tgt*k)+suf; if(k<1) requestAnimationFrame(step); else el.textContent=tgt+suf; })(performance.now());
+}
+function animateCountsIn(c){ (c||document).querySelectorAll('[data-count]').forEach(animateCount); }
 function renderTodayPicks() {
   const c = document.getElementById('today-content'); if (!c) return;
   const bankInp = document.getElementById('today-bank'); if (bankInp && !bankInp.value) bankInp.value = getTodayBank();
@@ -1826,9 +1846,9 @@ function renderTodayPicks() {
     const oddsTxt = o.odds ? `@ ${o.odds.toFixed(2)}` : '';
     const houseTxt = (o.book && !String(o.book).startsWith('≈')) ? `${o.book} ${oddsTxt}` : (String(o.book||'').startsWith('≈') ? `${oddsTxt} (precio derivado)` : oddsTxt);
     const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
-    html += `<div class="today-row${p.on?'':' t-off'}">
+    html += `<div class="today-row anim-in grow-hover${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
-      <div class="tr-prob ${o.probTier}">${(o.prob*100).toFixed(0)}%</div>
+      <div class="tr-prob ${o.probTier}" data-count="${Math.round(o.prob*100)}" data-suffix="%">${(o.prob*100).toFixed(0)}%</div>
       <div class="tr-body">
         <div class="tr-match">
           <span class="tr-team">${teamLogoHTML(g.home,24)}<span class="tr-name">${g.home.shortName||g.home.name}</span></span>
@@ -1836,12 +1856,13 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
           <span class="tr-time">${time}</span>
         </div>
-        <div class="tr-pick"><span class="tr-tag">${o.label}</span><strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge">${edgeTxt}</span></div>
+        <div class="tr-pick"><span class="tr-tag">${o.label}</span><strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span></div>
       </div>
       <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
   });
   c.innerHTML = html;
+  if (window.__animateToday) { animateCountsIn(c); window.__animateToday = false; }
 }
 function printTodayReport() {
   if (!window.__todayPicks || !window.__todayPicks.length) { toast('Carga el paquete primero (↻ Actualizar)','err'); return; }
@@ -4769,7 +4790,7 @@ function betCardHTML(b) {
     else acts += `<button class="icon-btn" title="Volver a pendiente" onclick="setStatus('${b.id}','pending')">↶</button>`;
   }
   acts += `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
-  return `<div class="bet-card st-${b.status}">
+  return `<div class="bet-card anim-in grow-hover st-${b.status}">
     <div class="bet-info">
       <div class="bet-line1"><span class="bet-match">${b.match||'—'}</span>${when}</div>
       <div class="bet-line2">${betMarketCell(b)} <span class="bet-sep">·</span> @${(b.odds||0).toFixed(2)} <span class="bet-sep">·</span> $${(b.stake||0).toFixed(2)}${b.sport?` <span class="bet-sep">·</span> <span class="muted">${b.sport}</span>`:''}</div>
