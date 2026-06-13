@@ -608,6 +608,7 @@
   .side-row.is-best .best-badge { background: var(--surface); color: var(--c-salvia); padding: 1px 6px; font-size: 9px; font-weight: 800; margin-right: 6px; letter-spacing: 0.08em; }
   .market-arb-pill { background: var(--c-cobre); color: var(--surface); padding: 3px 10px; font-family: var(--font-mono); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; }
   /* === SINCRONIZACIÓN === */
+  .sched-ctrls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .sync-pill { display: flex; align-items: center; gap: 6px; }
   .sync-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; transition: background 0.2s ease; }
   #sync-pill-text { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; }
@@ -757,6 +758,13 @@
   body[data-tsize="l"]  { zoom: 1.10; }
   body[data-tsize="xl"] { zoom: 1.20; }
   .today-league-head { font-size:12px; font-weight:800; letter-spacing:0.06em; color:var(--text-3); margin:18px 0 8px; text-transform:uppercase; }
+  /* Botones de liga con logo: blanco y negro apagado, color encendido */
+  .lg-grid { display:flex; flex-wrap:wrap; gap:8px; }
+  .lg-btn { display:inline-flex; align-items:center; gap:8px; padding:7px 13px 7px 8px; border:1px solid var(--border); border-radius:999px; background:var(--surface); cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-3); filter:grayscale(1); opacity:0.55; transition:filter .18s, opacity .18s, border-color .18s, box-shadow .18s, transform .12s; }
+  .lg-btn:hover { opacity:0.85; transform:translateY(-1px); }
+  .lg-btn.on { filter:none; opacity:1; color:var(--text-1); border-color:var(--c-salvia); box-shadow:0 0 0 1px var(--c-salvia) inset; }
+  .lg-logo { width:22px; height:22px; border-radius:5px; object-fit:contain; flex-shrink:0; background:#fff; }
+  .lg-badge { width:22px; height:22px; border-radius:5px; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:9.5px; font-weight:800; flex-shrink:0; letter-spacing:0.02em; }
   /* Mis apuestas — minimalista */
   .tracker-hist-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:24px 0 12px; font-size:18px; font-weight:700; }
   .bet-cards { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
@@ -805,6 +813,7 @@
   <div class="header-inner">
     <div class="brand"><svg class="brand-logo" viewBox="0 0 132 30" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sharp"><text x="0" y="22" font-family="Segoe UI, system-ui, sans-serif" font-size="22" font-weight="800" letter-spacing="1.5" fill="var(--text-1)">SHARP</text><path d="M112 22 L120 8 L128 22 Z" fill="var(--c-coral)"/></svg></div>
     <div class="controls">
+      <div id="schedule-controls" class="sched-ctrls">
       <select id="sport-select" title="Liga">
         <optgroup label="FÚTBOL">
           <option value="soccer/eng.1">Premier League</option>
@@ -830,8 +839,9 @@
         <option value="7">7 días</option>
       </select>
       <input type="date" id="range-date" class="ctrl" title="Ir a un día específico" style="padding:7px 10px;" />
-      <button class="ctrl" id="refresh-btn" title="Actualizar partidos + marcadores + apuestas">↻ Actualizar todo</button>
+      <button class="ctrl" id="refresh-btn" title="Vuelve a descargar los partidos y marcadores de esta liga">↻ Recargar liga</button>
       <button class="ctrl" id="load-odds-btn" title="Cargar las cuotas de mercado de esta liga (no necesitas abrir un partido)">↓ Cargar cuotas</button>
+      </div><!-- /schedule-controls -->
       <button class="ctrl sync-pill" id="sync-pill" onclick="showSyncGate()" title="Sincronización"><span id="sync-pill-dot" class="sync-pill-dot"></span><span id="sync-pill-text">local</span></button>
     </div>
   </div>
@@ -857,7 +867,7 @@
       <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Prob. mínima
         <select id="today-floor" onchange="setTodayFloor(this.value)" style="width:120px;">
           <option value="0.55">55% (más apuestas)</option>
-          <option value="0.60">60% (recomendado)</option>
+          <option value="0.6">60% (recomendado)</option>
           <option value="0.65">65%</option>
           <option value="0.75">75% (conservador)</option>
         </select>
@@ -1009,24 +1019,9 @@
     <div class="api-key-form">
       <div class="block-title">Cargar cuotas por liga</div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Trae las cuotas de mercado de toda una liga de una sola vez, aunque no haya partidos esta semana. Quedan guardadas y disponibles para el paquete de Hoy, el cronograma y el arbitraje.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-        <select id="tools-odds-league" style="padding:9px 12px;min-width:200px;">
-          <option value="soccer/ecu.1">LigaPro Ecuador</option>
-          <option value="soccer/eng.1">Premier League</option>
-          <option value="soccer/esp.1">LaLiga</option>
-          <option value="soccer/ita.1">Serie A</option>
-          <option value="soccer/ger.1">Bundesliga</option>
-          <option value="soccer/fra.1">Ligue 1</option>
-          <option value="soccer/uefa.champions">Champions</option>
-          <option value="soccer/conmebol.libertadores">Libertadores</option>
-          <option value="soccer/conmebol.sudamericana">Sudamericana</option>
-          <option value="soccer/fifa.world">Mundial FIFA</option>
-          <option value="basketball/nba">NBA</option>
-          <option value="baseball/mlb">MLB</option>
-        </select>
-        <button class="btn-accent" type="button" onclick="loadToolsLeagueOdds()">↓ Cargar cuotas</button>
-        <span id="tools-odds-status" style="font-size:12.5px;color:var(--text-3);"></span>
-      </div>
+      <p style="font-size:12.5px;color:var(--text-3);margin-bottom:8px;">Toca una liga para cargar sus cuotas:</p>
+      <div class="lg-grid" id="tools-odds-leagues"></div>
+      <div id="tools-odds-status" style="font-size:12.5px;color:var(--text-3);margin-top:10px;"></div>
     </div>
     <div class="api-key-form">
       <div class="block-title">Sincronización entre dispositivos</div>
@@ -1083,6 +1078,8 @@ const state = {
   weekOffset: 0,
   rangeDays: 3,        // por defecto ≤3 días
   dateAnchor: null,    // si fijas un día específico
+  wcStats: {},         // stats acumuladas del Mundial (por id de selección), se llenan con partidos jugados
+  wcStatsTs: 0,
   games: [],
   selectedGame: null,
   teamCache: {},
@@ -1150,8 +1147,8 @@ function parseGames(data, sport) {
     const home = cs.find(c=>c.homeAway==='home') || cs[0];
     const away = cs.find(c=>c.homeAway==='away') || cs[1];
     return { id: ev.id, sport, date: new Date(ev.date),
-      home: { id: home.team.id, name: home.team.displayName||home.team.name, shortName: home.team.shortDisplayName, record: home.records?.[0]?.summary||'—', score: home.score },
-      away: { id: away.team.id, name: away.team.displayName||away.team.name, shortName: away.team.shortDisplayName, record: away.records?.[0]?.summary||'—', score: away.score },
+      home: { id: home.team.id, name: home.team.displayName||home.team.name, shortName: home.team.shortDisplayName, record: home.records?.[0]?.summary||'—', score: home.score, logo: home.team.logo||null, form: home.form||null },
+      away: { id: away.team.id, name: away.team.displayName||away.team.name, shortName: away.team.shortDisplayName, record: away.records?.[0]?.summary||'—', score: away.score, logo: away.team.logo||null, form: away.form||null },
       status: comp.status?.type?.state || 'pre',
       clock: comp.status?.displayClock || null,
       period: comp.status?.period || null,
@@ -1642,7 +1639,14 @@ async function loadWeek() {
   state.games = parseGames(data, state.sport);
   state.games.forEach(g=>{g.viability=null; g.opportunity=null; g.signals=null;});
   updateStatBar(); renderSchedule();
-  await Promise.all(state.games.map(g => computeGameViability(g).then(()=>{ renderSchedule(); updateStatBar(); })));
+  if (isWorldCup({sport:state.sport})) await ensureWorldCupStats(true);
+  // Evita el "parpadeo": re-render como mucho cada 400ms durante la carga, y un render final.
+  let _lastR = 0;
+  await Promise.all(state.games.map(g => computeGameViability(g).then(()=>{
+    const now = Date.now();
+    if (now - _lastR > 400) { _lastR = now; renderSchedule(); updateStatBar(); }
+  })));
+  renderSchedule(); updateStatBar();
   // Senales externas (xG / clima / lesiones) — en background, no bloqueamos el render
   state.games.forEach(g => {
     if (!g.viability || g.viability.insufficient) return;
@@ -1654,6 +1658,31 @@ async function loadWeek() {
   startLivePolling();
 }
 // ================= HOY · PAQUETE DIARIO =================
+const LEAGUE_META = {
+  'soccer/eng.1': { name:'Premier', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png', color:'#38003c', abbr:'PL' },
+  'soccer/esp.1': { name:'LaLiga', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png', color:'#ee8707', abbr:'LAL' },
+  'soccer/ita.1': { name:'Serie A', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png', color:'#008fd7', abbr:'SA' },
+  'soccer/ger.1': { name:'Bundesliga', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png', color:'#d20515', abbr:'BUN' },
+  'soccer/fra.1': { name:'Ligue 1', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png', color:'#091c3e', abbr:'L1' },
+  'soccer/ecu.1': { name:'LigaPro', logo:null, color:'#ffcd00', abbr:'ECU' },
+  'soccer/uefa.champions': { name:'Champions', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png', color:'#0a1e5e', abbr:'UCL' },
+  'soccer/uefa.europa': { name:'Europa', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png', color:'#ff6900', abbr:'UEL' },
+  'soccer/conmebol.libertadores': { name:'Libertadores', logo:null, color:'#1a7a3c', abbr:'LIB' },
+  'soccer/conmebol.sudamericana': { name:'Sudamericana', logo:null, color:'#d4322c', abbr:'SUD' },
+  'soccer/fifa.world': { name:'Mundial', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/4.png', color:'#c8102e', abbr:'FIFA' },
+  'basketball/nba': { name:'NBA', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png', color:'#c9082a', abbr:'NBA' },
+  'baseball/mlb': { name:'MLB', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png', color:'#041e42', abbr:'MLB' },
+  'football/nfl': { name:'NFL', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png', color:'#013369', abbr:'NFL' }
+};
+function lgLogoFail(img){ const sp=document.createElement('span'); sp.className='lg-badge'; sp.style.background=img.dataset.color||'#888'; sp.textContent=img.dataset.abbr||'?'; img.replaceWith(sp); }
+function leagueBtnHTML(sp, on, onclick, nameOverride) {
+  const m = LEAGUE_META[sp] || { name:nameOverride||sp, color:'#888', abbr:(nameOverride||sp).slice(0,3).toUpperCase(), logo:null };
+  const name = nameOverride || m.name;
+  const inner = m.logo
+    ? `<img class="lg-logo" src="${m.logo}" data-color="${m.color}" data-abbr="${m.abbr}" onerror="lgLogoFail(this)" alt="">`
+    : `<span class="lg-badge" style="background:${m.color}">${m.abbr}</span>`;
+  return `<button type="button" class="lg-btn${on?' on':''}" onclick="${onclick}">${inner}<span class="lg-name">${name}</span></button>`;
+}
 const TODAY_LEAGUE_OPTS = [
   ['soccer/ecu.1','LigaPro'], ['soccer/eng.1','Premier'], ['soccer/esp.1','LaLiga'],
   ['soccer/ita.1','Serie A'], ['soccer/ger.1','Bundesliga'], ['soccer/conmebol.libertadores','Libertadores'],
@@ -1674,9 +1703,9 @@ function toggleTodayLeague(sp) {
 }
 function renderTodayLeagues() {
   const c = document.getElementById('today-leagues'); if (!c) return;
+  c.className = 'lg-grid'; c.removeAttribute('style');
   const sel = getTodayLeagues();
-  c.innerHTML = TODAY_LEAGUE_OPTS.map(([sp,n]) =>
-    `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" ${sel.includes(sp)?'checked':''} onchange="toggleTodayLeague('${sp}')"> ${n}</label>`).join('');
+  c.innerHTML = TODAY_LEAGUE_OPTS.map(([sp,n]) => leagueBtnHTML(sp, sel.includes(sp), `toggleTodayLeague('${sp}')`, n)).join('');
 }
 let todayGames = [];
 async function loadToday() {
@@ -1836,6 +1865,18 @@ async function refreshLiveScores() {
 }
 async function computeGameViability(g) {
   try {
+    if (isWorldCup(g)) {
+      // MUNDIAL: el modelo es odds-first + tiers + estadística acumulada del propio torneo.
+      // No depende de la "forma" de clubes (que para selecciones no existe), así que SIEMPRE es viable.
+      await ensureWorldCupStats();
+      g.homeStats = worldCupTeamStats(g.home.id);
+      g.awayStats = worldCupTeamStats(g.away.id);
+      g.homeResults = g.homeStats.results || [];
+      g.awayResults = g.awayStats.results || [];
+      g.viability = { total: 62, insufficient: false, favorite: null, wc: true, gpHome: g.homeStats.gp, gpAway: g.awayStats.gp };
+      computeGameOpportunity(g);
+      return;
+    }
     const [hd, ad] = await Promise.all([fetchTeamForm(g.sport, g.home.id), fetchTeamForm(g.sport, g.away.id)]);
     g.homeResults = extractRecentResults(hd, g.home.id, 10);
     g.awayResults = extractRecentResults(ad, g.away.id, 10);
@@ -2199,11 +2240,50 @@ function wcStrength(name) {
   }
   return { atk:WC_TIERS.medio.atk, def:WC_TIERS.medio.def, tier:'medio' }; // desconocido -> medio
 }
+// Acumula las stats de los partidos YA jugados en ESTE Mundial (no históricos: el Mundial solo
+// importa mientras se juega). Se refresca solo. Cuantos más partidos, mejor el modelo.
+async function ensureWorldCupStats(force) {
+  if (!force && state.wcStatsTs && (Date.now()-state.wcStatsTs < 5*60000) && Object.keys(state.wcStats).length) return;
+  try {
+    const today = new Date();
+    const data = await fetchScoreboard('soccer/fifa.world', `20260611-${fmtDateESPN(today)}`);
+    const games = parseGames(data, 'soccer/fifa.world');
+    const map = {};
+    games.forEach(g => {
+      // registra el form aunque no haya jugado todavía
+      [g.home, g.away].forEach(t => { if (t && t.id && !map[t.id]) map[t.id] = { results: [], form: t.form||null, name: t.name }; });
+      if (g.status !== 'post') return;
+      const hs = parseInt(g.home.score,10), as = parseInt(g.away.score,10);
+      if (isNaN(hs) || isNaN(as)) return;
+      const add = (t, gf, ga, home, opp) => {
+        const m = map[t.id] || (map[t.id] = { results: [], form: t.form||null, name: t.name });
+        m.results.push({ ourScore: gf, oppScore: ga, result: gf>ga?'W':(gf<ga?'L':'D'), home, opp, date: g.date });
+      };
+      add(g.home, hs, as, true, g.away.name);
+      add(g.away, as, hs, false, g.home.name);
+    });
+    state.wcStats = map; state.wcStatsTs = Date.now();
+  } catch(e) { /* conserva lo que haya */ }
+}
+// Stats de una selección SOLO con sus partidos de este Mundial (forma compatible con computeTeamStats).
+function worldCupTeamStats(id) {
+  const m = state.wcStats[id];
+  const st = computeTeamStats(m && m.results ? m.results : []);
+  st.form = m ? m.form : null;
+  st.results = m && m.results ? m.results : [];
+  return st;
+}
 function worldCupLambdas(g) {
   const H = wcStrength(g.home && g.home.name), A = wcStrength(g.away && g.away.name);
   const stage = wcIsKnockout(g) ? 0.88 : 1.0;   // eliminatorias: menos goles (defensivo)
-  let lh = ((H.atk + A.def) / 2) * stage;
-  let la = ((A.atk + H.def) / 2) * stage;
+  let atkH=H.atk, defH=H.def, atkA=A.atk, defA=A.def;
+  // Mezcla con lo REAL del Mundial: cada partido jugado pesa +25% (tope 75%). Los históricos no influyen.
+  const mix = (prior, real, gp) => { if (real==null || !gp) return prior; const w=Math.min(0.75, gp*0.25); return prior*(1-w)+real*w; };
+  const hs=g.homeStats, as=g.awayStats;
+  if (hs && hs.gp) { atkH=mix(atkH, hs.avgScored, hs.gp); defH=mix(defH, hs.avgConceded, hs.gp); }
+  if (as && as.gp) { atkA=mix(atkA, as.avgScored, as.gp); defA=mix(defA, as.avgConceded, as.gp); }
+  let lh = ((atkH + defA) / 2) * stage;
+  let la = ((atkA + defH) / 2) * stage;
   // Sedes neutrales: SIN ventaja de localía (a diferencia de clubes). Bonus leve solo a anfitriones.
   const host = ['united states','usa','mexico','canada'];
   if (host.some(x => (g.home && g.home.name||'').toLowerCase().includes(x))) lh *= 1.08;
@@ -3968,6 +4048,7 @@ function renderTools() {
   syncOddsKeyInputs();
   renderThemeControls();
   renderFontControls();
+  renderToolsOddsLeagues();
   renderBaseStakeStatus();
   renderAfKeyStatus();
   renderCorsProxyStatus();
@@ -3998,14 +4079,19 @@ function renderThemeControls() {
   document.querySelectorAll('#theme-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===th));
   document.querySelectorAll('#anim-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.anim===an));
 }
-async function loadToolsLeagueOdds() {
-  const sel = document.getElementById('tools-odds-league'); if (!sel) return;
-  const sp = sel.value, st = document.getElementById('tools-odds-status');
-  if (st) st.textContent = 'Cargando...';
+const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','soccer/fifa.world','basketball/nba','baseball/mlb'];
+function renderToolsOddsLeagues() {
+  const c = document.getElementById('tools-odds-leagues'); if (!c) return;
+  c.innerHTML = TOOLS_ODDS_OPTS.map(sp => leagueBtnHTML(sp, false, `loadToolsLeagueOddsFor('${sp}')`)).join('');
+}
+async function loadToolsLeagueOddsFor(sp) {
+  const st = document.getElementById('tools-odds-status');
+  const nm = (LEAGUE_META[sp]||{}).name || sp;
+  if (st) st.textContent = `Cargando ${nm}...`;
   try {
     const n = await loadOddsForSport(sp);
-    if (st) st.textContent = (n!=null) ? `✓ ${n} partido(s) con cuotas cargadas` : '';
-    if (n!=null) toast(`Cuotas cargadas: ${n} partido(s)`, 'ok');
+    if (st) st.textContent = (n!=null) ? `✓ ${nm}: ${n} partido(s) con cuotas` : '';
+    if (n!=null) toast(`Cuotas de ${nm} cargadas: ${n}`, 'ok');
   } catch(e) { if (st) st.textContent = '⚠ ' + e.message; }
 }
 function saveBaseStakeSetting(v) {
@@ -5175,18 +5261,22 @@ state.activePreset = localStorage.getItem('quantActivePreset') || 'adaptativo';
 if (state.activePreset === 'adaptativo') state.weights = getAdaptiveWeights();
 
 // ---------- TABS ----------
+function setScheduleControls(show){ const e=document.getElementById('schedule-controls'); if(e) e.style.display = show?'flex':'none'; }
 document.querySelectorAll('.tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    setScheduleControls(t.dataset.tab==='schedule');  // los controles de liga/fechas solo en Cronograma
     if (t.dataset.tab==='tools') renderTools();
     if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); }
     if (t.dataset.tab==='arb') renderArb();
+    if (t.dataset.tab==='schedule' && state.games && state.games.length && typeof refreshLiveScores==='function') refreshLiveScores();
     if (t.dataset.tab==='today') { renderTodayLeagues(); if (!todayGames.length) loadToday(); else renderTodayPicks(); }
   });
 });
+setScheduleControls(false);  // la pestaña inicial es Hoy: oculta los controles del cronograma
 document.querySelectorAll('#arb-subtabs .subtab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('#arb-subtabs .subtab').forEach(x=>x.classList.remove('active'));
