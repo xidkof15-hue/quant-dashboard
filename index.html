@@ -957,6 +957,7 @@
   .tr-live-c { display:flex; align-items:center; gap:11px; }
   .tr-lc-info { display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
   .tr-lc-score { font-family:var(--font-mono); font-size:18px; font-weight:800; color:var(--text-1); line-height:1; }
+  .tr-lc-when { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; }
   /* Mini-tarjetas en vivo (Mis Apuestas) */
   .lmc { display:flex; gap:6px; }
   .lmc-card { background:#eef2f7; border-radius:8px; padding:6px 9px; text-align:center; min-width:52px; }
@@ -2006,9 +2007,9 @@ function centerTimeHTML(date){
   const cd = countdownStr(date);
   return `<div class="ct-block"><div class="ct-time">${t}</div><div class="ct-date">${d}</div>${cd?`<div class="ct-cd">${cd}</div>`:''}</div>`;
 }
-function liveRingHTML(prog, txt){
+function liveRingHTML(prog){
   const r=18, c=2*Math.PI*r, off=c*(1-Math.max(0,Math.min(1,prog||0)));
-  return `<div class="ring-wrap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" fill="none" stroke="#e1e7ef" stroke-width="4"/><circle cx="24" cy="24" r="${r}" fill="none" stroke="var(--c-coral)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 24 24)"/></svg><div class="ring-txt">${txt||''}</div></div>`;
+  return `<div class="ring-wrap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" fill="none" stroke="#e1e7ef" stroke-width="4"/><circle cx="24" cy="24" r="${r}" fill="none" stroke="var(--c-coral)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 24 24)"/></svg></div>`;
 }
 function buildTodayPicks() {
   const floor = getTodayFloor();
@@ -2099,8 +2100,8 @@ function renderTodayPicks() {
     const already = pr && doneSet.has(`${g.id}|${pr.market}|${pr.side}`);
     const isLive = g.status==='in';
     let centerCol;
-    if (isLive){ const sc=`${g.home.score??0}-${g.away.score??0}`; const stn=liveStanding({resolve:pr,liveScore:sc});
-      centerCol=`<div class="tr-live-c">${liveRingHTML(gameProgress(g), g.shortDetail||g.clock||'')}<div class="tr-lc-info"><div class="tr-lc-score">${sc}</div>${stn?`<span class="stand stand-${stn.cls}">${STAND_LBL[stn.cls]}</span>`:''}</div></div>`; }
+    if (isLive){ const sc=`${g.home.score??0}-${g.away.score??0}`; const stn=liveStanding({resolve:pr,liveScore:sc}); const mom=g.shortDetail||g.clock||'';
+      centerCol=`<div class="tr-live-c">${liveRingHTML(gameProgress(g))}<div class="tr-lc-info"><div class="tr-lc-score">${sc}</div>${mom?`<div class="tr-lc-when">${mom}</div>`:''}${stn?`<span class="stand stand-${stn.cls}">${STAND_LBL[stn.cls]}</span>`:''}</div></div>`; }
     else { centerCol=centerTimeHTML(g.date); }
     html += `<div class="today-row anim-in grow-hover${(p.g.id+'|'+p.c.cat)===_bestId?' pulse-border':''}${already?' today-done':''}${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
@@ -5072,8 +5073,9 @@ function betCardHTML(b) {
   // Columna central: fecha/hora, o 3 mini-tarjetas en vivo
   let center;
   if (live){
-    const sc=b.liveScore||'—', clk=b.liveDetail||b.liveClock||'en juego', hl=b.liveLastPlay||'—';
-    center = `<div class="lmc"><div class="lmc-card"><div class="lmc-v">${sc}</div><div class="lmc-l">marcador</div></div><div class="lmc-card"><div class="lmc-v">${clk}</div><div class="lmc-l">tiempo</div></div><div class="lmc-card lmc-hl"><div class="lmc-v">${hl}</div><div class="lmc-l">jugada</div></div></div>`;
+    const sc=b.liveScore||'—', mom=b.liveDetail||b.liveClock||'';
+    const prog = gameProgress({sport:b.espnSport,status:'in',period:b.livePeriod,clock:b.liveClock});
+    center = `<div class="tr-live-c">${liveRingHTML(prog)}<div class="tr-lc-info"><div class="tr-lc-score">${sc}</div>${mom?`<div class="tr-lc-when">${mom}</div>`:''}</div></div>`;
   } else {
     let d=null; if(b.commence){const x=new Date(b.commence); if(!isNaN(x)) d=x;}
     center = d ? centerTimeHTML(d) : '';
@@ -5566,7 +5568,7 @@ function applyAutoStatus(bet, status) {
 let _autoResolveBusy = false;
 async function autoResolveBets() {
   if (_autoResolveBusy) return;
-  const pend = state.bets.filter(b => b.status==='pending' && b.auto && b.resolve && b.espnGameId && b.espnSport);
+  const pend = state.bets.filter(b => b.status==='pending' && b.espnGameId && b.espnSport);
   if (!pend.length) return;
   _autoResolveBusy = true;
   try {
