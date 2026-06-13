@@ -856,20 +856,37 @@
   .live-wrap.live-nmany { grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); }
   @media(max-width:720px){ .live-wrap.live-n2, .live-wrap.live-nmany { grid-template-columns:1fr; } }
   .lcard { background:var(--surface); border:1px solid var(--border); border-radius:15px; padding:18px; }
-  .live-n1 .lcard { padding:28px 34px; max-width:980px; margin:0 auto; width:100%; }
+  .live-n1 .lcard { padding:30px clamp(20px,4vw,56px); }
   .lcard.standing-win { border-left:3px solid #2e7d52; }
   .lcard.standing-lose { border-left:3px solid var(--c-granate); }
   .lc-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .lc-league { font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--text-3); }
+  .lc-league { font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--text-2); display:inline-flex; align-items:center; gap:9px; }
+  .lc-league .lglogo, .lc-league .lg-badge { vertical-align:middle; }
+  .live-n1 .lc-league { font-size:13px; }
+  /* Encabezados de grupo (varios partidos) */
+  .live-group-head { grid-column:1/-1; display:flex; align-items:center; gap:12px; margin:10px 0 0; padding-bottom:9px; border-bottom:2px solid var(--border); }
+  .lgh-name { font-size:15px; font-weight:800; letter-spacing:.01em; color:var(--text-1); }
+  .lgh-count { font-size:10px; font-weight:700; color:var(--text-3); background:#eef2f7; padding:2px 9px; border-radius:999px; }
+  /* Tarjeta full: 2 columnas de detalle */
+  .lc-detail2 { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:20px; padding-top:18px; border-top:1px dashed var(--border); }
+  @media(max-width:760px){ .lc-detail2 { grid-template-columns:1fr; gap:14px; } }
+  .lc-detail2 .lc-col > div + div { margin-top:14px; }
+  .lc-detail2 .le-events { border-top:0; padding-top:0; margin-top:0; }
+  .live-n1 .le-ev { font-size:13.5px; }
+  .le-ev.hot .le-tx { color:var(--c-coral); font-weight:700; }
+  .le-bp-row { display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; font-size:12.5px; }
+  .le-bp b { color:var(--text-3); font-weight:700; font-size:11px; }
+  .le-last { margin-top:10px; font-size:12px; color:var(--text-2); font-style:italic; }
+  .le-empty { color:var(--text-3); font-size:12px; padding:6px 0; }
   .lc-body { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; }
   .lc-team { display:flex; flex-direction:column; align-items:center; gap:9px; text-align:center; min-width:0; }
-  .lc-team .nm { font-size:13px; font-weight:700; }
-  .live-n1 .lc-team .nm { font-size:18px; }
+  .lc-team .nm { font-size:14.5px; font-weight:700; }
+  .live-n1 .lc-team .nm { font-size:21px; }
   .lc-mid { text-align:center; }
-  .lc-score { font-family:var(--font-mono); font-weight:800; letter-spacing:1px; color:var(--text-1); white-space:nowrap; font-size:34px; }
-  .live-n1 .lc-score { font-size:54px; }
+  .lc-score { font-family:var(--font-mono); font-weight:800; letter-spacing:1px; color:var(--text-1); white-space:nowrap; font-size:40px; }
+  .live-n1 .lc-score { font-size:68px; }
   .lc-clock { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; margin-top:4px; }
-  .live-n1 .lc-clock { font-size:14px; }
+  .live-n1 .lc-clock { font-size:15px; }
   .lc-bar { height:5px; background:#eef2f7; border-radius:99px; overflow:hidden; margin-top:15px; }
   .lc-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--c-salvia),var(--c-pizarra)); border-radius:99px; }
   .le-events { margin-top:14px; border-top:1px dashed var(--border); padding-top:11px; display:flex; flex-direction:column; gap:7px; }
@@ -989,8 +1006,6 @@
   </section>
 
   <section class="panel" id="panel-live">
-    <h1 class="section-title">En vivo · todos los deportes</h1>
-    <p class="section-sub">Todo lo que está en juego ahora. Con un solo partido ocupa toda la pantalla con el máximo detalle; con más, se reparte el espacio. Se actualiza solo.</p>
     <div id="live-wrap" class="live-wrap"></div>
   </section>
 
@@ -5533,10 +5548,22 @@ function parseLiveSummary(sport, sum){
         const st=(h.statistics||[]).slice(0,4); st.forEach(x=>{ const av=getStat(a,[x.name]); out.stats.push({label:(x.label||x.name||'').slice(0,14),home:x.displayValue,away:av==null?'—':av}); });
       }
     }
-    if (sport.startsWith('baseball') && sum.situation){
-      const si=sum.situation;
-      out.situation={ balls:si.balls, strikes:si.strikes, outs:si.outs, first:!!si.onFirst, second:!!si.onSecond, third:!!si.onThird,
-        batter:(si.batter&&si.batter.athlete&&si.batter.athlete.displayName)||null, pitcher:(si.pitcher&&si.pitcher.athlete&&si.pitcher.athlete.displayName)||null };
+    if (sport.startsWith('baseball')){
+      const si = sum.situation || (sum.header && sum.header.competitions && sum.header.competitions[0] && sum.header.competitions[0].situation) || null;
+      if (si){
+        const pn = o => { if(!o) return null; if(typeof o==='string') return o; const a=o.athlete||o; return (a.displayName||a.shortName||a.fullName||o.playerName||o.summary)||null; };
+        out.situation={ balls:si.balls, strikes:si.strikes, outs:si.outs, first:!!si.onFirst, second:!!si.onSecond, third:!!si.onThird,
+          batter:pn(si.batter)||pn(si.currentBatter)||pn(si.dueUp&&si.dueUp[0]), pitcher:pn(si.pitcher)||pn(si.currentPitcher),
+          lastPlay:(si.lastPlay&&(si.lastPlay.text||si.lastPlay.shortText))||null };
+      }
+      // Jugadas con anotación: quién y cuándo
+      let scoring = sum.scoringPlays || [];
+      if ((!scoring||!scoring.length) && Array.isArray(sum.plays)) scoring = sum.plays.filter(p=>p.scoringPlay);
+      out.plays = (scoring||[]).slice(-8).map(p=>{
+        let inn='';
+        if (p.period){ const ty=String(p.period.type||p.period.half||'').toLowerCase(); inn=(ty.includes('bot')?'Baja ':(ty.includes('top')?'Alta ':''))+(p.period.number||''); }
+        return { inning: inn||(p.periodDisplayValue||''), text:(p.text||p.shortText||'').trim(), score:(p.awayScore!=null&&p.homeScore!=null)?`${p.awayScore}-${p.homeScore}`:null };
+      }).filter(p=>p.text);
     }
   }catch(e){}
   return out;
@@ -5563,14 +5590,29 @@ async function loadLiveTab(){
   finally{ _liveTabBusy=false; }
 }
 function updateLiveNavDot(){ const d=document.querySelector('.tab-live .nav-live-dot'); if(d) d.style.display = (state.liveGames&&state.liveGames.length)?'inline-block':'none'; }
+function leagueLogoHTML(sport, size){
+  size=size||28; const m=LEAGUE_META[sport]||{}; const dim=`width:${size}px;height:${size}px;`;
+  if (m.logo) return `<img class="lglogo" src="${m.logo}" data-abbr="${m.abbr||''}" data-color="${m.color||'#46566e'}" onerror="lgLogoFail(this)" style="${dim}object-fit:contain;flex-shrink:0;" alt="">`;
+  return `<span class="lg-badge" style="${dim}background:${m.color||'#46566e'};display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:#fff;font-weight:800;font-size:${Math.round(size*0.34)}px;flex-shrink:0;">${m.abbr||'?'}</span>`;
+}
 function renderLiveTab(){
   const wrap=document.getElementById('live-wrap'); if(!wrap) return;
   const games=state.liveGames||[];
   if(!games.length){ wrap.className='live-wrap'; wrap.innerHTML='<div class="live-empty">No hay partidos en vivo ahora mismo.<br>Vuelve cuando empiece la acción.</div>'; return; }
   const n=games.length;
-  const detail = n===1?'full':(n===2?'mid':'compact');
-  wrap.className = 'live-wrap ' + (n===1?'live-n1':(n===2?'live-n2':'live-nmany'));
-  wrap.innerHTML = games.map(g=>liveCardHTML(g, detail)).join('');
+  if (n===1){ wrap.className='live-wrap live-n1'; wrap.innerHTML=liveCardHTML(games[0],'full'); return; }
+  const detail = n===2?'mid':'compact';
+  wrap.className='live-wrap ' + (n===2?'live-n2':'live-nmany');
+  // Agrupar por liga/deporte
+  const groups={}, order=[];
+  games.forEach(g=>{ const k=g.sport; if(!groups[k]){ groups[k]=[]; order.push(k); } groups[k].push(g); });
+  let html='';
+  order.forEach(sp=>{
+    const nm=(LEAGUE_META[sp]&&LEAGUE_META[sp].name)||groups[sp][0].league;
+    html += `<div class="live-group-head">${leagueLogoHTML(sp,30)}<span class="lgh-name">${nm}</span><span class="lgh-count">${groups[sp].length} en vivo</span></div>`;
+    html += groups[sp].map(g=>liveCardHTML(g, detail)).join('');
+  });
+  wrap.innerHTML=html;
 }
 function liveCardHTML(g, detail){
   const isSoccer=g.sport.startsWith('soccer'), isBaseball=g.sport.startsWith('baseball');
@@ -5578,27 +5620,41 @@ function liveCardHTML(g, detail){
   let stand=null; if(bet) stand=liveStanding({resolve:bet.resolve, liveScore:`${g.home.score??0}-${g.away.score??0}`});
   const clk = g.shortDetail || g.clock || (g.period?('P'+g.period):'');
   const prog = Math.round((typeof gameProgress==='function'?gameProgress(g):0)*100);
-  const lsize = detail==='full'?60:44;
-  const evs=(g.events||[]).slice().reverse();
-  const evShow = detail==='compact' ? evs.slice(0,3) : evs;
-  const evHtml = evShow.length ? `<div class="le-events">${evShow.map(e=>`<div class="le-ev"><span class="le-ic">${e.emoji}</span><span class="le-min">${e.clock||''}</span><span class="le-tx">${e.label}${e.who?' · '+e.who:''}</span></div>`).join('')}</div>` : '';
+  const lsize = detail==='full'?72:46;
+  const lgName = (LEAGUE_META[g.sport]&&LEAGUE_META[g.sport].name)||g.league;
+  // Lista unificada de jugadas: eventos de fútbol + jugadas anotadoras de béisbol
+  let evList=[];
+  if (g.events && g.events.length) evList = g.events.slice().reverse().map(e=>({ic:e.emoji, min:e.clock||'', tx:e.label+(e.who?' · '+e.who:''), hot:e.emoji==='⚽'}));
+  if (g.live && g.live.plays && g.live.plays.length) evList = g.live.plays.slice().reverse().map(p=>({ic:'⚾', min:p.inning||'', tx:p.text+(p.score?` (${p.score})`:''), hot:true})).concat(evList);
+  const cap = detail==='compact'?3:(detail==='mid'?6:14);
+  const evShow = evList.slice(0,cap);
+  const evHtml = evShow.length ? `<div class="le-events">${evShow.map(e=>`<div class="le-ev${e.hot?' hot':''}"><span class="le-ic">${e.ic}</span><span class="le-min">${e.min}</span><span class="le-tx">${e.tx}</span></div>`).join('')}</div>` : '';
   let possHtml='';
   if(isSoccer && g.live && g.live.possHome){ const ph=parseInt(g.live.possHome)||50; possHtml=`<div class="le-poss"><span>POSESIÓN</span><span style="color:var(--c-salvia)">${ph}%</span><span class="lp-bar"><i style="width:${ph}%"></i></span><span style="color:var(--c-granate)">${g.live.possAway||(100-ph)+'%'}</span></div>`; }
   let sitHtml='';
-  if(isBaseball && g.live && g.live.situation){ const si=g.live.situation; sitHtml=`<div class="le-sit"><span class="le-count">${si.balls??0}-${si.strikes??0} · ${si.outs??0} out</span>${baseDiamond(si)}${si.batter?`<span class="le-bp">Batea: ${si.batter}</span>`:''}${si.pitcher?`<span class="le-bp">Lanza: ${si.pitcher}</span>`:''}</div>`; }
+  if(isBaseball && g.live && g.live.situation){ const si=g.live.situation;
+    sitHtml=`<div class="le-sit"><span class="le-count">${si.balls??0} bolas · ${si.strikes??0} strikes · ${si.outs??0} out</span>${baseDiamond(si)}</div>`
+      + ((si.batter||si.pitcher)?`<div class="le-bp-row">${si.batter?`<span class="le-bp"><b>Al bate:</b> ${si.batter}</span>`:''}${si.pitcher?`<span class="le-bp"><b>Lanza:</b> ${si.pitcher}</span>`:''}</div>`:'')
+      + (si.lastPlay?`<div class="le-last">Última: ${si.lastPlay}</div>`:''); }
   let statHtml='';
   if(detail!=='compact' && g.live && g.live.stats && g.live.stats.length){ statHtml=`<div class="le-stats">${g.live.stats.map(st=>`<div class="le-st"><span class="ls-h">${st.home}</span><span class="ls-l">${st.label}</span><span class="ls-a">${st.away}</span></div>`).join('')}</div>`; }
   const betHtml = bet ? `<div class="lc-bet">${marketTag(betMarketLabel(bet))}<span class="muted" style="font-size:11px;">${bet.pick||''}</span>${stand?`<span class="stand stand-${stand.cls}">${stand.txt}</span>`:''}</div>` : '';
-  return `<div class="lcard${stand?' standing-'+stand.cls:''}">
-    <div class="lc-top"><span class="lc-league">${g.league}</span><span class="live-pill">● EN VIVO</span></div>
-    <div class="lc-body">
+  const head = `<div class="lc-top"><span class="lc-league">${leagueLogoHTML(g.sport, detail==='full'?34:22)}<span>${lgName}</span></span><span class="live-pill">● EN VIVO</span></div>`;
+  const board = `<div class="lc-body">
       <div class="lc-team">${teamLogoHTML(g.home,lsize)}<span class="nm">${g.home.shortName||g.home.name}</span></div>
       <div class="lc-mid"><div class="lc-score">${g.home.score??0} – ${g.away.score??0}</div><div class="lc-clock">${clk}</div></div>
       <div class="lc-team">${teamLogoHTML(g.away,lsize)}<span class="nm">${g.away.shortName||g.away.name}</span></div>
     </div>
-    <div class="lc-bar"><i style="width:${prog}%"></i></div>
-    ${sitHtml}${possHtml}${betHtml}${statHtml}${evHtml}
-  </div>`;
+    <div class="lc-bar"><i style="width:${prog}%"></i></div>`;
+  if (detail==='full'){
+    return `<div class="lcard full${stand?' standing-'+stand.cls:''}">${head}${board}
+      <div class="lc-detail2">
+        <div class="lc-col">${sitHtml}${possHtml}${statHtml}${betHtml||''}</div>
+        <div class="lc-col">${evHtml||'<div class="le-empty">Sin jugadas registradas todavía.</div>'}</div>
+      </div></div>`;
+  }
+  return `<div class="lcard${stand?' standing-'+stand.cls:''}">${head}${board}
+    ${sitHtml}${possHtml}${betHtml}${statHtml}${evHtml}</div>`;
 }
 function startLiveTabPoll(){ stopLiveTabPoll(); __liveTabTimer=setInterval(()=>{ const p=document.getElementById('panel-live'); if(p&&p.classList.contains('active')) loadLiveTab(); else stopLiveTabPoll(); }, 30000); }
 function stopLiveTabPoll(){ if(__liveTabTimer){ clearInterval(__liveTabTimer); __liveTabTimer=null; } }
