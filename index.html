@@ -679,7 +679,7 @@
   table.bets td.cell-when { white-space: nowrap; }
   .bets tr.bet-settled-won td { background: rgba(45,94,66,0.05); }
   .bets tr.bet-settled-lost td { background: rgba(122,46,46,0.05); }
-  .live-pill { background: var(--c-granate); color: #fff; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; display: inline-block; animation: livePulse 1.6s infinite; }
+  .live-pill { background: var(--c-granate); color: #fff; font-family: var(--font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; display: inline-block; animation: haloRing 1.6s infinite; }
   @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
   .pl-pos { color: var(--c-salvia); font-weight: 700; }
   .pl-neg { color: var(--c-granate); font-weight: 700; }
@@ -799,6 +799,18 @@
   .anim-in:nth-child(8){animation-delay:.35s} .anim-in:nth-child(9){animation-delay:.40s} .anim-in:nth-child(n+10){animation-delay:.45s}
   .grow-hover { transition: transform .16s ease, box-shadow .16s ease; }
   .grow-hover:hover { transform: scale(1.025); }
+  /* Halo expansivo para "EN VIVO" */
+  @keyframes haloRing { 0%{box-shadow:0 0 0 0 rgba(179,38,30,.55);} 70%{box-shadow:0 0 0 11px rgba(179,38,30,0);} 100%{box-shadow:0 0 0 0 rgba(179,38,30,0);} }
+  /* Borde pulsante para resaltar */
+  @keyframes pulseBorder { 0%,100%{box-shadow:0 0 0 0 rgba(226,101,74,.45);} 50%{box-shadow:0 0 0 6px rgba(226,101,74,0);} }
+  .pulse-border { animation: pulseBorder 1.7s infinite; border-color: var(--c-coral) !important; }
+  .evt-flash { animation: pulseBorder 1.4s 3; border-color: var(--c-coral) !important; }
+  /* Ticker de jugada (solo aparece con highlight nuevo) */
+  .tkr { margin-top:10px; overflow:hidden; white-space:nowrap; border-top:1px dashed var(--border); padding-top:8px; }
+  .tkr span { display:inline-block; font-size:12.5px; font-weight:600; color:var(--c-coral); padding-left:6px; animation: tkrScroll 9s linear infinite; }
+  @keyframes tkrScroll { 0%{transform:translateX(6%);} 100%{transform:translateX(-100%);} }
+  .team-row .tn-wrap { display:flex; align-items:center; gap:9px; min-width:0; }
+  .team-row .tn-wrap .tlogo, .team-row .tn-wrap .tlogo-fb { width:22px; height:22px; }
   @keyframes gradFlow { to { background-position:200% center; } }
   .grad-val { background:linear-gradient(90deg,var(--c-salvia),var(--c-coral),var(--c-salvia)); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation:gradFlow 3s linear infinite; font-weight:800; }
   @keyframes skelShimmer { 0%{background-position:-320px 0;} 100%{background-position:320px 0;} }
@@ -813,7 +825,12 @@
   .tr-x { color:var(--text-muted); font-size:11px; font-family:var(--font-mono); }
   .tr-time { margin-left:auto; color:var(--text-3); font-size:11px; font-family:var(--font-mono); }
   .tr-pick { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; font-size:12.5px; color:var(--text-2); }
-  .tr-tag { background:rgba(29,90,150,0.10); color:var(--c-salvia); padding:2px 8px; border-radius:5px; font-size:11px; font-weight:700; }
+  .mk-tag { display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:6px; font-size:11px; font-weight:800; }
+  .mk-tag .ic { font-size:12px; line-height:1; font-weight:700; }
+  .bm-pick { color:var(--text-1); font-weight:600; }
+  .bet-logos { display:inline-flex; align-items:center; margin-right:7px; vertical-align:middle; }
+  .bet-logos .tlogo, .bet-logos .tlogo-fb { width:18px; height:18px; }
+  .bet-logos > *:nth-child(2) { margin-left:-5px; }
   .tr-pick strong { color:var(--text-1); font-weight:700; }
   .tr-odds { font-family:var(--font-mono); color:var(--text-3); }
   .tr-edge { color:var(--c-salvia); font-weight:600; }
@@ -1170,6 +1187,22 @@ async function fetchScoreboard(sport, dr) { try { const r = await fetch(`${ESPN(
 async function fetchTeamForm(sport, tId) { const k = `${sport}-${tId}`; if (state.teamCache[k]) return state.teamCache[k]; try { const r = await fetch(`${ESPN(sport)}/teams/${tId}/schedule`); if (!r.ok) throw new Error(); const d = await r.json(); state.teamCache[k]=d; return d; } catch(e){return null;} }
 
 // ---------- PARSE ----------
+function describeLastPlay(comp){
+  try{
+    const det = comp && comp.details;
+    if(!Array.isArray(det)||!det.length) return null;
+    const d = det[det.length-1];
+    const txt = (d.type && d.type.text) ? d.type.text : '';
+    if(!txt) return null;
+    const clk = (d.clock && d.clock.displayValue) ? d.clock.displayValue : '';
+    const who = (d.athletesInvolved && d.athletesInvolved[0] && d.athletesInvolved[0].displayName) ? d.athletesInvolved[0].displayName : '';
+    const low = txt.toLowerCase();
+    const MAP=[['own goal','⚽','Gol en propia'],['goal','⚽','Gol'],['penalty','⚪','Penal'],['yellow','🟨','Tarjeta amarilla'],['red card','🟥','Tarjeta roja'],['offside','🚩','Offside'],['substitution','🔁','Cambio'],['corner','🚩','Córner'],['var','📺','VAR']];
+    let emoji='•', es=txt;
+    for(const m of MAP){ if(low.includes(m[0])){ emoji=m[1]; es=m[2]; break; } }
+    return `${emoji} ${clk?clk+' ':''}${es}${who?' — '+who:''}`;
+  }catch(e){ return null; }
+}
 function parseGames(data, sport) {
   if (!data?.events) return [];
   return data.events.map(ev => {
@@ -1180,6 +1213,7 @@ function parseGames(data, sport) {
       home: { id: home.team.id, name: home.team.displayName||home.team.name, shortName: home.team.shortDisplayName, record: home.records?.[0]?.summary||'—', score: home.score, logo: home.team.logo||null, form: home.form||null },
       away: { id: away.team.id, name: away.team.displayName||away.team.name, shortName: away.team.shortDisplayName, record: away.records?.[0]?.summary||'—', score: away.score, logo: away.team.logo||null, form: away.form||null },
       status: comp.status?.type?.state || 'pre',
+      lastPlay: describeLastPlay(comp),
       clock: comp.status?.displayClock || null,
       period: comp.status?.period || null,
       shortDetail: comp.status?.type?.shortDetail || null,
@@ -1630,6 +1664,10 @@ function gameCardHTML(g) {
   }
   const homeR = (isLive||isFinal) ? `<span style="font-family:var(--font-mono);font-weight:700;">${g.home.score}</span>` : `<span class="team-record">${g.home.record}</span>`;
   const awayR = (isLive||isFinal) ? `<span style="font-family:var(--font-mono);font-weight:700;">${g.away.score}</span>` : `<span class="team-record">${g.away.record}</span>`;
+  const homeNm = `<div class="tn-wrap">${teamLogoHTML(g.home,22)}<div class="team-name">${g.home.name}</div></div>`;
+  const awayNm = `<div class="tn-wrap">${teamLogoHTML(g.away,22)}<div class="team-name">${g.away.name}</div></div>`;
+  const tickerHtml = (isLive && g.newHighlight && g.lastPlay) ? `<div class="tkr"><span>${g.lastPlay}</span></div>` : '';
+  const highlightCls = (cardBandClass.includes('opp-high') ? ' pulse-border' : '') + (g.newHighlight ? ' evt-flash' : '');
   // Etiqueta superior derecha de la card. En 'in' y 'post' priorizamos marcador y estado.
   let stamp;
   if (isLive) {
@@ -1644,7 +1682,7 @@ function gameCardHTML(g) {
     stamp = `<span class="game-time">${time}</span>`;
   }
   const liveBar = isLive ? `<div class="live-strip"><div class="live-bar"><div class="live-bar-fill" style="width:${Math.round(gameProgress(g)*100)}%"></div></div><span class="live-det">${g.shortDetail || g.clock || (g.period?'P'+g.period:'')}</span></div>` : '';
-  return `<div class="game-card${cardBandClass}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')"><div class="game-meta"><span>${g.league}${betFlag}</span><span class="game-stamp">${stamp}</span></div><div class="teams"><div class="team-row"><div class="team-name">${g.home.name}</div>${homeR}</div><div class="vs-divider">— VS —</div><div class="team-row"><div class="team-name">${g.away.name}</div>${awayR}</div></div>${liveBar}${oppHtml}</div>`;
+  return `<div class="game-card${cardBandClass}${highlightCls}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')"><div class="game-meta"><span>${g.league}${betFlag}</span><span class="game-stamp">${stamp}</span></div><div class="teams"><div class="team-row">${homeNm}${homeR}</div><div class="vs-divider">— VS —</div><div class="team-row">${awayNm}${awayR}</div></div>${liveBar}${tickerHtml}${oppHtml}</div>`;
 }
 function updateStatBar() {
   const sl = document.querySelector('#sport-select option:checked').textContent;
@@ -1667,7 +1705,7 @@ async function loadWeek() {
   const data = await fetchScoreboard(state.sport, `${fmtDateESPN(wr.start)}-${fmtDateESPN(wr.end)}`);
   if (!data) { c.innerHTML = `<div class="state-msg">⚠ No se pudo conectar.</div>`; return; }
   state.games = parseGames(data, state.sport);
-  state.games.forEach(g=>{g.viability=null; g.opportunity=null; g.signals=null;});
+  state.games.forEach(g=>{g.viability=null; g.opportunity=null; g.signals=null; g._seenPlay=g.lastPlay; g.newHighlight=false;});
   updateStatBar(); renderSchedule();
   if (isWorldCup({sport:state.sport})) await ensureWorldCupStats(true);
   // Evita el "parpadeo": re-render como mucho cada 400ms durante la carga, y un render final.
@@ -1704,8 +1742,32 @@ const LEAGUE_META = {
   'baseball/mlb': { name:'MLB', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png', color:'#041e42', abbr:'MLB' },
   'football/nfl': { name:'NFL', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png', color:'#013369', abbr:'NFL' }
 };
+function oddsDataForGame(g){
+  if (!g) return null;
+  const sk = ODDS_SPORT_MAP[g.sport]; if (!sk) return null;
+  // Si el partido es de la liga seleccionada y ya hay cuotas en memoria, úsalas.
+  if (ODDS_SPORT_MAP[state.sport] === sk && state.oddsData) return state.oddsData;
+  // Cualquier otra liga del paquete: usa SU caché (clave del fix del paquete multi-liga).
+  const ck = getCachedOdds(sk);
+  if (ck && ck.data) return ck.data;
+  if (ODDS_SPORT_MAP[state.sport] === sk) return state.oddsData || null;
+  return null;
+}
 function colorFromString(str){ let h=0; str=String(str||'?'); for(let i=0;i<str.length;i++) h=str.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},42%,42%)`; }
 function tlogoFail(img){ const s=document.createElement('span'); s.className='tlogo-fb'; s.setAttribute('style', img.getAttribute('style')||''); s.style.background=img.dataset.col||'#7c8aa0'; s.textContent=img.dataset.ini||'?'; img.replaceWith(s); }
+function hexA(hex,a){ const h=hex.replace('#',''); return `rgba(${parseInt(h.substr(0,2),16)},${parseInt(h.substr(2,2),16)},${parseInt(h.substr(4,2),16)},${a})`; }
+const MARKET_TAGS=[
+  ['moneyline',{ic:'✦',c:'#1d5a96'}],['ganador',{ic:'✦',c:'#1d5a96'}],['1x2',{ic:'✦',c:'#1d5a96'}],['gana',{ic:'✦',c:'#1d5a96'}],
+  ['hándicap',{ic:'±',c:'#c2410c'}],['handicap',{ic:'±',c:'#c2410c'}],['spread',{ic:'±',c:'#c2410c'}],
+  ['total',{ic:'⇅',c:'#3f6178'}],['over',{ic:'⇅',c:'#3f6178'}],['under',{ic:'⇅',c:'#3f6178'}],
+  ['doble',{ic:'⧉',c:'#2e7d52'}],['ambos',{ic:'⇄',c:'#7a3fb0'}],['btts',{ic:'⇄',c:'#7a3fb0'}],
+  ['dnb',{ic:'⊘',c:'#5a6678'}],['no apuesta',{ic:'⊘',c:'#5a6678'}],
+];
+function marketTag(label){
+  const low=String(label||'').toLowerCase(); let st={ic:'•',c:'#46566e'};
+  for(const kv of MARKET_TAGS){ if(low.includes(kv[0])){ st=kv[1]; break; } }
+  return `<span class="mk-tag" style="background:${hexA(st.c,0.13)};color:${st.c};"><span class="ic">${st.ic}</span>${label}</span>`;
+}
 function teamLogoHTML(team, size){
   size = size || 26; team = team || {};
   const nm = team.shortName || team.name || '?';
@@ -1837,6 +1899,7 @@ function renderTodayPicks() {
   const total = allocateStakes(picks);
   window.__todayPicks = picks;
   const games = new Set(picks.filter(p=>p.on).map(p=>p.g.id)).size;
+  let _maxEdge=-Infinity, _bestId=null; picks.forEach(p=>{ if(p.on && p.c.edge>_maxEdge){_maxEdge=p.c.edge;_bestId=p.g.id+'|'+p.c.cat;} });
   let html = `<div class="small-note" style="margin-bottom:10px;">Paquete de hoy ${new Date().toLocaleDateString('es-EC')}: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong> de tu banca de $${getTodayBank().toFixed(2)}. Selección por <strong>valor</strong> (mejor cuota × probabilidad) y reparto tipo Kelly (más valor = más stake). Carga cada una en la casa indicada y lo más cerca del inicio.</div>`;
   let curLeague = null;
   picks.forEach(p => {
@@ -1846,7 +1909,7 @@ function renderTodayPicks() {
     const oddsTxt = o.odds ? `@ ${o.odds.toFixed(2)}` : '';
     const houseTxt = (o.book && !String(o.book).startsWith('≈')) ? `${o.book} ${oddsTxt}` : (String(o.book||'').startsWith('≈') ? `${oddsTxt} (precio derivado)` : oddsTxt);
     const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
-    html += `<div class="today-row anim-in grow-hover${p.on?'':' t-off'}">
+    html += `<div class="today-row anim-in grow-hover${(p.g.id+'|'+p.c.cat)===_bestId?' pulse-border':''}${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
       <div class="tr-prob ${o.probTier}" data-count="${Math.round(o.prob*100)}" data-suffix="%">${(o.prob*100).toFixed(0)}%</div>
       <div class="tr-body">
@@ -1856,7 +1919,7 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
           <span class="tr-time">${time}</span>
         </div>
-        <div class="tr-pick"><span class="tr-tag">${o.label}</span><strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span></div>
+        <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span></div>
       </div>
       <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
@@ -1883,7 +1946,7 @@ function registerTodayPackage() {
       stake: p.stake, score: o.prob!=null?Math.round(o.prob*100):null,
       book: String(o.book||'').startsWith('≈') ? '' : (o.book||''),
       mode: 'real', alignment: 'na',
-      espnGameId: g.id, espnSport: g.sport, homeTeam: g.home.name, awayTeam: g.away.name,
+      espnGameId: g.id, espnSport: g.sport, homeTeam: g.home.name, awayTeam: g.away.name, homeLogo: g.home.logo||null, awayLogo: g.away.logo||null,
       league: g.league, commence: g.date.toISOString(),
       notes: `Paquete Sharp · prob ${(o.prob*100).toFixed(0)}% · valor ${o.edge!=null?(o.edge>0?'+':'')+o.edge.toFixed(1)+'%':'—'}`,
       status: 'pending', auto: false
@@ -1912,6 +1975,11 @@ async function refreshLiveScores() {
         g.home.score!==f.home.score || g.away.score!==f.away.score) changed = true;
     g.status=f.status; g.clock=f.clock; g.period=f.period; g.shortDetail=f.shortDetail;
     g.home.score=f.home.score; g.away.score=f.away.score;
+    g.home.logo=f.home.logo||g.home.logo; g.away.logo=f.away.logo||g.away.logo;
+    if (f.lastPlay && f.lastPlay !== g._seenPlay) {
+      g.lastPlay=f.lastPlay; g._seenPlay=f.lastPlay; g.newHighlight=true; changed=true;
+      setTimeout(()=>{ g.newHighlight=false; const p=document.getElementById('panel-schedule'); if(!state.selectedGame && p && p.classList.contains('active')) renderSchedule(); }, 13000);
+    } else if (f.lastPlay) { g.lastPlay=f.lastPlay; }
   });
   if (changed && !state.selectedGame) renderSchedule();            // refresca la lista (no si estás dentro de un detalle)
 }
@@ -3622,9 +3690,10 @@ function mergeManualOver(apiEv, manualEv) {
   return { ...apiEv, bookmakers: books, _hasManual:true };
 }
 function matchOddsEvent(g) {
-  if (!state.oddsData || !g) return null;
+  const od = oddsDataForGame(g);
+  if (!od || !g) return null;
   const hn = normalizeTeam(g.home.name), an = normalizeTeam(g.away.name);
-  return state.oddsData.find(ev => {
+  return od.find(ev => {
     const eh = normalizeTeam(ev.home_team), ea = normalizeTeam(ev.away_team);
     return teamsOverlap(hn, eh) && teamsOverlap(an, ea);
   }) || null;
@@ -4448,6 +4517,8 @@ function prefillBet(mode = 'calc') {
     bet.espnSport  = meta.espnSport || g.sport;
     bet.homeTeam   = meta.homeTeam || g.home.name;
     bet.awayTeam   = meta.awayTeam || g.away.name;
+    bet.homeLogo   = g.home.logo || null;
+    bet.awayLogo   = g.away.logo || null;
     bet.league     = meta.league || g.league;
     bet.commence   = meta.commence || (g.date instanceof Date ? g.date.toISOString() : g.date);
     bet.comp       = meta.comp || null;
@@ -4628,15 +4699,16 @@ function betWhenCell(b) {
 }
 // Celda "Mercado": todos los detalles de la apuesta.
 function betMarketCell(b) {
+  let mk = b.market||'—', pick = b.pick||'';
   if (b.resolve) {
     const r = b.resolve;
     const tn = s => s==='home' ? (b.homeTeam||'Local') : (s==='away' ? (b.awayTeam||'Visita') : 'Empate');
-    if (r.market==='ml')     return `<strong>Ganador</strong> · ${tn(r.side)}`;
-    if (r.market==='btts')   return `<strong>Ambos anotan</strong> · ${r.side==='yes'?'Sí':'No'}`;
-    if (r.market==='totals') return `<strong>Total</strong> · ${r.side==='over'?'Over':'Under'} ${r.line}`;
-    if (r.market==='spread') return `<strong>Hándicap</strong> · ${tn(r.side)} ${r.line>0?'+':''}${r.line}`;
+    if (r.market==='ml')     { mk='Ganador'; pick=tn(r.side); }
+    else if (r.market==='btts')   { mk='Ambos anotan'; pick=r.side==='yes'?'Sí':'No'; }
+    else if (r.market==='totals') { mk='Total'; pick=(r.side==='over'?'Over':'Under')+' '+r.line; }
+    else if (r.market==='spread') { mk='Hándicap'; pick=tn(r.side)+' '+(r.line>0?'+':'')+r.line; }
   }
-  return `<strong>${b.market||'—'}</strong>${b.pick?' · '+b.pick:''}`;
+  return `${marketTag(mk)}${pick?' <span class="bm-pick">'+pick+'</span>':''}`;
 }
 // ----------------- FILTROS -----------------
 // Estado de filtros (no se persiste; solo durante la sesion)
@@ -4792,7 +4864,7 @@ function betCardHTML(b) {
   acts += `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
   return `<div class="bet-card anim-in grow-hover st-${b.status}">
     <div class="bet-info">
-      <div class="bet-line1"><span class="bet-match">${b.match||'—'}</span>${when}</div>
+      <div class="bet-line1">${(b.homeTeam&&b.awayTeam)?`<span class="bet-logos">${teamLogoHTML({name:b.homeTeam,logo:b.homeLogo},18)}${teamLogoHTML({name:b.awayTeam,logo:b.awayLogo},18)}</span>`:''}<span class="bet-match">${b.match||'—'}</span>${when}</div>
       <div class="bet-line2">${betMarketCell(b)} <span class="bet-sep">·</span> @${(b.odds||0).toFixed(2)} <span class="bet-sep">·</span> $${(b.stake||0).toFixed(2)}${b.sport?` <span class="bet-sep">·</span> <span class="muted">${b.sport}</span>`:''}</div>
     </div>
     <div class="bet-end">
