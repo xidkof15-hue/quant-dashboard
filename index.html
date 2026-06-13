@@ -905,6 +905,18 @@
   .strip-bar { height:5px; background:#eef2f7; border-radius:99px; overflow:hidden; margin-top:10px; max-width:340px; }
   .strip-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--c-salvia),var(--c-pizarra)); border-radius:99px; }
   @media(max-width:560px){ .strip { gap:10px; padding:11px 12px; } .strip-time { min-width:76px; } .strip-prob { font-size:16px; min-width:38px; } .strip-teams .nm { font-size:13.5px; } }
+  /* Hoy: apuesta ya registrada + datos en vivo */
+  .today-row.today-done { border-left:3px solid #2e7d52; background:rgba(46,125,82,.05); }
+  .done-chip { background:rgba(46,125,82,.15); color:#2e7d52; font-size:10px; font-weight:800; padding:2px 8px; border-radius:5px; margin-left:6px; }
+  .tr-livd { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; margin-left:6px; }
+  /* Cronograma: banner de liga */
+  .sched-banner { display:flex; align-items:center; gap:14px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .sched-banner .lglogo, .sched-banner .lg-badge { width:56px; height:56px; }
+  .sb-name { font-size:21px; font-weight:800; letter-spacing:-.01em; color:var(--text-1); }
+  .sb-sub { font-size:12px; color:var(--text-3); margin-top:2px; }
+  /* Botón cargar cuotas */
+  .btn-load-odds { background:var(--c-salvia); color:#fff; border:0; border-radius:8px; padding:9px 16px; font-weight:700; font-size:13px; cursor:pointer; margin-left:4px; transition:filter .15s; }
+  .btn-load-odds:hover { filter:brightness(1.08); }
   .lc-body { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; }
   .lc-team { display:flex; flex-direction:column; align-items:center; gap:9px; text-align:center; min-width:0; }
   .lc-team .nm { font-size:14.5px; font-weight:700; }
@@ -1697,7 +1709,7 @@ function renderSchedule() {
   const c = document.getElementById('schedule-content');
   if (!state.games.length) { c.innerHTML = `<div class="state-msg">No hay partidos en esta ventana.</div>`; return; }
   const games = getSortedGames();
-  let html = '';
+  let html = `<div class="sched-banner">${leagueLogoHTML(state.sport,56)}<div><div class="sb-name">${(LEAGUE_META[state.sport]&&LEAGUE_META[state.sport].name)||state.sport}</div><div class="sb-sub">${games.length} partidos</div></div></div>`;
   if (state.sortMode==='time') {
     const groups={};
     games.forEach(g=>{const k=g.date.toLocaleDateString('es-EC',{weekday:'long',day:'2-digit',month:'long',timeZone:'America/Guayaquil'}); (groups[k]=groups[k]||[]).push(g);});
@@ -1872,7 +1884,7 @@ function teamLogoHTML(team, size){
   const nm = team.shortName || team.name || '?';
   const ini = (nm.replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,3).toUpperCase()) || '?';
   const dim = `width:${size}px;height:${size}px;`;
-  if (team.logo && !/\/countries\//.test(team.logo)) return `<img class="tlogo" src="${team.logo}" data-ini="${ini}" data-col="${colorFromString(nm)}" onerror="tlogoFail(this)" style="${dim}" alt="">`;
+  if (team.logo) return `<img class="tlogo" src="${team.logo}" data-ini="${ini}" data-col="${colorFromString(nm)}" onerror="tlogoFail(this)" style="${dim}" alt="">`;
   return `<span class="tlogo-fb" style="${dim}color:${colorFromString(nm)};">${ini}</span>`;
 }
 function lgLogoFail(img){ const sp=document.createElement('span'); sp.className='lg-badge'; sp.style.background=img.dataset.color||'#888'; sp.textContent=img.dataset.abbr||'?'; img.replaceWith(sp); }
@@ -2011,6 +2023,7 @@ function renderTodayPicks() {
   window.__todayPicks = picks;
   const games = new Set(picks.filter(p=>p.on).map(p=>p.g.id)).size;
   let _maxEdge=-Infinity, _bestId=null; picks.forEach(p=>{ if(p.on && p.c.edge>_maxEdge){_maxEdge=p.c.edge;_bestId=p.g.id+'|'+p.c.cat;} });
+  const doneSet = new Set((state.bets||[]).filter(b=>b.espnGameId&&b.resolve).map(b=>`${b.espnGameId}|${b.resolve.market}|${b.resolve.side}`));
   let html = `<div class="small-note" style="margin-bottom:10px;">Paquete de hoy ${new Date().toLocaleDateString('es-EC')}: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong> de tu banca de $${getTodayBank().toFixed(2)}. Selección por <strong>valor</strong> (mejor cuota × probabilidad) y reparto tipo Kelly (más valor = más stake). Carga cada una en la casa indicada y lo más cerca del inicio.</div>`;
   let curLeague = null;
   picks.forEach(p => {
@@ -2021,7 +2034,14 @@ function renderTodayPicks() {
     const oddsTxt = o.odds ? `@ ${o.odds.toFixed(2)}` : '';
     const houseTxt = (o.book && !String(o.book).startsWith('≈')) ? `${o.book} ${oddsTxt}` : (String(o.book||'').startsWith('≈') ? `${oddsTxt} (precio derivado)` : oddsTxt);
     const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
-    html += `<div class="today-row anim-in grow-hover${(p.g.id+'|'+p.c.cat)===_bestId?' pulse-border':''}${p.on?'':' t-off'}">
+    const pr = buildResolveFromPick(o.cat, o.key, o.point);
+    const already = pr && doneSet.has(`${g.id}|${pr.market}|${pr.side}`);
+    const isLive = g.status==='in';
+    let timeChip;
+    if (isLive){ const sc=`${g.home.score??0}-${g.away.score??0}`; const stn=liveStanding({resolve:pr,liveScore:sc});
+      timeChip=`<span class="live-pill">● ${sc}</span><span class="tr-livd">${g.shortDetail||g.clock||''}</span>${stn?`<span class="stand stand-${stn.cls}">${stn.txt}</span>`:''}`; }
+    else { timeChip=`<span class="tr-time">${CLK} ${time}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}`; }
+    html += `<div class="today-row anim-in grow-hover${(p.g.id+'|'+p.c.cat)===_bestId?' pulse-border':''}${already?' today-done':''}${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
       <div class="tr-prob ${o.probTier}" data-count="${Math.round(o.prob*100)}" data-suffix="%">${(o.prob*100).toFixed(0)}%</div>
       <div class="tr-body">
@@ -2029,9 +2049,9 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.home,24)}<span class="tr-name">${g.home.shortName||g.home.name}</span></span>
           <span class="tr-x">vs</span>
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
-          <span class="tr-time">${CLK} ${time}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}
+          ${timeChip}
         </div>
-        <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span></div>
+        <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span>${already?'<span class="done-chip">✓ Registrada</span>':''}</div>
       </div>
       <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
@@ -4316,17 +4336,25 @@ function renderThemeControls() {
 const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','soccer/fifa.world','basketball/nba','baseball/mlb'];
 function renderToolsOddsLeagues() {
   const c = document.getElementById('tools-odds-leagues'); if (!c) return;
-  c.innerHTML = TOOLS_ODDS_OPTS.map(sp => leagueBtnHTML(sp, false, `loadToolsLeagueOddsFor('${sp}')`)).join('');
+  state.toolsOddsSel = state.toolsOddsSel || new Set();
+  c.innerHTML = TOOLS_ODDS_OPTS.map(sp => leagueBtnHTML(sp, state.toolsOddsSel.has(sp), `toggleToolsOdds('${sp}')`)).join('')
+    + `<button class="btn-load-odds" onclick="loadSelectedToolsOdds()">⬇ Cargar cuotas${state.toolsOddsSel.size?` (${state.toolsOddsSel.size})`:''}</button>`;
 }
-async function loadToolsLeagueOddsFor(sp) {
+function toggleToolsOdds(sp){
+  state.toolsOddsSel = state.toolsOddsSel || new Set();
+  if (state.toolsOddsSel.has(sp)) state.toolsOddsSel.delete(sp); else state.toolsOddsSel.add(sp);
+  renderToolsOddsLeagues();
+}
+async function loadSelectedToolsOdds(){
   const st = document.getElementById('tools-odds-status');
-  const nm = (LEAGUE_META[sp]||{}).name || sp;
-  if (st) st.textContent = `Cargando ${nm}...`;
-  try {
-    const n = await loadOddsForSport(sp);
-    if (st) st.textContent = (n!=null) ? `✓ ${nm}: ${n} partido(s) con cuotas` : '';
-    if (n!=null) toast(`Cuotas de ${nm} cargadas: ${n}`, 'ok');
-  } catch(e) { if (st) st.textContent = '⚠ ' + e.message; }
+  const sel = [...(state.toolsOddsSel||[])];
+  if (!sel.length){ if(st) st.textContent='Primero selecciona una o varias ligas, luego carga.'; toast('Selecciona al menos una liga','err'); return; }
+  if (st) st.innerHTML = `<span class="loader" style="width:11px;height:11px;margin-right:6px;"></span>Cargando ${sel.length} liga(s)...`;
+  let total=0, okn=0, fail=0;
+  for (const sp of sel){ try{ const n=await loadOddsForSport(sp); if(n!=null){ total+=n; okn++; } else fail++; }catch(e){ fail++; } }
+  if (st) st.textContent = `✓ ${okn} liga(s) con cuotas · ${total} partido(s)` + (fail?` · ${fail} sin datos`:'');
+  toast(`Cuotas cargadas: ${total} partido(s) en ${okn} liga(s)`, 'ok');
+  if (document.getElementById('panel-today') && document.getElementById('panel-today').classList.contains('active')) loadToday();
 }
 function saveBaseStakeSetting(v) {
   const n = parseFloat(v);
@@ -5624,13 +5652,13 @@ function liveCardHTML(g, detail){
   let stand=null; if(bet) stand=liveStanding({resolve:bet.resolve, liveScore:`${g.home.score??0}-${g.away.score??0}`});
   const clk = g.shortDetail || g.clock || (g.period?('P'+g.period):'');
   const prog = Math.round((typeof gameProgress==='function'?gameProgress(g):0)*100);
-  const lsize = detail==='full'?72:46;
+  const lsize = detail==='full'?92:60;
   const lgName = (LEAGUE_META[g.sport]&&LEAGUE_META[g.sport].name)||g.league;
   // Lista unificada de jugadas: eventos de fútbol + jugadas anotadoras de béisbol
   let evList=[];
   if (g.events && g.events.length) evList = g.events.slice().reverse().map(e=>({ic:e.emoji, min:e.clock||'', tx:e.label+(e.who?' · '+e.who:''), hot:e.emoji==='⚽'}));
   if (g.live && g.live.plays && g.live.plays.length) evList = g.live.plays.slice().reverse().map(p=>({ic:'⚾', min:p.inning||'', tx:p.text+(p.score?` (${p.score})`:''), hot:true})).concat(evList);
-  const cap = detail==='compact'?3:(detail==='mid'?6:14);
+  const cap = detail==='compact'?5:(detail==='mid'?9:18);
   const evShow = evList.slice(0,cap);
   const evHtml = evShow.length ? `<div class="le-events">${evShow.map(e=>`<div class="le-ev${e.hot?' hot':''}"><span class="le-ic">${e.ic}</span><span class="le-min">${e.min}</span><span class="le-tx">${e.tx}</span></div>`).join('')}</div>` : '';
   let possHtml='';
@@ -5641,9 +5669,9 @@ function liveCardHTML(g, detail){
       + ((si.batter||si.pitcher)?`<div class="le-bp-row">${si.batter?`<span class="le-bp"><b>Al bate:</b> ${si.batter}</span>`:''}${si.pitcher?`<span class="le-bp"><b>Lanza:</b> ${si.pitcher}</span>`:''}</div>`:'')
       + (si.lastPlay?`<div class="le-last">Última: ${si.lastPlay}</div>`:''); }
   let statHtml='';
-  if(detail!=='compact' && g.live && g.live.stats && g.live.stats.length){ statHtml=`<div class="le-stats">${g.live.stats.map(st=>`<div class="le-st"><span class="ls-h">${st.home}</span><span class="ls-l">${st.label}</span><span class="ls-a">${st.away}</span></div>`).join('')}</div>`; }
+  if(g.live && g.live.stats && g.live.stats.length){ statHtml=`<div class="le-stats">${g.live.stats.map(st=>`<div class="le-st"><span class="ls-h">${st.home}</span><span class="ls-l">${st.label}</span><span class="ls-a">${st.away}</span></div>`).join('')}</div>`; }
   const betHtml = bet ? `<div class="lc-bet">${marketTag(betMarketLabel(bet))}<span class="muted" style="font-size:11px;">${bet.pick||''}</span>${stand?`<span class="stand stand-${stand.cls}">${stand.txt}</span>`:''}</div>` : '';
-  const head = `<div class="lc-top"><span class="lc-league">${leagueLogoHTML(g.sport, detail==='full'?48:30)}<span>${lgName}</span></span><span class="live-pill">● EN VIVO</span></div>`;
+  const head = `<div class="lc-top"><span class="lc-league">${leagueLogoHTML(g.sport, detail==='full'?60:36)}<span>${lgName}</span></span></div>`;
   const board = `<div class="lc-body">
       <div class="lc-team">${teamLogoHTML(g.home,lsize)}<span class="nm">${g.home.shortName||g.home.name}</span></div>
       <div class="lc-mid"><div class="lc-score">${g.home.score??0} – ${g.away.score??0}</div><div class="lc-clock">${clk}</div></div>
@@ -5660,6 +5688,9 @@ function liveCardHTML(g, detail){
   return `<div class="lcard${stand?' standing-'+stand.cls:''}">${head}${board}
     ${sitHtml}${possHtml}${betHtml}${statHtml}${evHtml}</div>`;
 }
+let __trackerTimer=null;
+function startTrackerPoll(){ stopTrackerPoll(); __trackerTimer=setInterval(()=>{ const p=document.getElementById('panel-tracker'); if(p&&p.classList.contains('active')) autoResolveBets(); else stopTrackerPoll(); }, 35000); }
+function stopTrackerPoll(){ if(__trackerTimer){ clearInterval(__trackerTimer); __trackerTimer=null; } }
 function startLiveTabPoll(){ stopLiveTabPoll(); __liveTabTimer=setInterval(()=>{ const p=document.getElementById('panel-live'); if(p&&p.classList.contains('active')) loadLiveTab(); else stopLiveTabPoll(); }, 30000); }
 function stopLiveTabPoll(){ if(__liveTabTimer){ clearInterval(__liveTabTimer); __liveTabTimer=null; } }
 
@@ -5674,7 +5705,7 @@ document.querySelectorAll('.tab').forEach(t => {
     setScheduleControls(t.dataset.tab==='schedule');  // los controles de liga/fechas solo en Cronograma
     if (t.dataset.tab==='live') { loadLiveTab(); startLiveTabPoll(); } else { stopLiveTabPoll(); }
     if (t.dataset.tab==='tools') renderTools();
-    if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); }
+    if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); startTrackerPoll(); } else { stopTrackerPoll(); }
     if (t.dataset.tab==='arb') renderArb();
     if (t.dataset.tab==='schedule' && state.games && state.games.length && typeof refreshLiveScores==='function') refreshLiveScores();
     if (t.dataset.tab==='today') { renderTodayLeagues(); if (!todayGames.length) loadToday(); else renderTodayPicks(); }
