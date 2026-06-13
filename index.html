@@ -831,6 +831,17 @@
   .bet-logos { display:inline-flex; align-items:center; margin-right:7px; vertical-align:middle; }
   .bet-logos .tlogo, .bet-logos .tlogo-fb { width:18px; height:18px; }
   .bet-logos > *:nth-child(2) { margin-left:-5px; }
+  /* Hora estilo "píldora con color" (opción 4) + contador */
+  .tr-time { background:var(--c-salvia); color:#fff; font-size:11px; font-weight:700; padding:3px 9px 3px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+  .tr-cd { background:rgba(226,101,74,.13); color:var(--c-coral); font-size:10px; font-weight:800; padding:2px 7px; border-radius:999px; margin-left:6px; white-space:nowrap; }
+  /* Resaltado en vivo: vas ganando / perdiendo */
+  .stand { font-size:10px; font-weight:800; letter-spacing:.02em; padding:2px 8px; border-radius:5px; margin-left:7px; }
+  .stand-win { background:rgba(46,125,82,.15); color:#2e7d52; }
+  .stand-lose { background:rgba(179,38,30,.13); color:var(--c-granate); }
+  .stand-push { background:#eef2f7; color:var(--text-2); }
+  .bet-card.standing-win { border-left:3px solid #2e7d52; }
+  .bet-card.standing-lose { border-left:3px solid var(--c-granate); }
+  .bet-card.standing-push { border-left:3px solid var(--text-3); }
   .tr-pick strong { color:var(--text-1); font-weight:700; }
   .tr-odds { font-family:var(--font-mono); color:var(--text-3); }
   .tr-edge { color:var(--c-salvia); font-weight:600; }
@@ -1826,6 +1837,18 @@ async function loadToday() {
   window.__animateToday = true;
   renderTodayPicks();
 }
+const CLK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function countdownStr(date){
+  try{
+    const ms = date.getTime() - Date.now();
+    if (ms <= 0) return null;          // ya empezó / en vivo
+    if (ms > 8*3600000) return null;   // lejos: no saturar
+    const h = Math.floor(ms/3600000), m = Math.floor((ms%3600000)/60000);
+    if (h>0) return `en ${h}h ${m}m`;
+    if (m>0) return `en ${m}m`;
+    return 'empieza ya';
+  }catch(e){ return null; }
+}
 function buildTodayPicks() {
   const floor = getTodayFloor();
   const allowSecond = !!(document.getElementById('today-second')||{}).checked;
@@ -1843,7 +1866,7 @@ function buildTodayPicks() {
         if (o.edgePct==null || o.edgePct <= MIN_EDGE) return;   // solo valor positivo
         const od = o.oddsBest;
         const kelly = (od>1) ? Math.max(0,(o.displayProb*od - 1)/(od-1)) : 0;
-        cands.push({ cat:ck, label:mk.label, pick:o.trackerPick||o.name, odds:od, book:o.bestBook,
+        cands.push({ cat:ck, label:mk.label, pick:o.trackerPick||o.name, odds:od, book:o.bestBook, key:o.key, point:o.point,
           prob:o.displayProb, probTier:o.probTier, valueTier:o.valueTier, edge:o.edgePct, kelly });
       });
     });
@@ -1906,6 +1929,7 @@ function renderTodayPicks() {
     const g = p.g, o = p.c;
     if (g.league !== curLeague) { curLeague = g.league; html += `<div class="today-league-head">${curLeague}</div>`; }
     const time = g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
+    const cd = countdownStr(g.date);
     const oddsTxt = o.odds ? `@ ${o.odds.toFixed(2)}` : '';
     const houseTxt = (o.book && !String(o.book).startsWith('≈')) ? `${o.book} ${oddsTxt}` : (String(o.book||'').startsWith('≈') ? `${oddsTxt} (precio derivado)` : oddsTxt);
     const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
@@ -1917,7 +1941,7 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.home,24)}<span class="tr-name">${g.home.shortName||g.home.name}</span></span>
           <span class="tr-x">vs</span>
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
-          <span class="tr-time">${time}</span>
+          <span class="tr-time">${CLK} ${time}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}
         </div>
         <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span></div>
       </div>
@@ -1936,6 +1960,7 @@ function registerTodayPackage() {
   if (!picks.length) { toast('No hay apuestas activas en el paquete','err'); return; }
   picks.forEach(p => {
     const g = p.g, o = p.c;
+    const resolve = buildResolveFromPick(o.cat, o.key, o.point);
     state.bets.unshift({
       id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       createdAt: new Date().toISOString(),
@@ -1949,7 +1974,7 @@ function registerTodayPackage() {
       espnGameId: g.id, espnSport: g.sport, homeTeam: g.home.name, awayTeam: g.away.name, homeLogo: g.home.logo||null, awayLogo: g.away.logo||null,
       league: g.league, commence: g.date.toISOString(),
       notes: `Paquete Sharp · prob ${(o.prob*100).toFixed(0)}% · valor ${o.edge!=null?(o.edge>0?'+':'')+o.edge.toFixed(1)+'%':'—'}`,
-      status: 'pending', auto: false
+      resolve, status: 'pending', auto: !!resolve
     });
   });
   persistBets();
@@ -4852,17 +4877,13 @@ function betCardHTML(b) {
     : (b.status==='lost' ? `−$${b.stake.toFixed(2)}` : (b.status==='push' ? '$0' : ''));
   const plCls = b.status==='won' ? 'pos' : (b.status==='lost' ? 'neg' : 'muted');
   const live = (b.status==='pending' && b.liveStatus==='in');
+  const stand = live ? liveStanding(b) : null;
   const when = live
-    ? `<span class="live-pill">EN VIVO${b.liveScore?' '+b.liveScore:''}</span>`
+    ? `<span class="live-pill">EN VIVO${b.liveScore?' '+b.liveScore:''}</span>${stand?`<span class="stand stand-${stand.cls}">${stand.txt}</span>`:''}`
     : `<span class="bet-when">${betWhenCell(b)}</span>`;
-  // Acciones mínimas
-  let acts = '';
-  if (!b.auto) {
-    if (b.status==='pending') acts += `<button class="icon-btn btn-w" title="Ganada" onclick="setStatus('${b.id}','won')">✓</button><button class="icon-btn btn-l" title="Perdida" onclick="setStatus('${b.id}','lost')">✕</button>`;
-    else acts += `<button class="icon-btn" title="Volver a pendiente" onclick="setStatus('${b.id}','pending')">↶</button>`;
-  }
-  acts += `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
-  return `<div class="bet-card anim-in grow-hover st-${b.status}">
+  // Resultado 100% automático contra el marcador real → sin botones de marcar ganada/perdida.
+  let acts = `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
+  return `<div class="bet-card anim-in grow-hover st-${b.status}${stand?' standing-'+stand.cls:''}">
     <div class="bet-info">
       <div class="bet-line1">${(b.homeTeam&&b.awayTeam)?`<span class="bet-logos">${teamLogoHTML({name:b.homeTeam,logo:b.homeLogo},18)}${teamLogoHTML({name:b.awayTeam,logo:b.awayLogo},18)}</span>`:''}<span class="bet-match">${b.match||'—'}</span>${when}</div>
       <div class="bet-line2">${betMarketCell(b)} <span class="bet-sep">·</span> @${(b.odds||0).toFixed(2)} <span class="bet-sep">·</span> $${(b.stake||0).toFixed(2)}${b.sport?` <span class="bet-sep">·</span> <span class="muted">${b.sport}</span>`:''}</div>
@@ -5276,6 +5297,25 @@ function resetAdaptive() {
 }
 
 // ---------- MARCADO AUTOMATICO DE RESULTADOS ----------
+function buildResolveFromPick(cat, key, point){
+  if (!key) return null;
+  if (cat==='1x2' || cat==='ml') return { market:'ml', side:key, line:null };       // home/away/draw
+  if (cat==='btts') return { market:'btts', side:key, line:null };                    // yes/no
+  if (cat==='ou')   return (point!=null) ? { market:'totals', side:(String(key)[0]==='o'?'over':'under'), line:point } : null;
+  if (cat==='spread') return (point!=null) ? { market:'spread', side:(String(key)[0]==='h'?'home':'away'), line:point } : null;
+  if (cat==='dc')   return { market:'dc', side:key, line:null };                       // 1x/x2/12
+  if (cat==='dnb')  return { market:'dnb', side:(key==='dnbh'?'home':'away'), line:null };
+  return null;
+}
+function liveStanding(b){
+  if (!b.resolve || !b.liveScore) return null;
+  const m = String(b.liveScore).match(/(\d+)\s*-\s*(\d+)/); if(!m) return null;
+  const out = resolveBetOutcome(b, { homeScore:parseInt(m[1],10), awayScore:parseInt(m[2],10) });
+  if (out==='won')  return { txt:'Vas ganando', cls:'win' };
+  if (out==='lost') return { txt:'Vas perdiendo', cls:'lose' };
+  if (out==='push') return { txt:'Va parejo', cls:'push' };
+  return null;
+}
 function resolveBetOutcome(bet, ev) {
   const r = bet.resolve; if (!r) return null;
   const hs = ev.homeScore, as = ev.awayScore;
@@ -5296,6 +5336,14 @@ function resolveBetOutcome(bet, ev) {
     const opp = (r.side==='home') ? as : hs;
     if (adj === opp) return 'push';
     return adj>opp ? 'won' : 'lost';
+  } else if (r.market === 'dc') {
+    if (r.side==='1x') return hs>=as ? 'won' : 'lost';
+    if (r.side==='x2') return as>=hs ? 'won' : 'lost';
+    if (r.side==='12') return hs!==as ? 'won' : 'lost';
+  } else if (r.market === 'dnb') {
+    if (hs===as) return 'push';
+    if (r.side==='home') return hs>as ? 'won' : 'lost';
+    if (r.side==='away') return as>hs ? 'won' : 'lost';
   }
   return null;
 }
