@@ -791,6 +791,23 @@
   }
   .today-row { display:flex; gap:12px; align-items:center; background:var(--surface); border:1px solid var(--border); padding:12px 14px; margin-bottom:8px; flex-wrap:wrap; }
   .today-row.t-off { opacity:0.45; }
+  .tr-prob { font-family:var(--font-mono); font-size:22px; font-weight:800; min-width:50px; text-align:center; }
+  .tr-prob.alta { color:var(--c-salvia); } .tr-prob.media { color:var(--c-cobre); } .tr-prob.baja { color:var(--text-3); }
+  .tr-body { flex:1; min-width:0; }
+  .tr-match { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .tr-team { display:inline-flex; align-items:center; gap:6px; min-width:0; }
+  .tr-name { font-weight:700; font-size:14.5px; color:var(--text-1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px; }
+  .tr-x { color:var(--text-muted); font-size:11px; font-family:var(--font-mono); }
+  .tr-time { margin-left:auto; color:var(--text-3); font-size:11px; font-family:var(--font-mono); }
+  .tr-pick { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; font-size:12.5px; color:var(--text-2); }
+  .tr-tag { background:rgba(29,90,150,0.10); color:var(--c-salvia); padding:2px 8px; border-radius:5px; font-size:11px; font-weight:700; }
+  .tr-pick strong { color:var(--text-1); font-weight:700; }
+  .tr-odds { font-family:var(--font-mono); color:var(--text-3); }
+  .tr-edge { color:var(--c-salvia); font-weight:600; }
+  .tr-stake { font-family:var(--font-mono); font-size:18px; font-weight:800; color:var(--c-salvia); min-width:62px; text-align:right; }
+  .tlogo, .tlogo-fb { border-radius:50%; object-fit:contain; background:#fff; flex-shrink:0; box-shadow:0 0 0 1px var(--border); }
+  .tlogo-fb { display:inline-flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:9.5px; box-shadow:none; }
+  @media(max-width:480px){ .tr-name{max-width:88px;font-size:13px;} .tr-stake{font-size:16px;min-width:54px;} .tr-prob{font-size:19px;min-width:42px;} }
   .today-prob { font-family:var(--font-mono); font-size:22px; font-weight:800; min-width:64px; text-align:center; }
   .today-prob.alta { color:var(--c-salvia); } .today-prob.media { color:var(--c-cobre); }
   .today-main { flex:1; min-width:200px; }
@@ -1674,6 +1691,16 @@ const LEAGUE_META = {
   'baseball/mlb': { name:'MLB', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png', color:'#041e42', abbr:'MLB' },
   'football/nfl': { name:'NFL', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png', color:'#013369', abbr:'NFL' }
 };
+function colorFromString(str){ let h=0; str=String(str||'?'); for(let i=0;i<str.length;i++) h=str.charCodeAt(i)+((h<<5)-h); return `hsl(${Math.abs(h)%360},42%,42%)`; }
+function tlogoFail(img){ const s=document.createElement('span'); s.className='tlogo-fb'; s.setAttribute('style', img.getAttribute('style')||''); s.style.background=img.dataset.col||'#7c8aa0'; s.textContent=img.dataset.ini||'?'; img.replaceWith(s); }
+function teamLogoHTML(team, size){
+  size = size || 26; team = team || {};
+  const nm = team.shortName || team.name || '?';
+  const ini = (nm.replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,3).toUpperCase()) || '?';
+  const dim = `width:${size}px;height:${size}px;`;
+  if (team.logo) return `<img class="tlogo" src="${team.logo}" data-ini="${ini}" data-col="${colorFromString(nm)}" onerror="tlogoFail(this)" style="${dim}" alt="">`;
+  return `<span class="tlogo-fb" style="${dim}background:${colorFromString(nm)};">${ini}</span>`;
+}
 function lgLogoFail(img){ const sp=document.createElement('span'); sp.className='lg-badge'; sp.style.background=img.dataset.color||'#888'; sp.textContent=img.dataset.abbr||'?'; img.replaceWith(sp); }
 function leagueBtnHTML(sp, on, onclick, nameOverride) {
   const m = LEAGUE_META[sp] || { name:nameOverride||sp, color:'#888', abbr:(nameOverride||sp).slice(0,3).toUpperCase(), logo:null };
@@ -1801,13 +1828,17 @@ function renderTodayPicks() {
     const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
     html += `<div class="today-row${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
-      <div class="today-prob ${o.probTier}">${(o.prob*100).toFixed(0)}%</div>
-      <div class="today-main">
-        <div class="today-match">${g.home.name} vs ${g.away.name} <span class="muted" style="font-weight:400;font-size:11px;">· ${time}</span></div>
-        <div class="today-pick">${o.label}: <strong>${o.pick}</strong></div>
-        <div class="today-meta">${houseTxt} · ${edgeTxt}</div>
+      <div class="tr-prob ${o.probTier}">${(o.prob*100).toFixed(0)}%</div>
+      <div class="tr-body">
+        <div class="tr-match">
+          <span class="tr-team">${teamLogoHTML(g.home,24)}<span class="tr-name">${g.home.shortName||g.home.name}</span></span>
+          <span class="tr-x">vs</span>
+          <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
+          <span class="tr-time">${time}</span>
+        </div>
+        <div class="tr-pick"><span class="tr-tag">${o.label}</span><strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge">${edgeTxt}</span></div>
       </div>
-      <div class="today-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
+      <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
   });
   c.innerHTML = html;
@@ -5705,6 +5736,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   } else {
     setSyncStatus('local', 'Sin sincronizar');
   }
+  // La pestaña por defecto es "Hoy": inicialízala YA (antes no se hacía, por eso las ligas y
+  // los picks solo aparecían al cambiar de pestaña y volver).
+  renderTodayLeagues();
+  loadToday();
   loadWeek();
   renderTracker();
   autoResolveBets();
