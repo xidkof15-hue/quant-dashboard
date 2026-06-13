@@ -907,7 +907,7 @@
   .strip-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--c-salvia),var(--c-pizarra)); border-radius:99px; }
   @media(max-width:560px){ .strip { gap:10px; padding:11px 12px; } .strip-time { min-width:76px; } .strip-prob { font-size:16px; min-width:38px; } .strip-teams .nm { font-size:13.5px; } }
   /* Hoy: apuesta ya registrada + datos en vivo */
-  .today-row.today-done { border-left:3px solid #2e7d52; background:rgba(46,125,82,.05); }
+  .today-row.today-done { border-left:3px solid #2e7d52; background:#d4ddd6; }
   .done-chip { background:rgba(46,125,82,.15); color:#2e7d52; font-size:10px; font-weight:800; padding:2px 8px; border-radius:5px; margin-left:6px; }
   .tr-livd { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; margin-left:6px; }
   /* Cronograma: banner de liga */
@@ -933,7 +933,8 @@
   .br-match .tr-match { display:inline-flex; align-items:center; gap:9px; flex-wrap:wrap; }
   .br-pick { margin-top:9px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:12.5px; color:var(--text-2); }
   .br-odds { font-family:var(--font-mono); color:var(--text-1); font-weight:600; }
-  .br-lg { color:var(--text-3); font-size:11px; }
+  .br-lg { display:inline-flex; align-items:center; gap:6px; color:var(--text-3); font-size:11px; }
+  .br-lg .lglogo, .br-lg .lg-badge { width:20px; height:20px; }
   .br-end { display:flex; align-items:center; gap:12px; flex-shrink:0; }
   .br-end-main { text-align:right; }
   .br-result { font-family:var(--font-mono); font-size:18px; font-weight:800; }
@@ -944,6 +945,27 @@
   .br-acts { display:flex; gap:4px; }
   .tr-livd { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; }
   @media(max-width:600px){ .bet-row { gap:10px; padding:11px 12px; } .br-stake { min-width:70px; font-size:19px; } .br-result { font-size:15px; } .br-end { gap:8px; } }
+  /* Columna central (hora/fecha o en vivo) — Hoy y Mis Apuestas */
+  .tr-center, .br-center { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .tr-center { min-width:128px; } .br-center { min-width:150px; }
+  .ct-block { text-align:center; }
+  .ct-time { font-family:var(--font-mono); font-size:15px; font-weight:800; color:var(--text-1); }
+  .ct-date { font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+  .ct-cd { font-size:10px; font-weight:800; color:var(--c-coral); background:rgba(226,101,74,.12); padding:2px 9px; border-radius:999px; margin-top:6px; display:inline-block; }
+  .ring-wrap { position:relative; width:48px; height:48px; flex-shrink:0; }
+  .ring-txt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:800; color:var(--c-coral); }
+  .tr-live-c { display:flex; align-items:center; gap:11px; }
+  .tr-lc-info { display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
+  .tr-lc-score { font-family:var(--font-mono); font-size:18px; font-weight:800; color:var(--text-1); line-height:1; }
+  /* Mini-tarjetas en vivo (Mis Apuestas) */
+  .lmc { display:flex; gap:6px; }
+  .lmc-card { background:#eef2f7; border-radius:8px; padding:6px 9px; text-align:center; min-width:52px; }
+  .lmc-v { font-family:var(--font-mono); font-size:13px; font-weight:800; color:var(--text-1); white-space:nowrap; }
+  .lmc-hl { max-width:140px; }
+  .lmc-hl .lmc-v { font-size:11px; color:var(--c-coral); overflow:hidden; text-overflow:ellipsis; }
+  .lmc-l { font-size:8px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3); margin-top:4px; }
+  .br-stand-lg { font-size:12px; font-weight:800; padding:5px 13px; border-radius:999px; white-space:nowrap; }
+  @media(max-width:760px){ .tr-center,.br-center{ min-width:96px; } .lmc-hl{ display:none; } }
   .lc-body { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; }
   .lc-team { display:flex; flex-direction:column; align-items:center; gap:9px; text-align:center; min-width:0; }
   .lc-team .nm { font-size:14.5px; font-weight:700; }
@@ -1976,6 +1998,18 @@ function countdownStr(date){
     return 'empieza ya';
   }catch(e){ return null; }
 }
+const STAND_LBL={win:'Ganando',lose:'Perdiendo',push:'Parejo'};
+function centerTimeHTML(date){
+  if (!date || !date.toLocaleTimeString) return '';
+  const t = date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'});
+  const d = date.toLocaleDateString('es-EC',{weekday:'short',day:'2-digit',month:'short',timeZone:'America/Guayaquil'});
+  const cd = countdownStr(date);
+  return `<div class="ct-block"><div class="ct-time">${t}</div><div class="ct-date">${d}</div>${cd?`<div class="ct-cd">${cd}</div>`:''}</div>`;
+}
+function liveRingHTML(prog, txt){
+  const r=18, c=2*Math.PI*r, off=c*(1-Math.max(0,Math.min(1,prog||0)));
+  return `<div class="ring-wrap"><svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="${r}" fill="none" stroke="#e1e7ef" stroke-width="4"/><circle cx="24" cy="24" r="${r}" fill="none" stroke="var(--c-coral)" stroke-width="4" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 24 24)"/></svg><div class="ring-txt">${txt||''}</div></div>`;
+}
 function buildTodayPicks() {
   const floor = getTodayFloor();
   const allowSecond = !!(document.getElementById('today-second')||{}).checked;
@@ -2064,10 +2098,10 @@ function renderTodayPicks() {
     const pr = buildResolveFromPick(o.cat, o.key, o.point);
     const already = pr && doneSet.has(`${g.id}|${pr.market}|${pr.side}`);
     const isLive = g.status==='in';
-    let timeChip;
+    let centerCol;
     if (isLive){ const sc=`${g.home.score??0}-${g.away.score??0}`; const stn=liveStanding({resolve:pr,liveScore:sc});
-      timeChip=`<span class="live-pill">● ${sc}</span><span class="tr-livd">${g.shortDetail||g.clock||''}</span>${stn?`<span class="stand stand-${stn.cls}">${stn.txt}</span>`:''}`; }
-    else { timeChip=`<span class="tr-time">${CLK} ${time}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}`; }
+      centerCol=`<div class="tr-live-c">${liveRingHTML(gameProgress(g), g.shortDetail||g.clock||'')}<div class="tr-lc-info"><div class="tr-lc-score">${sc}</div>${stn?`<span class="stand stand-${stn.cls}">${STAND_LBL[stn.cls]}</span>`:''}</div></div>`; }
+    else { centerCol=centerTimeHTML(g.date); }
     html += `<div class="today-row anim-in grow-hover${(p.g.id+'|'+p.c.cat)===_bestId?' pulse-border':''}${already?' today-done':''}${p.on?'':' t-off'}">
       <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
       <div class="tr-prob ${o.probTier}" data-count="${Math.round(o.prob*100)}" data-suffix="%">${(o.prob*100).toFixed(0)}%</div>
@@ -2076,10 +2110,10 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.home,24)}<span class="tr-name">${g.home.shortName||g.home.name}</span></span>
           <span class="tr-x">vs</span>
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
-          ${timeChip}
         </div>
         <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span>${already?'<span class="done-chip">✓ Registrada</span>':''}</div>
       </div>
+      <div class="tr-center">${centerCol}</div>
       <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
   });
@@ -2093,9 +2127,15 @@ function printTodayReport() {
 function registerTodayPackage() {
   const picks = (window.__todayPicks||[]).filter(p=>p.on && p.stake>0);
   if (!picks.length) { toast('No hay apuestas activas en el paquete','err'); return; }
+  const doneSet = new Set((state.bets||[]).filter(b=>b.espnGameId&&b.resolve).map(b=>`${b.espnGameId}|${b.resolve.market}|${b.resolve.side}`));
+  let added=0, dup=0;
   picks.forEach(p => {
     const g = p.g, o = p.c;
     const resolve = buildResolveFromPick(o.cat, o.key, o.point);
+    const dupKey = resolve ? `${g.id}|${resolve.market}|${resolve.side}` : null;
+    if (dupKey && doneSet.has(dupKey)) { dup++; return; }
+    if (dupKey) doneSet.add(dupKey);
+    added++;
     state.bets.unshift({
       id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       createdAt: new Date().toISOString(),
@@ -2112,8 +2152,8 @@ function registerTodayPackage() {
       resolve, status: 'pending', auto: !!resolve
     });
   });
-  persistBets();
-  toast(`${picks.length} apuestas registradas en Mis Apuestas`, 'ok');
+  if (added) { persistBets(); toast(`${added} apuesta(s) registrada(s)`+(dup?` · ${dup} ya estaban`:''), 'ok'); const pt=document.getElementById('panel-today'); if(pt && pt.classList.contains('active')) renderTodayPicks(); }
+  else { toast('Ese partido y mercado ya están registrados — no se duplican', 'err'); }
 }
 let __liveTimer = null;
 function stopLivePolling() { if (__liveTimer) { clearInterval(__liveTimer); __liveTimer = null; } }
@@ -5026,24 +5066,34 @@ function betCardHTML(b) {
   const teams = (b.homeTeam&&b.awayTeam)
     ? `<span class="tr-team">${teamLogoHTML({name:b.homeTeam,logo:b.homeLogo},24)}<span class="tr-name">${b.homeTeam}</span></span><span class="tr-x">vs</span><span class="tr-team">${teamLogoHTML({name:b.awayTeam,logo:b.awayLogo},24)}<span class="tr-name">${b.awayTeam}</span></span>`
     : `<span class="tr-name">${b.match||'—'}</span>`;
-  let timeChip;
-  if (live){ const sc=b.liveScore||''; timeChip=`<span class="live-pill">● ${sc}</span><span class="tr-livd">${b.liveDetail||b.liveClock||''}</span>${stand?`<span class="stand stand-${stand.cls}">${stand.txt}</span>`:''}`; }
-  else { timeChip = betWhenCell(b); }
   const odds = b.odds?`<span class="br-odds">@ ${(+b.odds).toFixed(2)}</span>`:'';
-  const lg = (b.league||b.sport)?`<span class="br-lg">${b.league||b.sport}</span>`:'';
-  let endHtml;
-  if (b.status==='won') endHtml=`<div class="br-result win">+$${(b.stake*((b.odds||1)-1)).toFixed(2)}</div><div class="br-st-lbl">Ganada</div>`;
-  else if (b.status==='lost') endHtml=`<div class="br-result lose">−$${(b.stake||0).toFixed(2)}</div><div class="br-st-lbl">Perdida</div>`;
-  else if (b.status==='push'||b.status==='void') endHtml=`<div class="br-result push">$0.00</div><div class="br-st-lbl">Nula</div>`;
-  else endHtml=`<div class="br-status${live?' livep':''}">${live?'En vivo':'Pendiente'}</div>`;
+  const lgName = (LEAGUE_META[b.espnSport]&&LEAGUE_META[b.espnSport].name) || b.league || b.sport || '';
+  const lg = lgName ? `<span class="br-lg">${b.espnSport?leagueLogoHTML(b.espnSport,20):''}<span>${lgName}</span></span>` : '';
+  // Columna central: fecha/hora, o 3 mini-tarjetas en vivo
+  let center;
+  if (live){
+    const sc=b.liveScore||'—', clk=b.liveDetail||b.liveClock||'en juego', hl=b.liveLastPlay||'—';
+    center = `<div class="lmc"><div class="lmc-card"><div class="lmc-v">${sc}</div><div class="lmc-l">marcador</div></div><div class="lmc-card"><div class="lmc-v">${clk}</div><div class="lmc-l">tiempo</div></div><div class="lmc-card lmc-hl"><div class="lmc-v">${hl}</div><div class="lmc-l">jugada</div></div></div>`;
+  } else {
+    let d=null; if(b.commence){const x=new Date(b.commence); if(!isNaN(x)) d=x;}
+    center = d ? centerTimeHTML(d) : '';
+  }
+  // Derecha: resultado o estado (Ganando/Perdiendo en vivo)
+  let endMain;
+  if (b.status==='won') endMain=`<div class="br-result win">+$${(b.stake*((b.odds||1)-1)).toFixed(2)}</div><div class="br-st-lbl">Ganada</div>`;
+  else if (b.status==='lost') endMain=`<div class="br-result lose">−$${(b.stake||0).toFixed(2)}</div><div class="br-st-lbl">Perdida</div>`;
+  else if (b.status==='push'||b.status==='void') endMain=`<div class="br-result push">$0.00</div><div class="br-st-lbl">Nula</div>`;
+  else if (live && stand) endMain=`<div class="stand stand-${stand.cls} br-stand-lg">${STAND_LBL[stand.cls]}</div>`;
+  else endMain=`<div class="br-status${live?' livep':''}">${live?'En vivo':'Pendiente'}</div>`;
   const acts = `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
   return `<div class="bet-row grow-hover st-${b.status}${stand?' standing-'+stand.cls:''}">
     ${stake}
     <div class="br-body">
-      <div class="br-match"><span class="tr-match">${teams}</span>${timeChip}</div>
+      <div class="br-match"><span class="tr-match">${teams}</span></div>
       <div class="br-pick">${betMarketCell(b)}${odds}${lg}</div>
     </div>
-    <div class="br-end"><div class="br-end-main">${endHtml}</div><div class="br-acts">${acts}</div></div>
+    <div class="br-center">${center}</div>
+    <div class="br-end"><div class="br-end-main">${endMain}</div><div class="br-acts">${acts}</div></div>
   </div>`;
 }
 function trackerTableHTML(bets) {
@@ -5546,7 +5596,8 @@ async function autoResolveBets() {
           homeScore: sc(home), awayScore: sc(away),
           clock: stat.displayClock || null,
           period: stat.period || null,
-          shortDetail: stype.shortDetail || null
+          shortDetail: stype.shortDetail || null,
+          events: describeEvents(comp)
         };
       });
       group.forEach(b => {
@@ -5565,6 +5616,7 @@ async function autoResolveBets() {
           if (ev.clock && b.liveClock !== ev.clock) { b.liveClock = ev.clock; anyChange = true; }
           if (ev.shortDetail && b.liveDetail !== ev.shortDetail) { b.liveDetail = ev.shortDetail; anyChange = true; }
           if (ev.period && b.livePeriod !== ev.period) { b.livePeriod = ev.period; anyChange = true; }
+          if (ev.events && ev.events.length){ const e=ev.events[ev.events.length-1]; const who=e.who?(' '+e.who.split(' ').slice(-1)[0]):''; const lp=`${e.emoji} ${e.clock||''} ${e.label}${who}`.replace(/\s+/g,' ').trim(); if(b.liveLastPlay!==lp){ b.liveLastPlay=lp; anyChange=true; } }
         } else {
           if (b.liveStatus !== 'pre') { b.liveStatus = 'pre'; anyChange = true; }
         }
