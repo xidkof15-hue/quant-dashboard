@@ -8,7 +8,7 @@
 <style>
   :root {
     /* SHARP · Nórdica — gris azulado, azul profundo, coral */
-    --bg: #eef2f6;
+    --bg: #e8ebf0;
     --surface: #ffffff;
     --surface-hover: #f3f6f9;
     --surface-2: #e6ecf2;
@@ -36,9 +36,9 @@
     --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', Menlo, monospace;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { background: var(--bg); color: var(--text-1); font-family: var(--font-body); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; min-height: 100vh; }
+  html, body { background: var(--bg); color: var(--text-1); font-family: var(--font-body); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; min-height: 100vh; }
   /* HEADER */
-  .header { border-bottom: 1px solid var(--border); background: rgba(250,250,247,0.95); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
+  .header { border-bottom: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
   .header-inner { max-width: 1600px; margin: 0 auto; padding: 18px 24px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
   .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
   .brand-mark { width: 8px; height: 8px; background: var(--c-cobre); border-radius: 50%; }
@@ -353,6 +353,39 @@
     .stat-value { font-size: 22px; }
     .week-display { min-width: 110px; padding: 8px 10px; font-size: 11px; }
     .arb-leg { grid-template-columns: 1fr 1fr; }
+    .mkt-grid { grid-template-columns: 1fr; }
+    .market-grid { grid-template-columns: 1fr; }
+    .tabs { overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 0 0 auto; }
+    .today-box { gap: 10px; }
+    .calc-output { grid-template-columns: 1fr 1fr; }
+    .detail-head { position: static; margin: -16px -16px 16px; }
+    .detail-head .ds-title, .detail-title { font-size: 16px; }
+  }
+  /* iPhone (pantallas angostas) */
+  @media (max-width: 480px) {
+    .header-inner { padding: 12px 14px; gap: 10px; }
+    .brand-logo { height: 30px; }
+    .main { padding: 16px 13px 56px; }
+    .section-title { font-size: 20px; }
+    .section-sub { font-size: 13px; }
+    .tab { font-size: 13px; padding: 10px 12px; }
+    .today-box { flex-direction: column; align-items: stretch; padding: 13px; }
+    .today-box label, .today-box button { width: 100%; }
+    .today-box select, .today-box input { width: 100%; }
+    .today-row { gap: 9px; padding: 12px 12px; }
+    .today-prob { font-size: 20px; min-width: 50px; }
+    .today-stake { font-size: 16px; min-width: 60px; }
+    .today-match { font-size: 13px; }
+    .calc-output { grid-template-columns: 1fr; }
+    .calc-inputs { grid-template-columns: 1fr; }
+    .stat-bar, .tracker-stats { grid-template-columns: 1fr 1fr; }
+    .arb-leg { grid-template-columns: 1fr; }
+    table { font-size: 12.5px; }
+    .week-nav { flex: 1; }
+    .week-display { flex: 1; }
+    .modal-card, #modal-card { width: 94vw; max-width: 94vw; }
   }
   /* helpers */
   .pos { color: var(--c-salvia); }
@@ -711,7 +744,43 @@
   .mkt-prob, .mkt-val, .mkt-card-head, .chead { border-radius: 0; }
   .live-pill, .final-pill, .mkt-prob-tier, .prob-alta, .prob-media, .prob-baja, .prob-dudoso, .mkt-manual { border-radius: 6px; }
   .tab { border-radius: 0; }
+  /* Legibilidad: subir los textos más pequeños */
+  .section-sub { font-size: 13.5px; }
+  .small-note, .calc-help, .calc-out-desc, .today-meta, .mkt-val-note { font-size: 12.5px; }
+  .today-pick, .market-reasoning, .edu-box { font-size: 13.5px; }
+  .calc-inputs label, .calc-out-label, .mkt-val-head { font-size: 11px; }
+  .muted { font-size: inherit; }
+  /* Selector de fuente / tamaño (reusa .theme-btn) */
+  body[data-font="sans"]  { --font-body: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+  body[data-font="serif"] { --font-body: Georgia, Cambria, 'Times New Roman', serif; }
+  body[data-font="verdana"] { --font-body: Verdana, Geneva, Tahoma, sans-serif; }
+  body[data-tsize="l"]  { zoom: 1.10; }
+  body[data-tsize="xl"] { zoom: 1.20; }
   .today-league-head { font-size:12px; font-weight:800; letter-spacing:0.06em; color:var(--text-3); margin:18px 0 8px; text-transform:uppercase; }
+  /* Mis apuestas — minimalista */
+  .tracker-hist-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:24px 0 12px; font-size:18px; font-weight:700; }
+  .bet-cards { display:flex; flex-direction:column; gap:8px; margin-top:6px; }
+  .bet-card { display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--surface); border:1px solid var(--border); border-left:4px solid var(--border-strong); border-radius:var(--radius); padding:12px 14px; }
+  .bet-card.st-won  { border-left-color:var(--c-salvia); }
+  .bet-card.st-lost { border-left-color:var(--c-granate); }
+  .bet-card.st-push { border-left-color:var(--text-muted); }
+  .bet-card.st-pending { border-left-color:var(--c-pizarra); }
+  .bet-info { min-width:0; flex:1; }
+  .bet-line1 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .bet-match { font-weight:700; font-size:14.5px; color:var(--text-1); }
+  .bet-when { font-size:12px; color:var(--text-3); }
+  .bet-line2 { font-size:13px; color:var(--text-2); margin-top:3px; }
+  .bet-line2 strong { color:var(--text-1); font-weight:600; }
+  .bet-sep { color:var(--text-muted); margin:0 2px; }
+  .bet-end { display:flex; align-items:center; gap:14px; flex-shrink:0; }
+  .bet-pl { font-family:var(--font-mono); font-weight:800; font-size:16px; }
+  .bet-pl.pos { color:var(--c-salvia); }
+  .bet-pl.neg { color:var(--c-granate); }
+  .bet-actions { display:flex; gap:5px; }
+  @media (max-width:480px) {
+    .bet-card { flex-direction:column; align-items:stretch; gap:10px; }
+    .bet-end { justify-content:space-between; }
+  }
   .today-row { display:flex; gap:12px; align-items:center; background:var(--surface); border:1px solid var(--border); padding:12px 14px; margin-bottom:8px; flex-wrap:wrap; }
   .today-row.t-off { opacity:0.45; }
   .today-prob { font-family:var(--font-mono); font-size:22px; font-weight:800; min-width:64px; text-align:center; }
@@ -754,8 +823,15 @@
         <optgroup label="BÉISBOL"><option value="baseball/mlb">MLB</option></optgroup>
         <optgroup label="NFL"><option value="football/nfl">NFL</option></optgroup>
       </select>
-      <div class="week-nav"><button id="week-prev">◀</button><div class="week-display" id="week-display">—</div><button id="week-next">▶</button></div>
+      <div class="week-nav"><button id="week-prev" title="Rango anterior">◀</button><div class="week-display" id="week-display">—</div><button id="week-next" title="Rango siguiente">▶</button></div>
+      <select id="range-days" class="ctrl" title="Cuántos días mostrar" style="padding:8px 10px;">
+        <option value="1">Solo 1 día</option>
+        <option value="3" selected>3 días</option>
+        <option value="7">7 días</option>
+      </select>
+      <input type="date" id="range-date" class="ctrl" title="Ir a un día específico" style="padding:7px 10px;" />
       <button class="ctrl" id="refresh-btn" title="Actualizar partidos + marcadores + apuestas">↻ Actualizar todo</button>
+      <button class="ctrl" id="load-odds-btn" title="Cargar las cuotas de mercado de esta liga (no necesitas abrir un partido)">↓ Cargar cuotas</button>
       <button class="ctrl sync-pill" id="sync-pill" onclick="showSyncGate()" title="Sincronización"><span id="sync-pill-dot" class="sync-pill-dot"></span><span id="sync-pill-text">local</span></button>
     </div>
   </div>
@@ -778,8 +854,16 @@
       <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Banca de hoy ($)
         <input type="number" id="today-bank" step="5" min="5" style="width:110px;" onchange="setTodayBank(this.value)" />
       </label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);padding-bottom:8px;">
-        <input type="checkbox" id="today-inc-media" onchange="renderTodayPicks()" /> incluir prob. media (×1)
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Prob. mínima
+        <select id="today-floor" onchange="setTodayFloor(this.value)" style="width:120px;">
+          <option value="0.55">55% (más apuestas)</option>
+          <option value="0.60">60% (recomendado)</option>
+          <option value="0.65">65%</option>
+          <option value="0.75">75% (conservador)</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);padding-bottom:8px;" title="Sumar un 2º mercado de otra categoría por partido. Más acción pero algo más de riesgo por correlación.">
+        <input type="checkbox" id="today-second" onchange="renderTodayPicks()" /> permitir 2º mercado/partido
       </label>
       <button class="btn-secondary" onclick="loadToday()" style="margin-left:auto;">↻ Actualizar</button>
       <button class="btn-secondary" onclick="printTodayReport()">⎙ Imprimir reporte</button>
@@ -876,6 +960,19 @@
         <button class="theme-btn" data-anim="vivo" onclick="setAnim('vivo')">Vivas</button>
         <button class="theme-btn" data-anim="ninguna" onclick="setAnim('ninguna')">Ninguna</button>
       </div>
+      <p style="font-size:13px;color:var(--text-2);margin:12px 0 8px;">Tipografía:</p>
+      <div class="theme-grid" id="font-grid">
+        <button class="theme-btn" data-font="system" onclick="setFont('system')">Sistema</button>
+        <button class="theme-btn" data-font="sans" onclick="setFont('sans')">Helvética</button>
+        <button class="theme-btn" data-font="verdana" onclick="setFont('verdana')">Verdana (legible)</button>
+        <button class="theme-btn" data-font="serif" onclick="setFont('serif')">Serif</button>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin:12px 0 8px;">Tamaño de letra:</p>
+      <div class="theme-grid" id="tsize-grid">
+        <button class="theme-btn" data-tsize="n" onclick="setTextSize('n')">Normal</button>
+        <button class="theme-btn" data-tsize="l" onclick="setTextSize('l')">Grande</button>
+        <button class="theme-btn" data-tsize="xl" onclick="setTextSize('xl')">Muy grande</button>
+      </div>
     </div>
     <div class="api-key-form">
       <div class="block-title">API Key — The Odds API <span class="muted" style="text-transform:none;letter-spacing:0;">(compartida con la sección Cuotas de cada partido)</span></div>
@@ -910,6 +1007,28 @@
       <div style="margin-top:10px;"><button class="btn-secondary" onclick="clearAllDsCache()">Limpiar caché de fuentes</button></div>
     </div>
     <div class="api-key-form">
+      <div class="block-title">Cargar cuotas por liga</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Trae las cuotas de mercado de toda una liga de una sola vez, aunque no haya partidos esta semana. Quedan guardadas y disponibles para el paquete de Hoy, el cronograma y el arbitraje.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <select id="tools-odds-league" style="padding:9px 12px;min-width:200px;">
+          <option value="soccer/ecu.1">LigaPro Ecuador</option>
+          <option value="soccer/eng.1">Premier League</option>
+          <option value="soccer/esp.1">LaLiga</option>
+          <option value="soccer/ita.1">Serie A</option>
+          <option value="soccer/ger.1">Bundesliga</option>
+          <option value="soccer/fra.1">Ligue 1</option>
+          <option value="soccer/uefa.champions">Champions</option>
+          <option value="soccer/conmebol.libertadores">Libertadores</option>
+          <option value="soccer/conmebol.sudamericana">Sudamericana</option>
+          <option value="soccer/fifa.world">Mundial FIFA</option>
+          <option value="basketball/nba">NBA</option>
+          <option value="baseball/mlb">MLB</option>
+        </select>
+        <button class="btn-accent" type="button" onclick="loadToolsLeagueOdds()">↓ Cargar cuotas</button>
+        <span id="tools-odds-status" style="font-size:12.5px;color:var(--text-3);"></span>
+      </div>
+    </div>
+    <div class="api-key-form">
       <div class="block-title">Sincronización entre dispositivos</div>
       <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Usa una clave numérica para que tus apuestas, presets y cuotas se compartan entre tu iPhone, iPad y laptop. Escribe la misma clave en cada dispositivo. Cualquiera que conozca la clave puede ver y editar estos datos, así que guárdala como guardarías una contraseña.</p>
       <div id="sync-tools-box"></div>
@@ -924,29 +1043,14 @@
   <!-- TRACKER -->
   <section class="panel" id="panel-tracker">
     <h1 class="section-title">Mis apuestas</h1>
-    <p class="section-sub">Registra cada apuesta. El sistema calcula tu Sharp Rating, CLV, ROI y patrones de aciertos/desvíos.</p>
-    <div id="sharp-rating-card"></div>
+    <p class="section-sub">Tu resultado de un vistazo y el historial de cada apuesta. Las apuestas se registran solas desde el paquete de Hoy o desde la calculadora de un partido.</p>
     <div class="tracker-stats" id="tracker-stats"></div>
-
-    <h2 style="font-size:18px;font-weight:700;margin:22px 0 10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div class="tracker-hist-head">
       <span>Historial</span>
-      <button class="btn-secondary" type="button" onclick="openManualBetModal()" style="font-size:11px;padding:7px 13px;">+ Registrar manualmente</button>
-    </h2>
-    <p class="section-sub" style="margin-top:-6px;margin-bottom:14px;font-size:12px;">Las apuestas nuevas se registran directamente desde la calculadora de un partido (Cronograma → click → Calculadora). El botón "+ Registrar manualmente" es solo para apuestas a mercados que el sistema no cubre.</p>
+      <button class="btn-secondary" type="button" onclick="openManualBetModal()" style="font-size:12px;padding:7px 13px;">+ Registrar</button>
+    </div>
     <div id="tracker-filter-bar"></div>
     <div id="tracker-list"></div>
-
-    <h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Análisis descriptivo de tu desempeño</h2>
-    <p class="section-sub">Lo que ya pasó: tus números, tus patrones, tus tendencias.</p>
-    <div id="tracker-descriptive"></div>
-
-    <h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Matriz de aciertos y desvíos</h2>
-    <p class="section-sub">Cruza tus decisiones con los resultados para identificar patrones de validación, varianza, intuición y disciplina.</p>
-    <div id="tracker-matrix"></div>
-
-    <h2 style="font-size:20px;font-weight:700;margin:32px 0 4px;">Análisis predictivo de tu desempeño</h2>
-    <p class="section-sub">Lo que tus datos sugieren: dónde tienes edge, dónde sangras, qué stake óptimo deberías usar.</p>
-    <div id="tracker-predictive"></div>
   </section>
 
   <!-- EDUCATION -->
@@ -977,6 +1081,8 @@ const WEIGHT_INFO = {
 const state = {
   sport: 'soccer/eng.1',
   weekOffset: 0,
+  rangeDays: 3,        // por defecto ≤3 días
+  dateAnchor: null,    // si fijas un día específico
   games: [],
   selectedGame: null,
   teamCache: {},
@@ -1020,7 +1126,14 @@ const ODDS_SPORT_MAP = {
 };
 
 // ---------- DATE UTILS ----------
-function getWeekRange(o = 0) { const n = new Date(); const s = new Date(n); s.setDate(s.getDate() + o*7); const e = new Date(s); e.setDate(e.getDate()+7); return {start:s,end:e}; }
+function getWeekRange(o = 0) {
+  const rd = state.rangeDays || 3;
+  let s = state.dateAnchor ? new Date(state.dateAnchor) : new Date();
+  s.setHours(0,0,0,0);
+  s.setDate(s.getDate() + o*rd);
+  const e = new Date(s); e.setDate(e.getDate() + Math.max(0, rd-1));   // inclusiva: rd=1 => un solo día
+  return { start:s, end:e };
+}
 function fmtDateESPN(d) { return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateHuman(d) { return d.toLocaleDateString('es-EC', {day:'2-digit',month:'short'}); }
 function fmtDateTimeHuman(d) { return d.toLocaleDateString('es-EC',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'}); }
@@ -1546,6 +1659,8 @@ const TODAY_LEAGUE_OPTS = [
   ['soccer/ita.1','Serie A'], ['soccer/ger.1','Bundesliga'], ['soccer/conmebol.libertadores','Libertadores'],
   ['soccer/conmebol.sudamericana','Sudamericana'], ['soccer/fifa.world','Mundial FIFA'], ['basketball/nba','NBA'], ['baseball/mlb','MLB']];
 function getTodayBank() { const v = parseFloat(localStorage.getItem('quantDailyBank')); return (v>0)?v:100; }
+function getTodayFloor() { const v = parseFloat(localStorage.getItem('quantTodayFloor')); return (v>=0.5 && v<=0.95) ? v : 0.60; }
+function setTodayFloor(v) { const n=parseFloat(v); if (n>=0.5) lsSet('quantTodayFloor', String(n)); renderTodayPicks(); }
 function setTodayBank(v) { const n=parseFloat(v); if (n>0) lsSet('quantDailyBank', String(n)); renderTodayPicks(); }
 function getTodayLeagues() {
   try { const a = JSON.parse(localStorage.getItem('quantTodayLeagues')||'null'); if (Array.isArray(a)&&a.length) return a; } catch(e){}
@@ -1580,33 +1695,56 @@ async function loadToday() {
   renderTodayPicks();
 }
 function buildTodayPicks() {
-  const incMedia = !!(document.getElementById('today-inc-media')||{}).checked;
+  const floor = getTodayFloor();
+  const allowSecond = !!(document.getElementById('today-second')||{}).checked;
+  const MIN_EDGE = 0;   // backtest: seleccionar por VALOR (mejor cuota × prob > 1) gana dinero; favoritos sin valor lo pierden
   const picks = [];
   todayGames.forEach(g => {
     const opp = g.opportunity;
     if (!opp || !opp.markets) return;
-    // UNA apuesta por partido (la de mayor probabilidad fiable) para no apilar apuestas correlacionadas
-    let best = null;
-    Object.entries(opp.markets).forEach(([k,m]) => {
-      if (m.reliable===false || m.mode!=='market') return;
-      if (m.probTier!=='alta' && !(incMedia && m.probTier==='media')) return;
-      if (!best || (m.displayProb||0) > (best.m.displayProb||0)) best = { k, m };
+    // Candidatos: TODAS las opciones de mercado del partido (no solo la más probable)
+    const cands = [];
+    Object.entries(opp.markets).forEach(([ck,mk]) => {
+      (mk.topOptions||[]).forEach(o => {
+        if (o.reliable===false || o.mode!=='market') return;
+        if (o.displayProb==null || o.displayProb < floor) return;
+        if (o.edgePct==null || o.edgePct <= MIN_EDGE) return;   // solo valor positivo
+        const od = o.oddsBest;
+        const kelly = (od>1) ? Math.max(0,(o.displayProb*od - 1)/(od-1)) : 0;
+        cands.push({ cat:ck, label:mk.label, pick:o.trackerPick||o.name, odds:od, book:o.bestBook,
+          prob:o.displayProb, probTier:o.probTier, valueTier:o.valueTier, edge:o.edgePct, kelly });
+      });
     });
-    if (best) picks.push({ g, mk:best.k, m:best.m, on:(g.__off?false:true) });
+    if (!cands.length) return;
+    cands.sort((a,b)=> b.edge - a.edge);   // mayor VALOR primero
+    const chosen = [cands[0]];
+    if (allowSecond) {  // 2º mercado de OTRA categoría (menos correlación)
+      const second = cands.find(c => c.cat !== cands[0].cat);
+      if (second) chosen.push(second);
+    }
+    chosen.forEach(c => picks.push({ g, c, on:(g.__off?false:true) }));
   });
-  picks.sort((a,b)=> (a.g.date - b.g.date));
+  picks.sort((a,b)=> (a.g.date - b.g.date) || (b.c.edge - a.c.edge));
   return picks;
 }
 function allocateStakes(picks) {
   const bank = getTodayBank();
   const act = picks.filter(p=>p.on);
-  const wsum = act.reduce((a,p)=>a + (p.m.stakeMult||1), 0);
-  act.forEach(p => {
-    let st = wsum ? bank * (p.m.stakeMult||1) / wsum : 0;
-    st = Math.min(st, bank*0.25);
-    p.stake = Math.max(1, Math.round(st*2)/2);
-  });
   picks.filter(p=>!p.on).forEach(p=>p.stake=0);
+  if (!act.length) return 0;
+  // Pesos Kelly (a más valor/edge, más stake). Reparten TU banca del día.
+  let w = act.map(p => Math.max(0.0001, p.c.kelly));
+  let tot = w.reduce((a,b)=>a+b,0);
+  let share = w.map(x => x/tot);
+  // Tope 40% por apuesta; redistribuye el exceso al resto (evita sobre-concentrar)
+  const CAP = 0.40;
+  for (let it=0; it<4; it++) {
+    const over = share.reduce((a,s)=> a + Math.max(0, s-CAP), 0);
+    if (over <= 1e-9) break;
+    const underTot = share.reduce((a,s)=> a + (s<CAP ? s : 0), 0);
+    share = share.map(s => s>=CAP ? CAP : s + (underTot ? over*(s/underTot) : 0));
+  }
+  act.forEach((p,i) => { p.stake = Math.max(1, Math.round(bank*share[i]*2)/2); });
   return act.reduce((a,p)=>a+p.stake,0);
 }
 function toggleTodayPick(id) {
@@ -1616,27 +1754,29 @@ function toggleTodayPick(id) {
 function renderTodayPicks() {
   const c = document.getElementById('today-content'); if (!c) return;
   const bankInp = document.getElementById('today-bank'); if (bankInp && !bankInp.value) bankInp.value = getTodayBank();
+  const flSel = document.getElementById('today-floor'); if (flSel) flSel.value = String(getTodayFloor());
   if (!todayGames.length) return;
   const picks = buildTodayPicks();
-  if (!picks.length) { c.innerHTML = `<div class="state-msg">Hoy no hay apuestas con probabilidad suficiente en tus ligas. Mejor no forzar: mañana habrá.</div>`; return; }
+  if (!picks.length) { c.innerHTML = `<div class="state-msg">Hoy no hay apuestas con valor suficiente en tus ligas (con piso ${(getTodayFloor()*100).toFixed(0)}%). Mejor no forzar: prueba bajar el piso o vuelve mañana.</div>`; return; }
   const total = allocateStakes(picks);
   window.__todayPicks = picks;
-  const volNote = picks.some(p=>probAltaFor(p.g)>PROB_ALTA) ? ` · en ligas volátiles (Sudamérica) se exige ≥${(PROB_ALTA_VOLATILE*100).toFixed(0)}%` : '';
-  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete de hoy ${new Date().toLocaleDateString('es-EC')}: <strong>${picks.filter(p=>p.on).length} apuestas · $${total.toFixed(2)}</strong> de tu banca de $${getTodayBank().toFixed(2)}. Una apuesta por partido (la de mayor probabilidad)${volNote}. Carga cada una en la casa que mejor pague y lo más cerca del inicio.</div>`;
+  const games = new Set(picks.filter(p=>p.on).map(p=>p.g.id)).size;
+  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete de hoy ${new Date().toLocaleDateString('es-EC')}: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong> de tu banca de $${getTodayBank().toFixed(2)}. Selección por <strong>valor</strong> (mejor cuota × probabilidad) y reparto tipo Kelly (más valor = más stake). Carga cada una en la casa indicada y lo más cerca del inicio.</div>`;
   let curLeague = null;
   picks.forEach(p => {
-    if (p.g.league !== curLeague) { curLeague = p.g.league; html += `<div class="today-league-head">${curLeague}</div>`; }
-    const time = p.g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
-    const oddsTxt = p.m.bestOdds ? `@ ${p.m.bestOdds.toFixed(2)}` : '';
-    const houseTxt = p.m.bestBook ? `${p.m.bestBook} ${oddsTxt}` : oddsTxt;
-    const valTxt = p.m.valueTier==='positivo' ? 'valor alto' : (p.m.valueTier==='neutro' ? 'valor medio' : (p.m.valueTier==='negativo' ? 'valor bajo' : ''));
+    const g = p.g, o = p.c;
+    if (g.league !== curLeague) { curLeague = g.league; html += `<div class="today-league-head">${curLeague}</div>`; }
+    const time = g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit'});
+    const oddsTxt = o.odds ? `@ ${o.odds.toFixed(2)}` : '';
+    const houseTxt = (o.book && !String(o.book).startsWith('≈')) ? `${o.book} ${oddsTxt}` : (String(o.book||'').startsWith('≈') ? `${oddsTxt} (precio derivado)` : oddsTxt);
+    const edgeTxt = (o.edge!=null && o.edge>0) ? `valor +${o.edge.toFixed(1)}%` : 'valor ~0';
     html += `<div class="today-row${p.on?'':' t-off'}">
-      <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${p.g.id}')" title="incluir/excluir">
-      <div class="today-prob ${p.m.probTier}">${(p.m.displayProb*100).toFixed(0)}%</div>
+      <input type="checkbox" ${p.on?'checked':''} onchange="toggleTodayPick('${g.id}')" title="incluir/excluir">
+      <div class="today-prob ${o.probTier}">${(o.prob*100).toFixed(0)}%</div>
       <div class="today-main">
-        <div class="today-match">${p.g.home.name} vs ${p.g.away.name} <span class="muted" style="font-weight:400;font-size:11px;">· ${time}</span></div>
-        <div class="today-pick">${p.m.label}: <strong>${p.m.bestPick}</strong></div>
-        <div class="today-meta">${houseTxt}${valTxt?' · '+valTxt:''} · ×${p.m.stakeMult||1}</div>
+        <div class="today-match">${g.home.name} vs ${g.away.name} <span class="muted" style="font-weight:400;font-size:11px;">· ${time}</span></div>
+        <div class="today-pick">${o.label}: <strong>${o.pick}</strong></div>
+        <div class="today-meta">${houseTxt} · ${edgeTxt}</div>
       </div>
       <div class="today-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
     </div>`;
@@ -1651,19 +1791,20 @@ function registerTodayPackage() {
   const picks = (window.__todayPicks||[]).filter(p=>p.on && p.stake>0);
   if (!picks.length) { toast('No hay apuestas activas en el paquete','err'); return; }
   picks.forEach(p => {
+    const g = p.g, o = p.c;
     state.bets.unshift({
       id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
       createdAt: new Date().toISOString(),
-      date: p.g.date.toISOString().slice(0,10),
-      sport: p.g.league, match: `${p.g.home.name} vs ${p.g.away.name}`,
-      market: p.m.label, pick: p.m.bestPick,
-      odds: p.m.bestOdds || 0, closingOdds: null,
-      stake: p.stake, score: p.m.displayProb!=null?Math.round(p.m.displayProb*100):null,
-      book: (p.m.bestBook||'').startsWith('≈') ? '' : (p.m.bestBook||''),
+      date: g.date.toISOString().slice(0,10),
+      sport: g.league, match: `${g.home.name} vs ${g.away.name}`,
+      market: o.label, pick: o.pick,
+      odds: o.odds || 0, closingOdds: null,
+      stake: p.stake, score: o.prob!=null?Math.round(o.prob*100):null,
+      book: String(o.book||'').startsWith('≈') ? '' : (o.book||''),
       mode: 'real', alignment: 'na',
-      espnGameId: p.g.id, espnSport: p.g.sport, homeTeam: p.g.home.name, awayTeam: p.g.away.name,
-      league: p.g.league, commence: p.g.date.toISOString(),
-      notes: `Paquete Sharp · prob ${(p.m.displayProb*100).toFixed(0)}% · ×${p.m.stakeMult||1}`,
+      espnGameId: g.id, espnSport: g.sport, homeTeam: g.home.name, awayTeam: g.away.name,
+      league: g.league, commence: g.date.toISOString(),
+      notes: `Paquete Sharp · prob ${(o.prob*100).toFixed(0)}% · valor ${o.edge!=null?(o.edge>0?'+':'')+o.edge.toFixed(1)+'%':'—'}`,
       status: 'pending', auto: false
     });
   });
@@ -3176,6 +3317,35 @@ function updateWeightTotal(){const t=Object.values(state.weights).reduce((a,b)=>
 function resetWeights(){state.weights={form:25,strength:25,h2h:15,homeAway:10,context:10,consistency:10,rest:5}; renderRating(); state.games.forEach(g=>{if(g.homeStats&&g.awayStats){ g.viability=computeViability(g.homeStats,g.awayStats,state.weights); computeGameOpportunity(g);}}); renderSchedule(); updateStatBar();}
 
 // ---------- ODDS PANEL: SHARED FETCH ----------
+// Carga (y cachea) las cuotas de UNA liga sin necesidad de abrir un partido.
+async function loadOddsForSport(sp) {
+  if (!state.oddsKey) { toast('Primero configura tu API key en Herramientas', 'err'); return null; }
+  const sk = ODDS_SPORT_MAP[sp]; if (!sk) { toast('Esa liga no tiene cuotas disponibles', 'err'); return null; }
+  const url = `https://api.the-odds-api.com/v4/sports/${sk}/odds/?apiKey=${state.oddsKey}&regions=us,eu,uk&markets=h2h,totals,spreads&oddsFormat=decimal`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,150)}`);
+  const data = await r.json();
+  saveOddsToCache(sk, data);
+  saveOddsSnapshot(data);
+  if (ODDS_SPORT_MAP[state.sport] === sk) state.oddsData = data;
+  return Array.isArray(data) ? data.length : 0;
+}
+// Botón del cronograma: carga cuotas de la liga seleccionada arriba.
+async function loadLeagueOddsNow() {
+  const btn = document.getElementById('load-odds-btn');
+  const label = (document.getElementById('sport-select') && document.getElementById('sport-select').selectedOptions[0]) ? document.getElementById('sport-select').selectedOptions[0].textContent : 'liga';
+  if (btn) { btn.disabled = true; btn.textContent = '↓ Cargando...'; }
+  try {
+    const n = await loadOddsForSport(state.sport);
+    if (n != null) {
+      toast(`Cuotas de ${label} cargadas: ${n} partido(s) con mercado`, 'ok');
+      if (state.games && state.games.length) await Promise.all(state.games.map(g => computeGameViability(g)));
+      renderSchedule(); renderArb();
+      if (state.selectedGame) refreshOpenDetailSections && refreshOpenDetailSections();
+    }
+  } catch(e) { toast('Error al cargar cuotas: ' + e.message, 'err'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '↓ Cargar cuotas'; } }
+}
 async function fetchOddsForCurrentSport() {
   if (!state.oddsKey) return null;
   const sk = ODDS_SPORT_MAP[state.sport]; if (!sk) return null;
@@ -3797,11 +3967,22 @@ function syncOddsKeyInputs() {
 function renderTools() {
   syncOddsKeyInputs();
   renderThemeControls();
+  renderFontControls();
   renderBaseStakeStatus();
   renderAfKeyStatus();
   renderCorsProxyStatus();
   renderDsStatus();
   renderToolsSync();
+}
+function applyFont(v) { document.body.setAttribute('data-font', v || 'system'); }
+function applyTextSize(v) { document.body.setAttribute('data-tsize', v || 'n'); if (typeof updateHeaderHeight==='function') setTimeout(updateHeaderHeight,50); }
+function setFont(v) { lsSet('quantFont', v); applyFont(v); renderFontControls(); }
+function setTextSize(v) { lsSet('quantTextSize', v); applyTextSize(v); renderFontControls(); }
+function renderFontControls() {
+  const fo = localStorage.getItem('quantFont') || 'system';
+  const ts = localStorage.getItem('quantTextSize') || 'n';
+  document.querySelectorAll('#font-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.font===fo));
+  document.querySelectorAll('#tsize-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.tsize===ts));
 }
 function applyTheme(t) {
   const map = { calido:'nordica', mono:'tinta', carbon:'terminal' };  // migración de temas viejos
@@ -3816,6 +3997,16 @@ function renderThemeControls() {
   const an = localStorage.getItem('quantAnim') || 'sutil';
   document.querySelectorAll('#theme-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===th));
   document.querySelectorAll('#anim-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.anim===an));
+}
+async function loadToolsLeagueOdds() {
+  const sel = document.getElementById('tools-odds-league'); if (!sel) return;
+  const sp = sel.value, st = document.getElementById('tools-odds-status');
+  if (st) st.textContent = 'Cargando...';
+  try {
+    const n = await loadOddsForSport(sp);
+    if (st) st.textContent = (n!=null) ? `✓ ${n} partido(s) con cuotas cargadas` : '';
+    if (n!=null) toast(`Cuotas cargadas: ${n} partido(s)`, 'ok');
+  } catch(e) { if (st) st.textContent = '⚠ ' + e.message; }
 }
 function saveBaseStakeSetting(v) {
   const n = parseFloat(v);
@@ -4159,7 +4350,7 @@ function toast(msg, kind) {
   el._t = setTimeout(() => { el.className = 'app-toast'; }, 2500);
 }
 // ---------- TRACKER RENDER ----------
-function renderTracker() { renderSharpRating(); renderTrackerStats(); renderTrackerList(); renderTrackerDescriptive(); renderTrackerMatrix(); renderTrackerPredictive(); }
+function renderTracker() { renderTrackerStats(); renderTrackerList(); }
 
 function calcSharpRating() {
   const settled = state.bets.filter(b => b.status !== 'pending');
@@ -4267,14 +4458,11 @@ function renderTrackerStats() {
   const roi = ts ? pl/ts*100 : 0;
   const wr = settled.length ? won.length/settled.length*100 : 0;
   const ao = settled.length ? settled.reduce((a,x)=>a+x.odds,0)/settled.length : 0;
-  const paper = b.filter(x=>x.mode==='paper').length;
-  const real = b.filter(x=>x.mode==='real').length;
   c.innerHTML = `
-    <div class="tracker-stat"><div class="l">Total apuestas</div><div class="v">${b.length}</div><div class="d">${paper} paper · ${real} reales · ${pending.length} pend.</div></div>
-    <div class="tracker-stat"><div class="l">Win rate</div><div class="v">${wr.toFixed(1)}%</div><div class="d">${won.length}W / ${lost.length}L</div></div>
-    <div class="tracker-stat"><div class="l">P/L total</div><div class="v ${pl>=0?'pos':'neg'}">${pl>=0?'+':''}$${pl.toFixed(2)}</div><div class="d">stake total $${ts.toFixed(2)}</div></div>
-    <div class="tracker-stat"><div class="l">ROI</div><div class="v ${roi>=0?'pos':'neg'}">${roi>=0?'+':''}${roi.toFixed(1)}%</div><div class="d">retorno sobre stake</div></div>
-    <div class="tracker-stat"><div class="l">Cuota promedio</div><div class="v">${ao.toFixed(2)}</div><div class="d">en liquidadas</div></div>
+    <div class="tracker-stat"><div class="l">Resultado</div><div class="v ${pl>=0?'pos':'neg'}">${pl>=0?'+':''}$${pl.toFixed(2)}</div><div class="d">sobre $${ts.toFixed(0)} apostados</div></div>
+    <div class="tracker-stat"><div class="l">ROI</div><div class="v ${roi>=0?'pos':'neg'}">${roi>=0?'+':''}${roi.toFixed(1)}%</div><div class="d">retorno por cada $1</div></div>
+    <div class="tracker-stat"><div class="l">Récord</div><div class="v">${won.length}–${lost.length}</div><div class="d">${wr.toFixed(0)}% acierto · cuota ${ao.toFixed(2)}</div></div>
+    <div class="tracker-stat"><div class="l">Pendientes</div><div class="v">${pending.length}</div><div class="d">en juego o por jugar</div></div>
   `;
 }
 
@@ -4445,8 +4633,35 @@ function trackerBlock(key, title, bets, openState, subText) {
   const arrow = isOpen ? '▾' : '▸';
   const head = `<div class="tracker-block-title clickable" onclick="toggleTrackerBlock('${key}')"><span class="block-arrow">${arrow}</span><span>${title}</span> <span class="count">${bets.length}</span></div>`;
   if (!isOpen) return head;
-  if (!bets.length) return head + `<div class="tracker-block-sub">Sin apuestas en este bloque (con los filtros actuales).</div>`;
-  return head + `<div class="tracker-block-sub">${subText}</div>` + trackerTableHTML(bets);
+  if (!bets.length) return head + `<div class="tracker-block-sub">Sin apuestas aquí.</div>`;
+  return head + `<div class="bet-cards">` + bets.map(betCardHTML).join('') + `</div>`;
+}
+// Tarjeta minimalista por apuesta
+function betCardHTML(b) {
+  const pl = b.status==='won' ? `+$${(b.stake*(b.odds-1)).toFixed(2)}`
+    : (b.status==='lost' ? `−$${b.stake.toFixed(2)}` : (b.status==='push' ? '$0' : ''));
+  const plCls = b.status==='won' ? 'pos' : (b.status==='lost' ? 'neg' : 'muted');
+  const live = (b.status==='pending' && b.liveStatus==='in');
+  const when = live
+    ? `<span class="live-pill">EN VIVO${b.liveScore?' '+b.liveScore:''}</span>`
+    : `<span class="bet-when">${betWhenCell(b)}</span>`;
+  // Acciones mínimas
+  let acts = '';
+  if (!b.auto) {
+    if (b.status==='pending') acts += `<button class="icon-btn btn-w" title="Ganada" onclick="setStatus('${b.id}','won')">✓</button><button class="icon-btn btn-l" title="Perdida" onclick="setStatus('${b.id}','lost')">✕</button>`;
+    else acts += `<button class="icon-btn" title="Volver a pendiente" onclick="setStatus('${b.id}','pending')">↶</button>`;
+  }
+  acts += `<button class="icon-btn btn-edit" title="Editar" onclick="openEditModal('${b.id}')">✎</button><button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
+  return `<div class="bet-card st-${b.status}">
+    <div class="bet-info">
+      <div class="bet-line1"><span class="bet-match">${b.match||'—'}</span>${when}</div>
+      <div class="bet-line2">${betMarketCell(b)} <span class="bet-sep">·</span> @${(b.odds||0).toFixed(2)} <span class="bet-sep">·</span> $${(b.stake||0).toFixed(2)}${b.sport?` <span class="bet-sep">·</span> <span class="muted">${b.sport}</span>`:''}</div>
+    </div>
+    <div class="bet-end">
+      ${pl?`<div class="bet-pl ${plCls}">${pl}</div>`:''}
+      <div class="bet-actions">${acts}</div>
+    </div>
+  </div>`;
 }
 
 function trackerTableHTML(bets) {
@@ -4996,6 +5211,15 @@ document.getElementById('sport-select').addEventListener('change', e=>{
 });
 document.getElementById('week-prev').addEventListener('click', ()=>{state.weekOffset--; loadWeek();});
 document.getElementById('week-next').addEventListener('click', ()=>{state.weekOffset++; loadWeek();});
+(function(){
+  const rd = document.getElementById('range-days');
+  if (rd) { const saved = parseInt(localStorage.getItem('quantRangeDays')||'3',10); state.rangeDays = saved; rd.value = String(saved);
+    rd.addEventListener('change', ()=>{ state.rangeDays = parseInt(rd.value,10)||3; lsSet('quantRangeDays', String(state.rangeDays)); state.weekOffset=0; loadWeek(); }); }
+  const rdt = document.getElementById('range-date');
+  if (rdt) rdt.addEventListener('change', ()=>{ state.dateAnchor = rdt.value ? new Date(rdt.value+'T00:00:00') : null; state.weekOffset=0; loadWeek(); });
+  const lob = document.getElementById('load-odds-btn');
+  if (lob) lob.addEventListener('click', loadLeagueOddsNow);
+})();
 document.getElementById('refresh-btn').addEventListener('click', async () => {
   const btn = document.getElementById('refresh-btn');
   if (btn.dataset.busy === '1') return;
@@ -5086,6 +5310,8 @@ function gatherState() {
     baseStake: getBaseStake(),
     theme: localStorage.getItem('quantTheme') || null,
     anim: localStorage.getItem('quantAnim') || null,
+    font: localStorage.getItem('quantFont') || null,
+    tsize: localStorage.getItem('quantTextSize') || null,
     activePreset: state.activePreset || 'adaptativo'
   };
 }
@@ -5151,6 +5377,8 @@ function mergeBlobs(cloud, local) {
     baseStake: local.baseStake || cloud.baseStake || null,
     theme: local.theme || cloud.theme || null,
     anim: local.anim || cloud.anim || null,
+    font: local.font || cloud.font || null,
+    tsize: local.tsize || cloud.tsize || null,
     activePreset: local.activePreset || cloud.activePreset || 'adaptativo'
   };
 }
@@ -5183,6 +5411,8 @@ function applyBlob(blob, rerender) {
     if (blob.baseStake)       localStorage.setItem('quantBaseStake', String(blob.baseStake));
     if (blob.theme)           { localStorage.setItem('quantTheme', blob.theme); applyTheme(blob.theme); }
     if (blob.anim)            { localStorage.setItem('quantAnim', blob.anim); applyAnim(blob.anim); }
+    if (blob.font)            { localStorage.setItem('quantFont', blob.font); applyFont(blob.font); }
+    if (blob.tsize)           { localStorage.setItem('quantTextSize', blob.tsize); applyTextSize(blob.tsize); }
     if (typeof blob.activePreset === 'string') { state.activePreset = blob.activePreset; localStorage.setItem('quantActivePreset', blob.activePreset); }
     if (state.activePreset === 'adaptativo') { state.weights = getAdaptiveWeights(); localStorage.setItem('quantWeights', JSON.stringify(state.weights)); }
   } catch(e) { console.warn('applyBlob:', e); }
@@ -5373,6 +5603,8 @@ window.addEventListener('resize', updateHeaderHeight);
 window.addEventListener('DOMContentLoaded', async () => {
   applyTheme(localStorage.getItem('quantTheme') || 'nordica');
   applyAnim(localStorage.getItem('quantAnim') || 'sutil');
+  applyFont(localStorage.getItem('quantFont') || 'system');
+  applyTextSize(localStorage.getItem('quantTextSize') || 'n');
   updateHeaderHeight();
   syncOddsKeyInputs();
   renderToolsSync();
