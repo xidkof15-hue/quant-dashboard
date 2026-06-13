@@ -5510,10 +5510,26 @@ function buildResolveFromPick(cat, key, point){
   if (cat==='dnb')  return { market:'dnb', side:(key==='dnbh'?'home':'away'), line:null };
   return null;
 }
+function deriveResolve(b){
+  if (b.resolve) return b.resolve;
+  if (!b.homeTeam || !b.awayTeam) return null;
+  const mkl=(b.market||'').toLowerCase(), pick=(b.pick||''), pl=pick.toLowerCase();
+  const hn=(b.homeTeam||'').toLowerCase(), an=(b.awayTeam||'').toLowerCase();
+  const sideOf=function(){ const hb=hn.split(/\s+/).some(w=>w.length>2&&pl.includes(w)); const ab=an.split(/\s+/).some(w=>w.length>2&&pl.includes(w)); if(hb&&!ab)return 'home'; if(ab&&!hb)return 'away'; return null; };
+  const nm=pick.match(/([+-]?\d+(?:\.\d+)?)/); const line=nm?parseFloat(nm[1]):null;
+  if (mkl.includes('spread')||mkl.includes('hándic')||mkl.includes('handic')){ const s=sideOf(); return s?{market:'spread',side:s,line:(line==null?0:line)}:null; }
+  if (mkl.includes('total')||pl.includes('over')||pl.includes('under')){ const side=pl.includes('over')?'over':'under'; return line!=null?{market:'totals',side:side,line:line}:null; }
+  if (mkl.includes('ambos')||mkl.includes('btts')){ return {market:'btts',side:(pl.includes('sí')||pl.includes('si')||pl.includes('yes'))?'yes':'no',line:null}; }
+  if (mkl.includes('doble')){ if(pl.includes('1x'))return {market:'dc',side:'1x',line:null}; if(pl.includes('x2'))return {market:'dc',side:'x2',line:null}; if(pl.includes('12'))return {market:'dc',side:'12',line:null}; return null; }
+  if (mkl.includes('dnb')||mkl.includes('no apuesta')){ const s=sideOf(); return s?{market:'dnb',side:s,line:null}:null; }
+  if (mkl.includes('money')||mkl.includes('ganador')||mkl.includes('1x2')||mkl.includes('gana')){ if(pl.includes('empate')||pl.includes('draw'))return {market:'ml',side:'draw',line:null}; const s=sideOf(); return s?{market:'ml',side:s,line:null}:null; }
+  return null;
+}
 function liveStanding(b){
-  if (!b.resolve || !b.liveScore) return null;
+  const r = b.resolve || deriveResolve(b);
+  if (!r || !b.liveScore) return null;
   const m = String(b.liveScore).match(/(\d+)\s*-\s*(\d+)/); if(!m) return null;
-  const out = resolveBetOutcome(b, { homeScore:parseInt(m[1],10), awayScore:parseInt(m[2],10) });
+  const out = resolveBetOutcome({resolve:r, homeTeam:b.homeTeam, awayTeam:b.awayTeam}, { homeScore:parseInt(m[1],10), awayScore:parseInt(m[2],10) });
   if (out==='won')  return { txt:'Vas ganando', cls:'win' };
   if (out==='lost') return { txt:'Vas perdiendo', cls:'lose' };
   if (out==='push') return { txt:'Va parejo', cls:'push' };
@@ -5605,6 +5621,7 @@ async function autoResolveBets() {
       group.forEach(b => {
         const ev = evMap[b.espnGameId];
         if (!ev) return;
+        if (!b.resolve) { const dr = deriveResolve(b); if (dr) { b.resolve = dr; b.auto = true; anyChange = true; } }
         if (ev.state === 'post') {
           // Guarda marcador final visible (aun si resolveBetOutcome no aplicara)
           const fScore = (isFinite(ev.homeScore) && isFinite(ev.awayScore)) ? `${ev.homeScore}-${ev.awayScore}` : null;
