@@ -860,9 +860,9 @@
   .lcard.standing-win { border-left:3px solid #2e7d52; }
   .lcard.standing-lose { border-left:3px solid var(--c-granate); }
   .lc-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .lc-league { font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--text-2); display:inline-flex; align-items:center; gap:9px; }
+  .lc-league { font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--text-2); display:inline-flex; align-items:center; gap:10px; }
   .lc-league .lglogo, .lc-league .lg-badge { vertical-align:middle; }
-  .live-n1 .lc-league { font-size:13px; }
+  .live-n1 .lc-league { font-size:16px; }
   /* Encabezados de grupo (varios partidos) */
   .live-group-head { grid-column:1/-1; display:flex; align-items:center; gap:12px; margin:10px 0 0; padding-bottom:9px; border-bottom:2px solid var(--border); }
   .lgh-name { font-size:15px; font-weight:800; letter-spacing:.01em; color:var(--text-1); }
@@ -878,6 +878,33 @@
   .le-bp b { color:var(--text-3); font-weight:700; font-size:11px; }
   .le-last { margin-top:10px; font-size:12px; color:var(--text-2); font-style:italic; }
   .le-empty { color:var(--text-3); font-size:12px; padding:6px 0; }
+  .lcard .live-pill { font-size:11px; padding:4px 12px; letter-spacing:.1em; }
+  .live-n1 .live-pill { font-size:13.5px; padding:6px 15px; }
+  .live-group-head .lglogo, .live-group-head .lg-badge { width:40px; height:40px; }
+  /* ===== Cronograma en franjas ===== */
+  .sched-list { display:flex; flex-direction:column; gap:9px; }
+  .strip { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:13px 15px; cursor:pointer; transition:transform .15s, box-shadow .15s; }
+  .strip:hover { transform:scale(1.01); box-shadow:0 4px 16px rgba(22,36,58,.08); }
+  .strip.opp-high { border-color:var(--c-coral); }
+  .strip.is-live { border-left:3px solid var(--c-granate); }
+  .strip.is-final { opacity:.78; }
+  .strip-time { display:flex; flex-direction:column; align-items:flex-start; gap:5px; min-width:96px; }
+  .strip-score { font-family:var(--font-mono); font-weight:800; font-size:16px; color:var(--text-1); }
+  .strip-main { flex:1; min-width:0; }
+  .strip-teams { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .strip-teams .tm { display:inline-flex; align-items:center; gap:7px; min-width:0; }
+  .strip-teams .nm { font-weight:700; font-size:14.5px; }
+  .strip-teams .vs { color:var(--text-3); font-size:11px; font-family:var(--font-mono); }
+  .strip-opp { margin-top:7px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:12.5px; color:var(--text-2); }
+  .strip-opp strong { color:var(--text-1); font-weight:700; }
+  .strip-sep { color:var(--text-3); }
+  .strip-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .strip-prob { font-family:var(--font-mono); font-size:19px; font-weight:800; text-align:center; min-width:46px; }
+  .strip-prob.alta { color:#2e7d52; } .strip-prob.media { color:var(--c-coral); } .strip-prob.baja { color:var(--text-3); }
+  .strip-chev { color:var(--text-3); font-size:18px; }
+  .strip-bar { height:5px; background:#eef2f7; border-radius:99px; overflow:hidden; margin-top:10px; max-width:340px; }
+  .strip-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--c-salvia),var(--c-pizarra)); border-radius:99px; }
+  @media(max-width:560px){ .strip { gap:10px; padding:11px 12px; } .strip-time { min-width:76px; } .strip-prob { font-size:16px; min-width:38px; } .strip-teams .nm { font-size:13.5px; } }
   .lc-body { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; }
   .lc-team { display:flex; flex-direction:column; align-items:center; gap:9px; text-align:center; min-width:0; }
   .lc-team .nm { font-size:14.5px; font-weight:700; }
@@ -1674,9 +1701,9 @@ function renderSchedule() {
   if (state.sortMode==='time') {
     const groups={};
     games.forEach(g=>{const k=g.date.toLocaleDateString('es-EC',{weekday:'long',day:'2-digit',month:'long',timeZone:'America/Guayaquil'}); (groups[k]=groups[k]||[]).push(g);});
-    Object.keys(groups).forEach(dk=>{html+=`<div class="day-group"><div class="day-label">▸ ${dk}</div><div class="game-grid">${groups[dk].map(gameCardHTML).join('')}</div></div>`;});
+    Object.keys(groups).forEach(dk=>{html+=`<div class="day-group"><div class="day-label">▸ ${dk}</div><div class="sched-list">${groups[dk].map(gameCardHTML).join('')}</div></div>`;});
   } else {
-    html += `<div class="game-grid">${games.map(gameCardHTML).join('')}</div>`;
+    html += `<div class="sched-list">${games.map(gameCardHTML).join('')}</div>`;
   }
   c.innerHTML = html;
 }
@@ -1715,69 +1742,46 @@ function gameProgress(g) {
 }
 function gameCardHTML(g) {
   const activeBets = gameActiveBets(g);
-  const betFlag = activeBets>0 ? ` <span class="bet-flag" title="${activeBets} apuesta(s) activa(s)">● ${activeBets>1?activeBets+' ':''}apostado</span>` : '';
-  const time = g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'});
-  const dayShort = g.date.toLocaleDateString('es-EC',{day:'2-digit',month:'short',timeZone:'America/Guayaquil'});
+  const betFlag = activeBets>0 ? `<span class="bet-flag" title="${activeBets} apuesta(s) activa(s)">● apostado</span>` : '';
+  const time = (g.date&&g.date.toLocaleTimeString) ? g.date.toLocaleTimeString('es-EC',{hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'}) : '';
   const isLive = g.status==='in', isFinal = g.status==='post';
-  // Construir el badge de OPORTUNIDAD por mercado (punto 7).
-  let oppHtml;
-  let cardBandClass = '';
-  if (g.opportunity && g.opportunity.markets && Object.keys(g.opportunity.markets).length) {
-    const opp = g.opportunity;
+  const cd = (!isLive && !isFinal && g.date) ? countdownStr(g.date) : null;
+  let timeBlock;
+  if (isLive){ const sc=`${g.home.score??0}-${g.away.score??0}`; timeBlock=`<span class="live-pill">● EN VIVO</span><span class="strip-score">${sc}</span>`; }
+  else if (isFinal){ const sc=`${g.home.score??0}-${g.away.score??0}`; timeBlock=`<span class="final-pill">FINAL</span><span class="strip-score">${sc}</span>`; }
+  else { timeBlock=`<span class="tr-time">${CLK} ${time}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}`; }
+  const opp = g.opportunity; let bandCls='', oppLine='', probHtml='';
+  if (opp && opp.markets && Object.keys(opp.markets).length){
     const band = opportunityBand(opp);
-    const dq = opp.dataQuality === 'limited' ? ' <span class="dq-tag" title="Sin cuotas reales para algunas opciones">DATOS PARCIALES</span>' : '';
-    const n = opp.recommendedCount || 0;
-    const probTxt = opp.bestProb!=null ? `prob ${(opp.bestProb*100).toFixed(0)}%` : '';
-    const valTxt = (opp.bestValueTier==='positivo' && opp.bestEvPct!=null) ? ` · valor +${opp.bestEvPct}%` : '';
-    const probPct = opp.bestProb!=null ? `${(opp.bestProb*100).toFixed(0)}%` : '—';
-    if (band === 'high' || band === 'mid') {
-      cardBandClass = band === 'high' ? ' opp-high' : ' opp-mid';
-      const txt = band==='high' ? `${n} con probabilidad alta` : `Probabilidad media`;
-      oppHtml = `<div class="opp-badge opp-band-${band}">
-        <div class="opp-line-1"><span class="opp-icon">${band==='high'?'✓':'◐'}</span><span class="opp-text">${txt}</span><span class="opp-score-pill">${probPct}</span></div>
-        <div class="opp-line-2">Mejor: ${opp.bestMarketLabel} · ${probTxt}${valTxt} · ${opp.bestPickLabel}${dq}</div>
-      </div>`;
-    } else if (band === 'est') {
-      cardBandClass = ' opp-none';
-      oppHtml = `<div class="opp-badge opp-band-none">
-        <div class="opp-line-1"><span class="opp-icon">≈</span><span class="opp-text">Estimación (sin cuotas API)</span></div>
-        <div class="opp-line-2">Abre el partido · usa Carga manual para las cuotas de Oddspedia${dq}</div>
-      </div>`;
+    const probPct = opp.bestProb!=null ? `${Math.round(opp.bestProb*100)}%` : '—';
+    const probTier = opp.bestProb!=null ? (opp.bestProb>=PROB_ALTA?'alta':(opp.bestProb>=PROB_MEDIA?'media':'baja')) : 'baja';
+    if (band==='high' || band==='mid'){
+      bandCls = band==='high' ? ' opp-high pulse-border' : ' opp-mid';
+      const valTxt = (opp.bestValueTier==='positivo' && opp.bestEvPct!=null) ? `<span class="strip-sep">·</span> <span class="grad-val">valor +${opp.bestEvPct}%</span>` : '';
+      oppLine = `${marketTag(opp.bestMarketLabel)} <strong>${opp.bestPickLabel||''}</strong> <span class="strip-sep">·</span> prob ${probPct} ${valTxt}`;
+      probHtml = `<div class="strip-prob ${probTier}">${probPct}</div>`;
+    } else if (band==='est'){
+      oppLine = `<span class="muted">Estimación (sin cuotas API) — abre el partido para cargar cuotas</span>`;
     } else {
-      cardBandClass = ' opp-none';
-      const unrelNote = opp.anyUnreliable ? ' · <span style="color:var(--c-granate);">⚠ cuotas dudosas en algún mercado</span>' : '';
-      oppHtml = `<div class="opp-badge opp-band-none">
-        <div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin probabilidad destacada</span></div>
-        <div class="opp-line-2">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} · ${probTxt}`:'Sin mercados calculables'}${unrelNote}${dq}</div>
-      </div>`;
+      oppLine = `<span class="muted">${opp.bestMarketLabel?`Mejor: ${opp.bestMarketLabel} · prob ${probPct}`:'Sin valor destacado'}</span>`;
     }
-  } else if (g.viability && g.viability.insufficient) {
-    cardBandClass = ' opp-none';
-    oppHtml = `<div class="opp-badge opp-band-none"><div class="opp-line-1"><span class="opp-icon">—</span><span class="opp-text">Sin historial reciente</span></div><div class="opp-line-2">No podemos calificar mercados todavia</div></div>`;
+  } else if (g.viability && g.viability.insufficient){
+    oppLine = `<span class="muted">Sin historial reciente para calificar</span>`;
   } else {
-    oppHtml = `<div class="opp-badge opp-band-loading"><span class="loader" style="width:11px;height:11px;"></span><span class="opp-text" style="margin-left:8px;">analizando mercados...</span></div>`;
+    oppLine = `<span class="muted"><span class="loader" style="width:10px;height:10px;"></span> analizando…</span>`;
   }
-  const homeR = (isLive||isFinal) ? `<span style="font-family:var(--font-mono);font-weight:700;">${g.home.score}</span>` : `<span class="team-record">${g.home.record}</span>`;
-  const awayR = (isLive||isFinal) ? `<span style="font-family:var(--font-mono);font-weight:700;">${g.away.score}</span>` : `<span class="team-record">${g.away.record}</span>`;
-  const homeNm = `<div class="tn-wrap">${teamLogoHTML(g.home,22)}<div class="team-name">${g.home.name}</div></div>`;
-  const awayNm = `<div class="tn-wrap">${teamLogoHTML(g.away,22)}<div class="team-name">${g.away.name}</div></div>`;
-  const tickerHtml = (isLive && g.newHighlight && g.lastPlay) ? `<div class="tkr"><span>${g.lastPlay}</span></div>` : '';
-  const highlightCls = (cardBandClass.includes('opp-high') ? ' pulse-border' : '') + (g.newHighlight ? ' evt-flash' : '');
-  // Etiqueta superior derecha de la card. En 'in' y 'post' priorizamos marcador y estado.
-  let stamp;
-  if (isLive) {
-    const sc = `${g.home.score ?? 0}-${g.away.score ?? 0}`;
-    stamp = `<span class="live-pill">● EN VIVO</span><span class="live-score">${sc}</span>`;
-  } else if (isFinal) {
-    const sc = `${g.home.score ?? 0}-${g.away.score ?? 0}`;
-    stamp = `<span class="final-pill">FINAL</span><span class="final-score">${sc}</span>`;
-  } else if (state.sortMode !== 'time') {
-    stamp = `${dayShort} · ${time}`;
-  } else {
-    stamp = `<span class="game-time">${time}</span>`;
-  }
-  const liveBar = isLive ? `<div class="live-strip"><div class="live-bar"><div class="live-bar-fill" style="width:${Math.round(gameProgress(g)*100)}%"></div></div><span class="live-det">${g.shortDetail || g.clock || (g.period?'P'+g.period:'')}</span></div>` : '';
-  return `<div class="game-card${cardBandClass}${highlightCls}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')"><div class="game-meta"><span>${g.league}${betFlag}</span><span class="game-stamp">${stamp}</span></div><div class="teams"><div class="team-row">${homeNm}${homeR}</div><div class="vs-divider">— VS —</div><div class="team-row">${awayNm}${awayR}</div></div>${liveBar}${tickerHtml}${oppHtml}</div>`;
+  const liveBar = isLive ? `<div class="strip-bar"><i style="width:${Math.round(gameProgress(g)*100)}%"></i></div>` : '';
+  const ticker = (isLive && g.newHighlight && g.lastPlay) ? `<div class="tkr"><span>${g.lastPlay}</span></div>` : '';
+  const flashCls = g.newHighlight ? ' evt-flash' : '';
+  return `<div class="strip${bandCls}${flashCls}${isLive?' is-live':''}${isFinal?' is-final':''}" data-id="${g.id}" onclick="selectGame('${g.id}')">
+    <div class="strip-time">${timeBlock}</div>
+    <div class="strip-main">
+      <div class="strip-teams"><span class="tm">${teamLogoHTML(g.home,26)}<span class="nm">${g.home.shortName||g.home.name}</span></span><span class="vs">vs</span><span class="tm">${teamLogoHTML(g.away,26)}<span class="nm">${g.away.shortName||g.away.name}</span></span>${betFlag}</div>
+      <div class="strip-opp">${oppLine}</div>
+      ${liveBar}${ticker}
+    </div>
+    <div class="strip-right">${probHtml}<span class="strip-chev">›</span></div>
+  </div>`;
 }
 function updateStatBar() {
   const sl = document.querySelector('#sport-select option:checked').textContent;
@@ -1868,7 +1872,7 @@ function teamLogoHTML(team, size){
   const nm = team.shortName || team.name || '?';
   const ini = (nm.replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).map(w=>w[0]).join('').slice(0,3).toUpperCase()) || '?';
   const dim = `width:${size}px;height:${size}px;`;
-  if (team.logo) return `<img class="tlogo" src="${team.logo}" data-ini="${ini}" data-col="${colorFromString(nm)}" onerror="tlogoFail(this)" style="${dim}" alt="">`;
+  if (team.logo && !/\/countries\//.test(team.logo)) return `<img class="tlogo" src="${team.logo}" data-ini="${ini}" data-col="${colorFromString(nm)}" onerror="tlogoFail(this)" style="${dim}" alt="">`;
   return `<span class="tlogo-fb" style="${dim}color:${colorFromString(nm)};">${ini}</span>`;
 }
 function lgLogoFail(img){ const sp=document.createElement('span'); sp.className='lg-badge'; sp.style.background=img.dataset.color||'#888'; sp.textContent=img.dataset.abbr||'?'; img.replaceWith(sp); }
@@ -5609,7 +5613,7 @@ function renderLiveTab(){
   let html='';
   order.forEach(sp=>{
     const nm=(LEAGUE_META[sp]&&LEAGUE_META[sp].name)||groups[sp][0].league;
-    html += `<div class="live-group-head">${leagueLogoHTML(sp,30)}<span class="lgh-name">${nm}</span><span class="lgh-count">${groups[sp].length} en vivo</span></div>`;
+    html += `<div class="live-group-head">${leagueLogoHTML(sp,40)}<span class="lgh-name">${nm}</span><span class="lgh-count">${groups[sp].length} en vivo</span></div>`;
     html += groups[sp].map(g=>liveCardHTML(g, detail)).join('');
   });
   wrap.innerHTML=html;
@@ -5639,7 +5643,7 @@ function liveCardHTML(g, detail){
   let statHtml='';
   if(detail!=='compact' && g.live && g.live.stats && g.live.stats.length){ statHtml=`<div class="le-stats">${g.live.stats.map(st=>`<div class="le-st"><span class="ls-h">${st.home}</span><span class="ls-l">${st.label}</span><span class="ls-a">${st.away}</span></div>`).join('')}</div>`; }
   const betHtml = bet ? `<div class="lc-bet">${marketTag(betMarketLabel(bet))}<span class="muted" style="font-size:11px;">${bet.pick||''}</span>${stand?`<span class="stand stand-${stand.cls}">${stand.txt}</span>`:''}</div>` : '';
-  const head = `<div class="lc-top"><span class="lc-league">${leagueLogoHTML(g.sport, detail==='full'?34:22)}<span>${lgName}</span></span><span class="live-pill">● EN VIVO</span></div>`;
+  const head = `<div class="lc-top"><span class="lc-league">${leagueLogoHTML(g.sport, detail==='full'?48:30)}<span>${lgName}</span></span><span class="live-pill">● EN VIVO</span></div>`;
   const board = `<div class="lc-body">
       <div class="lc-team">${teamLogoHTML(g.home,lsize)}<span class="nm">${g.home.shortName||g.home.name}</span></div>
       <div class="lc-mid"><div class="lc-score">${g.home.score??0} – ${g.away.score??0}</div><div class="lc-clock">${clk}</div></div>
