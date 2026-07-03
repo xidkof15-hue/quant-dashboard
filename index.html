@@ -1365,6 +1365,12 @@ function fmtDateHuman(d) { return d.toLocaleDateString('es-EC', {day:'2-digit',m
 function fmtDateTimeHuman(d) { return d.toLocaleDateString('es-EC',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'}); }
 
 // ---------- FETCH ----------
+async function fetchT(url, ms){
+  const ac = (typeof AbortController!=='undefined') ? new AbortController() : null;
+  const t = ac ? setTimeout(()=>{ try{ac.abort();}catch(e){} }, ms||8000) : null;
+  try { return await fetch(url, ac?{signal:ac.signal}:undefined); }
+  finally { if(t) clearTimeout(t); }
+}
 const _sbCache = {};
 async function fetchScoreboard(sport, dr) {
   const k = sport+'|'+dr;
@@ -2000,23 +2006,39 @@ function setTodayOffset(n, btn){ state.todayOffset = n; if(btn){ btn.parentEleme
 function setTodayMode(m, btn){ state.todayMode = m; localStorage.setItem('sharpTodayMode', m); syncModeSeg(); renderTodayPicks(); }
 function syncModeSeg(){ const a=document.getElementById('mode-btn-preciso'), b=document.getElementById('mode-btn-volumen'); if(a&&b){ a.classList.toggle('on', state.todayMode!=='volumen'); b.classList.toggle('on', state.todayMode==='volumen'); } }
 function todayDateLabel(){ const d=new Date(); d.setDate(d.getDate()+state.todayOffset); return d.toLocaleDateString('es-EC',{weekday:'long',day:'numeric',month:'long'}); }
+let __todayGen = 0;
+function todayErrMsg(stage, e){ const det = (e && e.message) ? ` (${String(e.message).slice(0,120)})` : ''; return `<div class="state-msg">No se pudo terminar ${stage}${det}. Pulsa <strong>↻ Actualizar</strong> para reintentar.</div>`; }
 async function loadToday() {
+  const gen = ++__todayGen;                    // el último clic gana; corridas viejas se descartan
   const c = document.getElementById('today-content');
   syncModeSeg();
   c.innerHTML = `<div class="small-note" style="margin-bottom:10px;">Cargando partidos (${todayDateLabel()})…</div>` + '<div class="skel-row"></div>'.repeat(4);
   const d = new Date(); d.setDate(d.getDate()+state.todayOffset); const ds = fmtDateESPN(d);
   const leagues = getTodayLeagues();
-  todayGames = [];
-  await Promise.all(leagues.map(async sp => {
-    const data = await fetchScoreboard(sp, ds);
-    if (data) parseGames(data, sp).forEach(g => { if (g.status!=='post') todayGames.push(g); });
-  }));
+  const games = [];
+  try {
+    await Promise.all(leagues.map(async sp => {
+      const data = await fetchScoreboard(sp, ds);
+      if (data) parseGames(data, sp).forEach(g => { if (g.status!=='post') games.push(g); });
+    }));
+  } catch(e) { if (gen!==__todayGen) return; c.innerHTML = todayErrMsg('la carga de partidos', e); return; }
+  if (gen!==__todayGen) return;
+  todayGames = games;
   if (!todayGames.length) { c.innerHTML = `<div class="state-msg">No hay partidos pendientes ese día en tus ligas seleccionadas.</div>`; return; }
   c.innerHTML = `<div class="state-msg"><span class="loader"></span>Calculando probabilidades (${todayGames.length} partidos)...</div>`;
-  await Promise.all(todayGames.map(g => computeGameViability(g)));
-  try { await enrichToday(todayGames, ds); } catch(e) {}
+  try {
+    await Promise.all(todayGames.map(g => Promise.resolve(computeGameViability(g)).catch(()=>{ g.viability={total:0,error:true}; g.opportunity=g.opportunity||{markets:{},favorableCount:0,dataQuality:'insufficient'}; })));
+  } catch(e) { /* aislado por partido; seguimos con lo que haya */ }
+  if (gen!==__todayGen) return;
+  c.innerHTML = `<div class="state-msg"><span class="loader"></span>Buscando contexto (abridores, clima, fuerza)…</div>`;
+  try {
+    // tope duro de 12 s: si una fuente externa se cuelga, el paquete sale igual sin esa línea de contexto
+    await Promise.race([ enrichToday(todayGames, ds), new Promise(res=>setTimeout(res, 12000)) ]);
+  } catch(e) { /* contexto es opcional */ }
+  if (gen!==__todayGen) return;
   window.__animateToday = true;
-  renderTodayPicks();
+  try { renderTodayPicks(); }
+  catch(e) { c.innerHTML = todayErrMsg('el armado del paquete', e); }
 }
 const CLK='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 function countdownStr(date){
@@ -2060,7 +2082,7 @@ async function loadClubElo(){
     const key='sharpClubElo', cached=JSON.parse(localStorage.getItem(key)||'null');
     if (cached && Date.now()-cached.ts < 24*3600000) return cached.map;
     const d=new Date().toISOString().slice(0,10);
-    const r=await fetch('https://api.clubelo.com/'+d); if(!r.ok) throw 0;
+    const r=await fetchT('https://api.clubelo.com/'+d, 8000); if(!r.ok) throw 0;
     const txt=await r.text(); const map={};
     txt.split('\n').slice(1).forEach(line=>{ const p=line.split(','); if(p.length>4){ const nm=normTeamName(p[1]); const elo=parseFloat(p[4]); if(nm&&elo>0) map[nm]=elo; } });
     if (Object.keys(map).length>100) { localStorage.setItem(key, JSON.stringify({ts:Date.now(),map})); return map; }
@@ -2098,7 +2120,7 @@ async function loadMlbProbables(ds){
     const key='sharpMlbProb'+ds, cached=JSON.parse(localStorage.getItem(key)||'null');
     if (cached && Date.now()-cached.ts < 3*3600000) return cached.data;
     const dt = ds.slice(0,4)+'-'+ds.slice(4,6)+'-'+ds.slice(6,8);
-    const r=await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1&date='+dt+'&hydrate=probablePitcher'); if(!r.ok) throw 0;
+    const r=await fetchT('https://statsapi.mlb.com/api/v1/schedule?sportId=1&date='+dt+'&hydrate=probablePitcher', 8000); if(!r.ok) throw 0;
     const d=await r.json(); const games=((d.dates||[])[0]||{}).games||[]; const ids=new Set(); const out=[];
     games.forEach(gm=>{
       const hp=gm.teams&&gm.teams.home&&gm.teams.home.probablePitcher, ap=gm.teams&&gm.teams.away&&gm.teams.away.probablePitcher;
@@ -2106,7 +2128,7 @@ async function loadMlbProbables(ds){
       if(hp)ids.add(hp.id); if(ap)ids.add(ap.id);
     });
     if (ids.size){
-      const r2=await fetch('https://statsapi.mlb.com/api/v1/people?personIds='+[...ids].join(',')+'&hydrate=stats(group=[pitching],type=[season])');
+      const r2=await fetchT('https://statsapi.mlb.com/api/v1/people?personIds='+[...ids].join(',')+'&hydrate=stats(group=[pitching],type=[season])', 8000);
       if (r2.ok){ const d2=await r2.json(); const st={};
         (d2.people||[]).forEach(p=>{ const sp=(((p.stats||[])[0]||{}).splits||[])[0]; if(sp&&sp.stat) st[p.id]={era:sp.stat.era, whip:sp.stat.whip}; });
         out.forEach(o=>{ if(o.hp&&st[o.hp.id])Object.assign(o.hp,st[o.hp.id]); if(o.ap&&st[o.ap.id])Object.assign(o.ap,st[o.ap.id]); });
@@ -2127,7 +2149,7 @@ async function weatherForGame(g){
     let hr=null;
     if (cached && Date.now()-cached.ts<3*3600000) hr=cached.d;
     else{
-      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p[0]}&longitude=${p[1]}&hourly=temperature_2m,wind_speed_10m&forecast_days=4&timezone=auto`);
+      const r=await fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${p[0]}&longitude=${p[1]}&hourly=temperature_2m,wind_speed_10m&forecast_days=4&timezone=auto`, 8000);
       if(!r.ok) return null; hr=await r.json();
       try{ localStorage.setItem(key, JSON.stringify({ts:Date.now(),d:{hourly:{time:hr.hourly.time,temperature_2m:hr.hourly.temperature_2m,wind_speed_10m:hr.hourly.wind_speed_10m}}})); }catch(e){}
       hr={hourly:hr.hourly};
@@ -2253,7 +2275,7 @@ function renderTodayPicks() {
   const flSel = document.getElementById('today-floor'); if (flSel) flSel.value = String(getTodayFloor());
   if (!todayGames.length) return;
   const picks = buildTodayPicks();
-  if (!picks.length) { c.innerHTML = `<div class="state-msg">Hoy no hay apuestas con valor suficiente en tus ligas (con piso ${(getTodayFloor()*100).toFixed(0)}%). Mejor no forzar: prueba bajar el piso o vuelve mañana.</div>`; return; }
+  if (!picks.length) { c.innerHTML = `<div class="state-msg">Sin apuestas con valor para <strong>${todayDateLabel()}</strong> (piso ${(getTodayFloor()*100).toFixed(0)}%).${state.todayOffset>0?' Para días futuros muchas casas publican cuotas más tarde: reintenta más cerca del día.':' Mejor no forzar: prueba bajar el piso o vuelve mañana.'}</div>`; return; }
   const total = allocateStakes(picks);
   window.__todayPicks = picks;
   const games = new Set(picks.filter(p=>p.on).map(p=>p.g.id)).size;
