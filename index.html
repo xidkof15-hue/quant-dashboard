@@ -948,23 +948,20 @@
   /* Columna central (hora/fecha o en vivo) — Hoy y Mis Apuestas */
   .tr-center, .br-center { flex-shrink:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
   .tr-center { min-width:128px; } .br-center { min-width:150px; }
+  .seg-mini { display:inline-flex; border:1px solid var(--border); border-radius:9px; overflow:hidden; background:var(--surface); }
+  .seg-mini button { border:0; background:transparent; padding:7px 12px; font-size:12px; font-weight:700; color:var(--text-3); cursor:pointer; font-family:inherit; }
+  .seg-mini button + button { border-left:1px solid var(--border); }
+  .seg-mini button.on { background:var(--c-salvia); color:#fff; }
+  .tr-intel { font-size:10.5px; color:var(--text-3); margin-top:4px; font-family:var(--font-mono); }
   .ct-block { text-align:center; }
   .ct-time { font-family:var(--font-mono); font-size:15px; font-weight:800; color:var(--text-1); }
   .ct-date { font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
   .ct-cd { font-size:10px; font-weight:800; color:var(--c-coral); background:rgba(226,101,74,.12); padding:2px 9px; border-radius:999px; margin-top:6px; display:inline-block; }
   .ring-wrap { position:relative; width:48px; height:48px; flex-shrink:0; }
-  .ring-txt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:10px; font-weight:800; color:var(--c-coral); }
   .tr-live-c { display:flex; align-items:center; gap:11px; }
   .tr-lc-info { display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
   .tr-lc-score { font-family:var(--font-mono); font-size:18px; font-weight:800; color:var(--text-1); line-height:1; }
   .tr-lc-when { font-family:var(--font-mono); font-size:11px; color:var(--c-coral); font-weight:700; }
-  /* Mini-tarjetas en vivo (Mis Apuestas) */
-  .lmc { display:flex; gap:6px; }
-  .lmc-card { background:#eef2f7; border-radius:8px; padding:6px 9px; text-align:center; min-width:52px; }
-  .lmc-v { font-family:var(--font-mono); font-size:13px; font-weight:800; color:var(--text-1); white-space:nowrap; }
-  .lmc-hl { max-width:140px; }
-  .lmc-hl .lmc-v { font-size:11px; color:var(--c-coral); overflow:hidden; text-overflow:ellipsis; }
-  .lmc-l { font-size:8px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3); margin-top:4px; }
   .br-stand-lg { font-size:12px; font-weight:800; padding:5px 13px; border-radius:999px; white-space:nowrap; }
   .res-block { text-align:center; padding:6px 14px; border-radius:10px; }
   .res-block.res-won { background:rgba(46,125,82,.12); }
@@ -1092,6 +1089,16 @@
       </label>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);padding-bottom:8px;" title="Sumar un 2º mercado de otra categoría por partido. Más acción pero algo más de riesgo por correlación.">
         <input type="checkbox" id="today-second" onchange="renderTodayPicks()" /> permitir 2º mercado/partido
+      </label>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Día del paquete
+        <div class="seg-mini" id="today-day-seg">
+          <button class="on" onclick="setTodayOffset(0,this)">Hoy</button><button onclick="setTodayOffset(1,this)">Mañana</button><button onclick="setTodayOffset(2,this)">+2 días</button>
+        </div>
+      </label>
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);" title="Preciso: modelo actual (menos apuestas, más ROI por apuesta). Volumen: fútbol con mezcla 70% mercado + 30% fuerza (Elo/FPI), piso 55% y valor ≥3% — validado en backtest 2023-25 con más apuestas y más crecimiento de banca.">Modo (fútbol)
+        <div class="seg-mini" id="today-mode-seg">
+          <button id="mode-btn-preciso" onclick="setTodayMode('preciso',this)">Preciso</button><button id="mode-btn-volumen" onclick="setTodayMode('volumen',this)">Volumen</button>
+        </div>
       </label>
       <button class="btn-secondary" onclick="loadToday()" style="margin-left:auto;">↻ Actualizar</button>
       <button class="btn-secondary" onclick="printTodayReport()">⎙ Imprimir reporte</button>
@@ -1358,7 +1365,16 @@ function fmtDateHuman(d) { return d.toLocaleDateString('es-EC', {day:'2-digit',m
 function fmtDateTimeHuman(d) { return d.toLocaleDateString('es-EC',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'}); }
 
 // ---------- FETCH ----------
-async function fetchScoreboard(sport, dr) { try { const r = await fetch(`${ESPN(sport)}/scoreboard?dates=${dr}&limit=200`); if (!r.ok) throw new Error(); return await r.json(); } catch(e){return null;} }
+const _sbCache = {};
+async function fetchScoreboard(sport, dr) {
+  const k = sport+'|'+dr;
+  const c = _sbCache[k];
+  if (c && (Date.now()-c.ts < 20000)) return c.d;      // E1: una sola petición por liga/fecha cada 20 s
+  if (c && c.p) return c.p;                             // ya hay una en curso: compartirla
+  const p = (async ()=>{ try { const r = await fetch(`${ESPN(sport)}/scoreboard?dates=${dr}&limit=200`); if (!r.ok) throw new Error(); const d = await r.json(); _sbCache[k]={ts:Date.now(),d}; return d; } catch(e){ _sbCache[k]={ts:Date.now()-15000,d:null}; return null; } })();
+  _sbCache[k] = { ts:0, d:null, p };
+  return p;
+}
 async function fetchTeamForm(sport, tId) { const k = `${sport}-${tId}`; if (state.teamCache[k]) return state.teamCache[k]; try { const r = await fetch(`${ESPN(sport)}/teams/${tId}/schedule`); if (!r.ok) throw new Error(); const d = await r.json(); state.teamCache[k]=d; return d; } catch(e){return null;} }
 
 // ---------- PARSE ----------
@@ -1978,19 +1994,27 @@ function renderTodayLeagues() {
   c.innerHTML = TODAY_LEAGUE_OPTS.map(([sp,n]) => leagueBtnHTML(sp, sel.includes(sp), `toggleTodayLeague('${sp}')`, n)).join('');
 }
 let todayGames = [];
+state.todayOffset = 0;
+state.todayMode = localStorage.getItem('sharpTodayMode') || 'preciso';
+function setTodayOffset(n, btn){ state.todayOffset = n; if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); } loadToday(); }
+function setTodayMode(m, btn){ state.todayMode = m; localStorage.setItem('sharpTodayMode', m); syncModeSeg(); renderTodayPicks(); }
+function syncModeSeg(){ const a=document.getElementById('mode-btn-preciso'), b=document.getElementById('mode-btn-volumen'); if(a&&b){ a.classList.toggle('on', state.todayMode!=='volumen'); b.classList.toggle('on', state.todayMode==='volumen'); } }
+function todayDateLabel(){ const d=new Date(); d.setDate(d.getDate()+state.todayOffset); return d.toLocaleDateString('es-EC',{weekday:'long',day:'numeric',month:'long'}); }
 async function loadToday() {
   const c = document.getElementById('today-content');
-  c.innerHTML = `<div class="small-note" style="margin-bottom:10px;">Cargando partidos de hoy…</div>` + '<div class="skel-row"></div>'.repeat(4);
-  const d = new Date(); const ds = fmtDateESPN(d);
+  syncModeSeg();
+  c.innerHTML = `<div class="small-note" style="margin-bottom:10px;">Cargando partidos (${todayDateLabel()})…</div>` + '<div class="skel-row"></div>'.repeat(4);
+  const d = new Date(); d.setDate(d.getDate()+state.todayOffset); const ds = fmtDateESPN(d);
   const leagues = getTodayLeagues();
   todayGames = [];
   await Promise.all(leagues.map(async sp => {
     const data = await fetchScoreboard(sp, ds);
     if (data) parseGames(data, sp).forEach(g => { if (g.status!=='post') todayGames.push(g); });
   }));
-  if (!todayGames.length) { c.innerHTML = `<div class="state-msg">No hay partidos pendientes hoy en tus ligas seleccionadas.</div>`; return; }
+  if (!todayGames.length) { c.innerHTML = `<div class="state-msg">No hay partidos pendientes ese día en tus ligas seleccionadas.</div>`; return; }
   c.innerHTML = `<div class="state-msg"><span class="loader"></span>Calculando probabilidades (${todayGames.length} partidos)...</div>`;
   await Promise.all(todayGames.map(g => computeGameViability(g)));
+  try { await enrichToday(todayGames, ds); } catch(e) {}
   window.__animateToday = true;
   renderTodayPicks();
 }
@@ -2006,6 +2030,134 @@ function countdownStr(date){
     return 'empieza ya';
   }catch(e){ return null; }
 }
+
+// ---------- M1: fuerza (Elo/FPI) + mezcla validada · D1: pitchers MLB · D4: clima ----------
+const ELO_BUCKETS = [[0.0967,0.1609,0.7424],[0.1129,0.2033,0.6838],[0.1777,0.2283,0.5941],[0.2182,0.2621,0.5197],[0.2610,0.2668,0.4722],[0.3187,0.2894,0.3919],[0.3766,0.2988,0.3246],[0.4181,0.3052,0.2767],[0.4771,0.2906,0.2323],[0.5351,0.2692,0.1958],[0.6032,0.2458,0.1510],[0.6716,0.2017,0.1267],[0.7421,0.1689,0.0890],[0.7954,0.1391,0.0655],[0.8387,0.1155,0.0458],[0.8817,0.0957,0.0226]]; // P(H,D,A) por bucket de EloDiff (bins 50, desde -400) — entrenado 2000-2019, 101k partidos con Elo
+function eloBucketProbs(diff){ const i=Math.max(0,Math.min(15,Math.floor((Math.max(-400,Math.min(400,diff))+400)/50))); const p=ELO_BUCKETS[i]; return {home:p[0],draw:p[1],away:p[2]}; }
+function strengthFromFPI(h,a){ if(!(h>0)||!(a>0)||h+a>100.5) return null; const d=Math.max(0,100-h-a); const t=h+d+a; return {home:h/t,draw:d/t,away:a/t}; }
+function blendVolumen(pMkt,pStr){ return 0.7*pMkt + 0.3*pStr; }  // validado: 70/30, piso .55, valor ≥3%
+const VOL_FLOOR=0.55, VOL_EDGE=0.03;
+// Candidato modo Volumen para un partido de fútbol: SOLO 1X2 con mezcla (lo backtesteado)
+function volumenCandidate(oneX2Options, ps){
+  if (!ps || !oneX2Options || !oneX2Options.length) return null;
+  let best=null;
+  oneX2Options.forEach(o=>{
+    if (o.reliable===false || o.mode!=='market') return;
+    const od = o.oddsBest; if (!(od>1) || o.displayProb==null) return;
+    const pk = o.key==='home'?'home':(o.key==='away'?'away':(o.key==='draw'?'draw':null)); if(!pk) return;
+    const pB = blendVolumen(o.displayProb, ps[pk]);
+    const edge = od*pB - 1;
+    if (pB>=VOL_FLOOR && edge>=VOL_EDGE && (!best || edge>best.edge)){
+      best = { key:o.key, point:o.point, pick:o.trackerPick||o.name, odds:od, book:o.bestBook, prob:pB, edge:edge*100,
+               kelly:Math.max(0,(od*pB-1)/(od-1)) };
+    }
+  });
+  return best;
+}
+// --- ClubElo (opcional; si CORS falla, se ignora en silencio) ---
+async function loadClubElo(){
+  try{
+    const key='sharpClubElo', cached=JSON.parse(localStorage.getItem(key)||'null');
+    if (cached && Date.now()-cached.ts < 24*3600000) return cached.map;
+    const d=new Date().toISOString().slice(0,10);
+    const r=await fetch('https://api.clubelo.com/'+d); if(!r.ok) throw 0;
+    const txt=await r.text(); const map={};
+    txt.split('\n').slice(1).forEach(line=>{ const p=line.split(','); if(p.length>4){ const nm=normTeamName(p[1]); const elo=parseFloat(p[4]); if(nm&&elo>0) map[nm]=elo; } });
+    if (Object.keys(map).length>100) { localStorage.setItem(key, JSON.stringify({ts:Date.now(),map})); return map; }
+    return null;
+  }catch(e){ return null; }
+}
+function normTeamName(n){ return String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\b(fc|cf|afc|sc|ac|cd|club|de|real|the)\b/g,'').replace(/[^a-z0-9]/g,'').trim(); }
+function clubEloFor(map, teamName){
+  if(!map) return null; const t=normTeamName(teamName); if(!t) return null;
+  if (map[t]) return map[t];
+  let hit=null; Object.keys(map).forEach(k=>{ if(!hit && (k.includes(t)||t.includes(k)) && Math.min(k.length,t.length)>=6) hit=map[k]; });
+  return hit;
+}
+// --- Fuerza por partido: FPI (ESPN, sin ambigüedad de nombres) primero; ClubElo de respaldo ---
+async function strengthForGame(g, eloMap){
+  try{
+    const sum = await fetchSummary(g.sport, g.id);
+    const pr = sum && sum.predictor;
+    if (pr){
+      const h=parseFloat(pr.homeTeam && pr.homeTeam.gameProjection), a=parseFloat(pr.awayTeam && pr.awayTeam.gameProjection);
+      const st=strengthFromFPI(h,a); if(st){ g.intel=g.intel||{}; g.intel.fpi={h:h,a:a}; return st; }
+    }
+    if (sum && Array.isArray(sum.injuries)){
+      const nInj = sum.injuries.reduce((acc,t)=>acc+((t.injuries||[]).length),0);
+      if (nInj>0){ g.intel=g.intel||{}; g.intel.inj=nInj; }
+    }
+  }catch(e){}
+  const eh=clubEloFor(eloMap, g.home && g.home.name), ea=clubEloFor(eloMap, g.away && g.away.name);
+  if (eh && ea) return eloBucketProbs(eh-ea);
+  return null;
+}
+// --- D1: abridores probables MLB (statsapi.mlb.com; falla en silencio si CORS bloquea) ---
+async function loadMlbProbables(ds){
+  try{
+    const key='sharpMlbProb'+ds, cached=JSON.parse(localStorage.getItem(key)||'null');
+    if (cached && Date.now()-cached.ts < 3*3600000) return cached.data;
+    const dt = ds.slice(0,4)+'-'+ds.slice(4,6)+'-'+ds.slice(6,8);
+    const r=await fetch('https://statsapi.mlb.com/api/v1/schedule?sportId=1&date='+dt+'&hydrate=probablePitcher'); if(!r.ok) throw 0;
+    const d=await r.json(); const games=((d.dates||[])[0]||{}).games||[]; const ids=new Set(); const out=[];
+    games.forEach(gm=>{
+      const hp=gm.teams&&gm.teams.home&&gm.teams.home.probablePitcher, ap=gm.teams&&gm.teams.away&&gm.teams.away.probablePitcher;
+      out.push({ home:gm.teams.home.team.name, away:gm.teams.away.team.name, hp:hp?{id:hp.id,name:hp.fullName}:null, ap:ap?{id:ap.id,name:ap.fullName}:null });
+      if(hp)ids.add(hp.id); if(ap)ids.add(ap.id);
+    });
+    if (ids.size){
+      const r2=await fetch('https://statsapi.mlb.com/api/v1/people?personIds='+[...ids].join(',')+'&hydrate=stats(group=[pitching],type=[season])');
+      if (r2.ok){ const d2=await r2.json(); const st={};
+        (d2.people||[]).forEach(p=>{ const sp=(((p.stats||[])[0]||{}).splits||[])[0]; if(sp&&sp.stat) st[p.id]={era:sp.stat.era, whip:sp.stat.whip}; });
+        out.forEach(o=>{ if(o.hp&&st[o.hp.id])Object.assign(o.hp,st[o.hp.id]); if(o.ap&&st[o.ap.id])Object.assign(o.ap,st[o.ap.id]); });
+      }
+    }
+    localStorage.setItem(key, JSON.stringify({ts:Date.now(),data:out}));
+    return out;
+  }catch(e){ return null; }
+}
+// --- D4: clima por estadio (Open-Meteo, sin clave) ---
+const MLB_PARKS={'yankees':[40.8296,-73.9262],'red sox':[42.3467,-71.0972],'blue jays':[43.6414,-79.3894],'orioles':[39.2839,-76.6218],'rays':[27.7683,-82.6534],'white sox':[41.83,-87.6339],'guardians':[41.4962,-81.6852],'tigers':[42.339,-83.0485],'royals':[39.0517,-94.4803],'twins':[44.9817,-93.2776],'astros':[29.7573,-95.3555],'angels':[33.8003,-117.8827],'athletics':[38.5802,-121.513],'mariners':[47.5914,-122.3325],'rangers':[32.7473,-97.0847],'braves':[33.8908,-84.4678],'marlins':[25.7781,-80.2196],'mets':[40.7571,-73.8458],'phillies':[39.9057,-75.1665],'nationals':[38.873,-77.0074],'cubs':[41.9484,-87.6553],'reds':[39.0975,-84.5068],'brewers':[43.028,-87.9712],'pirates':[40.4469,-80.0057],'cardinals':[38.6226,-90.1928],'diamondbacks':[33.4455,-112.0667],'rockies':[39.7559,-104.9942],'dodgers':[34.0739,-118.24],'padres':[32.7076,-117.1566],'giants':[37.7786,-122.3893]};
+function parkFor(teamName){ const t=String(teamName||'').toLowerCase(); let hit=null; Object.keys(MLB_PARKS).forEach(k=>{ if(!hit&&t.includes(k)) hit=MLB_PARKS[k]; }); return hit; }
+async function weatherForGame(g){
+  try{
+    const p=parkFor(g.home&&g.home.name); if(!p||!g.date) return null;
+    const key='sharpWx'+Math.round(p[0]*100)+'_'+g.date.toISOString().slice(0,10);
+    const cached=JSON.parse(localStorage.getItem(key)||'null');
+    let hr=null;
+    if (cached && Date.now()-cached.ts<3*3600000) hr=cached.d;
+    else{
+      const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${p[0]}&longitude=${p[1]}&hourly=temperature_2m,wind_speed_10m&forecast_days=4&timezone=auto`);
+      if(!r.ok) return null; hr=await r.json();
+      try{ localStorage.setItem(key, JSON.stringify({ts:Date.now(),d:{hourly:{time:hr.hourly.time,temperature_2m:hr.hourly.temperature_2m,wind_speed_10m:hr.hourly.wind_speed_10m}}})); }catch(e){}
+      hr={hourly:hr.hourly};
+    }
+    const times=hr.hourly.time; const tgt=g.date.getTime(); let bi=0,bd=1e18;
+    for(let i=0;i<times.length;i++){ const dd=Math.abs(new Date(times[i]).getTime()-tgt); if(dd<bd){bd=dd;bi=i;} }
+    return { t:Math.round(hr.hourly.temperature_2m[bi]), w:Math.round(hr.hourly.wind_speed_10m[bi]) };
+  }catch(e){ return null; }
+}
+// --- Orquestador: enriquece los partidos del paquete (silencioso ante fallos) ---
+async function enrichToday(games, ds){
+  const soccer = games.filter(g=>String(g.sport||'').startsWith('soccer'));
+  const mlb = games.filter(g=>String(g.sport||'')==='baseball/mlb');
+  const eloMap = soccer.length ? await loadClubElo() : null;
+  const tasks = [];
+  soccer.forEach(g=> tasks.push(strengthForGame(g, eloMap).then(st=>{ g.strength=st; }).catch(()=>{})));
+  if (mlb.length){
+    tasks.push(loadMlbProbables(ds).then(list=>{
+      if(!list) return;
+      mlb.forEach(g=>{
+        const hn=(g.home&&g.home.name||'').toLowerCase(), an=(g.away&&g.away.name||'').toLowerCase();
+        const m=list.find(x=> hn.includes(x.home.split(' ').pop().toLowerCase()) && an.includes(x.away.split(' ').pop().toLowerCase()));
+        if(m&&(m.hp||m.ap)){ g.intel=g.intel||{}; const fmt=p=>p?`${p.name.split(' ').pop()}${p.era?` (ERA ${p.era})`:''}`:'—'; g.intel.pitch=`Abren: ${fmt(m.ap)} vs ${fmt(m.hp)}`; }
+      });
+    }).catch(()=>{}));
+    mlb.forEach(g=> tasks.push(weatherForGame(g).then(wx=>{ if(wx){ g.intel=g.intel||{}; g.intel.wx=`${wx.t}°C · viento ${wx.w} km/h`; } }).catch(()=>{})));
+  }
+  await Promise.all(tasks);
+}
+
 const STAND_LBL={win:'Ganando',lose:'Perdiendo',push:'Parejo'};
 function centerTimeHTML(date){
   if (!date || !date.toLocaleTimeString) return '';
@@ -2026,6 +2178,18 @@ function buildTodayPicks() {
   todayGames.forEach(g => {
     const opp = g.opportunity;
     if (!opp || !opp.markets) return;
+    // M1 · modo Volumen (solo fútbol con señal de fuerza): 1X2 con mezcla 70/30, piso 55%, valor ≥3% — lo validado en backtest.
+    // Si el partido no tiene señal de fuerza, cae al modo actual. Si la tiene pero ninguna opción pasa el corte, NO se apuesta ese partido.
+    if (state.todayMode==='volumen' && String(g.sport||'').startsWith('soccer') && g.strength){
+      const mk1 = opp.markets['1x2'];
+      const vc = volumenCandidate((mk1&&mk1.topOptions)||[], g.strength);
+      if (vc){
+        const tier = vc.prob>=0.75?'alta':(vc.prob>=0.60?'media':'baja');
+        picks.push({ g, c:{ cat:'1x2', label:(mk1&&mk1.label)||'1X2', pick:vc.pick, odds:vc.odds, book:vc.book, key:vc.key, point:vc.point,
+          prob:vc.prob, probTier:tier, valueTier:'positivo', edge:vc.edge, kelly:vc.kelly }, on:(g.__off?false:true) });
+      }
+      return;
+    }
     // Candidatos: TODAS las opciones de mercado del partido (no solo la más probable)
     const cands = [];
     Object.entries(opp.markets).forEach(([ck,mk]) => {
@@ -2051,8 +2215,10 @@ function buildTodayPicks() {
   picks.sort((a,b)=> (a.g.date - b.g.date) || (b.c.edge - a.c.edge));
   return picks;
 }
+function committedPending(){ return (state.bets||[]).filter(b=>b.status==='pending').reduce((a,b)=>a+(+b.stake||0),0); }
+function availableBank(){ return Math.max(0, getTodayBank() - committedPending()); }
 function allocateStakes(picks) {
-  const bank = getTodayBank();
+  const bank = availableBank();
   const act = picks.filter(p=>p.on);
   picks.filter(p=>!p.on).forEach(p=>p.stake=0);
   if (!act.length) return 0;
@@ -2092,8 +2258,10 @@ function renderTodayPicks() {
   window.__todayPicks = picks;
   const games = new Set(picks.filter(p=>p.on).map(p=>p.g.id)).size;
   let _maxEdge=-Infinity, _bestId=null; picks.forEach(p=>{ if(p.on && p.c.edge>_maxEdge){_maxEdge=p.c.edge;_bestId=p.g.id+'|'+p.c.cat;} });
-  const doneSet = new Set((state.bets||[]).filter(b=>b.espnGameId&&b.resolve).map(b=>`${b.espnGameId}|${b.resolve.market}|${b.resolve.side}`));
-  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete de hoy ${new Date().toLocaleDateString('es-EC')}: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong> de tu banca de $${getTodayBank().toFixed(2)}. Selección por <strong>valor</strong> (mejor cuota × probabilidad) y reparto tipo Kelly (más valor = más stake). Carga cada una en la casa indicada y lo más cerca del inicio.</div>`;
+  const doneSet = new Set((state.bets||[]).map(b=>{ if(!b.espnGameId) return null; const r=b.resolve||deriveResolve(b); return r?`${b.espnGameId}|${r.market}|${r.side}`:null; }).filter(Boolean));
+  const comm = committedPending();
+  const modeTxt = state.todayMode==='volumen' ? 'Volumen (fútbol: 70% mercado + 30% fuerza, piso 55%, valor ≥3%)' : 'Preciso (modelo actual)';
+  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete para <strong>${todayDateLabel()}</strong> · modo <strong>${modeTxt}</strong>: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong>. Banca $${getTodayBank().toFixed(2)}${comm>0?` − $${comm.toFixed(2)} ya comprometidos en pendientes = <strong>$${availableBank().toFixed(2)} disponibles</strong>`:''}. Selección por <strong>valor</strong> y reparto tipo Kelly.${state.todayOffset>0?' Las cuotas de días futuros pueden moverse: recarga antes de apostar.':''}</div>`;
   let curLeague = null;
   picks.forEach(p => {
     const g = p.g, o = p.c;
@@ -2120,6 +2288,7 @@ function renderTodayPicks() {
           <span class="tr-team">${teamLogoHTML(g.away,24)}<span class="tr-name">${g.away.shortName||g.away.name}</span></span>
         </div>
         <div class="tr-pick">${marketTag(o.label)}<strong>${o.pick}</strong><span class="tr-odds">${houseTxt}</span><span class="tr-edge${o.valueTier==='positivo'?' grad-val':''}">${edgeTxt}</span>${already?'<span class="done-chip">✓ Registrada</span>':''}</div>
+        ${(function(){ const it=g.intel||{}; const parts=[it.pitch, it.wx, (it.fpi?`FPI ${Math.round(it.fpi.h)}-${Math.round(Math.max(0,100-it.fpi.h-it.fpi.a))}-${Math.round(it.fpi.a)}`:null), (it.inj?`${it.inj} bajas`:null)].filter(Boolean); return parts.length?`<div class="tr-intel">${parts.join(' · ')}</div>`:''; })()}
       </div>
       <div class="tr-center">${centerCol}</div>
       <div class="tr-stake">${p.on?'$'+p.stake.toFixed(2):'—'}</div>
@@ -2135,7 +2304,7 @@ function printTodayReport() {
 function registerTodayPackage() {
   const picks = (window.__todayPicks||[]).filter(p=>p.on && p.stake>0);
   if (!picks.length) { toast('No hay apuestas activas en el paquete','err'); return; }
-  const doneSet = new Set((state.bets||[]).filter(b=>b.espnGameId&&b.resolve).map(b=>`${b.espnGameId}|${b.resolve.market}|${b.resolve.side}`));
+  const doneSet = new Set((state.bets||[]).map(b=>{ if(!b.espnGameId) return null; const r=b.resolve||deriveResolve(b); return r?`${b.espnGameId}|${r.market}|${r.side}`:null; }).filter(Boolean));
   let added=0, dup=0;
   picks.forEach(p => {
     const g = p.g, o = p.c;
@@ -5108,46 +5277,7 @@ function betCardHTML(b) {
     <div class="br-end"><div class="br-end-main">${endMain}</div><div class="br-acts">${acts}</div></div>
   </div>`;
 }
-function trackerTableHTML(bets) {
-  const cols = `<tr><th>Fecha / hora</th><th>Liga</th><th>Partido</th><th>Mercado</th><th>Cuota</th><th>Stake</th><th>Score</th><th>Modo</th><th>Estado</th><th>Ganancia / Pérdida</th><th>Lección</th><th>Acciones</th></tr>`;
-  let rows = '';
-  bets.forEach(b => {
-    const pl = b.status==='won' ? `+$${(b.stake*(b.odds-1)).toFixed(2)}` : (b.status==='lost' ? `-$${b.stake.toFixed(2)}` : (b.status==='push' ? '$0.00' : '—'));
-    const plCls = b.status==='won' ? 'pl-pos' : (b.status==='lost' ? 'pl-neg' : 'muted');
-    const modeHtml = b.mode==='paper' ? '<span class="muted" style="font-size:10px;">paper</span>' : '<span class="info" style="font-size:10px;">real</span>';
-    const tag = (b.auto ? '<span class="auto-tag" title="Resultado automático">AUTO</span>' : '<span class="manual-tag" title="Marcado manual">MANUAL</span>');
-    let estado;
-    if (b.status==='pending' && b.liveStatus==='in') {
-      const sc = b.liveScore ? ` ${b.liveScore}` : '';
-      estado = `<span class="live-pill">EN VIVO${sc}</span>`;
-    } else if (b.status==='post' || (b.status!=='pending' && b.finalScore)) {
-      estado = `<span class="status-pill st-${b.status}">${STATUS_ES[b.status]||b.status}</span>${b.finalScore?`<span class="muted" style="font-family:var(--font-mono);font-size:10px;margin-left:6px;">${b.finalScore}</span>`:''}`;
-    } else {
-      estado = `<span class="status-pill st-${b.status}">${STATUS_ES[b.status]||b.status}</span>`;
-    }
-    const lessonCell = (b.status!=='pending')
-      ? `<span class="lesson-link" onclick="openLessonModal('${b.id}')">Ver lección</span>`
-      : '<span class="muted">—</span>';
-    // Botones de marcado manual SOLO si la apuesta no es auto. Las auto se cierran solas.
-    let markBtns = '';
-    if (!b.auto) {
-      if (b.status==='pending') {
-        markBtns = `<button class="icon-btn btn-w" title="Marcar ganada" onclick="setStatus('${b.id}','won')">✓</button><button class="icon-btn btn-l" title="Marcar perdida" onclick="setStatus('${b.id}','lost')">✕</button><button class="icon-btn" title="Marcar nula" onclick="setStatus('${b.id}','push')">~</button>`;
-      } else {
-        markBtns = `<button class="icon-btn" title="Volver a pendiente" onclick="setStatus('${b.id}','pending')">↶</button>`;
-      }
-    }
-    const actions = markBtns
-      + `<button class="icon-btn btn-edit" title="Editar apuesta" onclick="openEditModal('${b.id}')">✎</button>`
-      + `<button class="icon-btn btn-x" title="Eliminar" onclick="deleteBet('${b.id}')">🗑</button>`;
-    const rowCls = b.status==='won' ? 'bet-settled-won' : (b.status==='lost' ? 'bet-settled-lost' : '');
-    rows += `<tr class="${rowCls}"><td class="cell-when">${betWhenCell(b)}</td><td>${b.sport||'—'}</td><td class="cell-match">${b.match||'—'}${tag}</td><td class="cell-market">${betMarketCell(b)}</td><td>${b.odds.toFixed(2)}</td><td>$${b.stake.toFixed(2)}</td><td>${b.score ?? '—'}</td><td>${modeHtml}</td><td>${estado}</td><td class="${plCls}">${pl}</td><td>${lessonCell}</td><td><div class="row-actions">${actions}</div></td></tr>`;
-    if (b.notes) rows += `<tr><td colspan="12" style="background:var(--bg);padding:6px 12px 10px;font-size:11px;color:var(--text-2);"><em>"${b.notes}"</em></td></tr>`;
-  });
-  return `<div class="bets-table-wrap"><table class="bets"><thead>${cols}</thead><tbody>${rows}</tbody></table></div>`;
-}
-
-// ---------- MODAL: LECCION DETALLADA ----------
+// (tabla antigua eliminada — B4)
 function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
 function buildLessonHTML(b) {
   const won = b.status==='won', lost = b.status==='lost', push = b.status==='push';
@@ -5528,10 +5658,10 @@ function deriveResolve(b){
   const sideOf=function(){ const hb=hn.split(/\s+/).some(w=>w.length>2&&pl.includes(w)); const ab=an.split(/\s+/).some(w=>w.length>2&&pl.includes(w)); if(hb&&!ab)return 'home'; if(ab&&!hb)return 'away'; return null; };
   const nm=pick.match(/([+-]?\d+(?:\.\d+)?)/); const line=nm?parseFloat(nm[1]):null;
   if (mkl.includes('spread')||mkl.includes('hándic')||mkl.includes('handic')){ const s=sideOf(); return s?{market:'spread',side:s,line:(line==null?0:line)}:null; }
-  if (mkl.includes('total')||pl.includes('over')||pl.includes('under')){ const side=pl.includes('over')?'over':'under'; return line!=null?{market:'totals',side:side,line:line}:null; }
+  if (mkl.includes('total')||pl.includes('over')||pl.includes('under')||pl.includes('más de')||pl.includes('mas de')||pl.includes('menos de')){ const side=(pl.includes('over')||pl.includes('más de')||pl.includes('mas de'))?'over':'under'; return line!=null?{market:'totals',side:side,line:line}:null; }
   if (mkl.includes('ambos')||mkl.includes('btts')){ return {market:'btts',side:(pl.includes('sí')||pl.includes('si')||pl.includes('yes'))?'yes':'no',line:null}; }
   if (mkl.includes('doble')){ if(pl.includes('1x'))return {market:'dc',side:'1x',line:null}; if(pl.includes('x2'))return {market:'dc',side:'x2',line:null}; if(pl.includes('12'))return {market:'dc',side:'12',line:null}; return null; }
-  if (mkl.includes('dnb')||mkl.includes('no apuesta')){ const s=sideOf(); return s?{market:'dnb',side:s,line:null}:null; }
+  if (mkl.includes('dnb')||mkl.includes('no apuesta')||mkl.includes('empate anula')||pl.includes('empate anula')){ const s=sideOf(); return s?{market:'dnb',side:s,line:null}:null; }
   if (mkl.includes('money')||mkl.includes('ganador')||mkl.includes('1x2')||mkl.includes('gana')){ if(pl.includes('empate')||pl.includes('draw'))return {market:'ml',side:'draw',line:null}; const s=sideOf(); return s?{market:'ml',side:s,line:null}:null; }
   return null;
 }
@@ -5666,7 +5796,7 @@ if (state.activePreset === 'adaptativo') state.weights = getAdaptiveWeights();
 
 // ---------- EN VIVO (multideporte) ----------
 const LIVE_LEAGUES = ['soccer/fifa.world','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/ecu.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb','football/nfl'];
-let _liveTabBusy=false, __liveTabTimer=null, __liveSig='';
+let _liveTabBusy=false, __liveTabTimer=null, __liveSig='', __liveActiveLg=null, __liveFullTs=0;
 async function fetchSummary(sport, id){
   const k = sport+'|'+id; state.summaryCache = state.summaryCache || {};
   const c = state.summaryCache[k]; if (c && (Date.now()-c.ts < 25000)) return c.data;
@@ -5721,9 +5851,14 @@ async function loadLiveTab(){
   if(!state.liveGames || !state.liveGames.length) wrap.innerHTML = liveSkeleton();
   try{
     const dr = fmtDateESPN(new Date());
-    const results = await Promise.all(LIVE_LEAGUES.map(sp => fetchScoreboard(sp, dr).then(d=>({sp,d})).catch(()=>({sp,d:null}))));
+    // E2: escaneo completo de las 14 ligas solo cada 5 min; entre medias, solo las que tienen juego en vivo o por empezar (<90 min)
+    const full = !__liveActiveLg || (Date.now()-__liveFullTs > 300000);
+    const scanLg = full ? LIVE_LEAGUES : LIVE_LEAGUES.filter(sp => __liveActiveLg.has(sp));
+    const results = await Promise.all(scanLg.map(sp => fetchScoreboard(sp, dr).then(d=>({sp,d})).catch(()=>({sp,d:null}))));
     let live=[];
-    results.forEach(r=>{ if(!r.d) return; (parseGames(r.d, r.sp)||[]).forEach(g=>{ if(g.status==='in'){ g.sport=r.sp; live.push(g); } }); });
+    const activeNow = new Set();
+    results.forEach(r=>{ if(!r.d) return; (parseGames(r.d, r.sp)||[]).forEach(g=>{ if(g.status==='in'){ g.sport=r.sp; live.push(g); activeNow.add(r.sp); } else if (g.status==='pre' && g.date && (g.date - Date.now()) < 90*60000) activeNow.add(r.sp); }); });
+    if (full){ __liveActiveLg = activeNow; __liveFullTs = Date.now(); } else { __liveActiveLg = new Set([...__liveActiveLg].filter(sp=>activeNow.has(sp) || scanLg.indexOf(sp)<0)); activeNow.forEach(sp=>__liveActiveLg.add(sp)); }
     await Promise.all(live.map(async g=>{ const sum=await fetchSummary(g.sport,g.id); g.live = parseLiveSummary(g.sport, sum); }));
     state.liveGames = live;
     const sig = live.map(g=>`${g.id}:${g.home.score}-${g.away.score}:${g.shortDetail||g.clock}:${(g.events||[]).length}`).join('|');
