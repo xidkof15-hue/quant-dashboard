@@ -953,6 +953,12 @@
   .seg-mini button + button { border-left:1px solid var(--border); }
   .seg-mini button.on { background:var(--c-salvia); color:#fff; }
   .tr-intel { font-size:10.5px; color:var(--text-3); margin-top:4px; font-family:var(--font-mono); }
+  .clv-chip, .mv-chip { font-family:var(--font-mono); font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap; }
+  .clv-chip.up, .mv-chip.up { background:rgba(46,125,82,.13); color:#2e7d52; }
+  .clv-chip.dn, .mv-chip.dn { background:rgba(179,38,30,.10); color:var(--c-granate); }
+  .mode-stats { display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin:-14px 2px 20px; font-size:11.5px; color:var(--text-2); }
+  .mode-stats .ms-t { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); }
+  .mode-stats .ms-item em { color:var(--text-3); font-style:normal; font-size:10px; }
   .ct-block { text-align:center; }
   .ct-time { font-family:var(--font-mono); font-size:15px; font-weight:800; color:var(--text-1); }
   .ct-date { font-size:10px; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
@@ -1269,6 +1275,7 @@
     <h1 class="section-title">Mis apuestas</h1>
     <p class="section-sub">Tu resultado de un vistazo y el historial de cada apuesta. Las apuestas se registran solas desde el paquete de Hoy o desde la calculadora de un partido.</p>
     <div class="tracker-stats" id="tracker-stats"></div>
+    <div id="mode-stats-slot"></div>
     <div class="tracker-hist-head">
       <span>Historial</span>
       <button class="btn-secondary" type="button" onclick="openManualBetModal()" style="font-size:12px;padding:7px 13px;">+ Registrar</button>
@@ -2283,7 +2290,7 @@ function renderTodayPicks() {
   const doneSet = new Set((state.bets||[]).map(b=>{ if(!b.espnGameId) return null; const r=b.resolve||deriveResolve(b); return r?`${b.espnGameId}|${r.market}|${r.side}`:null; }).filter(Boolean));
   const comm = committedPending();
   const modeTxt = state.todayMode==='volumen' ? 'Volumen (fútbol: 70% mercado + 30% fuerza, piso 55%, valor ≥3%)' : 'Preciso (modelo actual)';
-  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete para <strong>${todayDateLabel()}</strong> · modo <strong>${modeTxt}</strong>: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong>. Banca $${getTodayBank().toFixed(2)}${comm>0?` − $${comm.toFixed(2)} ya comprometidos en pendientes = <strong>$${availableBank().toFixed(2)} disponibles</strong>`:''}. Selección por <strong>valor</strong> y reparto tipo Kelly.${state.todayOffset>0?' Las cuotas de días futuros pueden moverse: recarga antes de apostar.':''}</div>`;
+  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete para <strong>${todayDateLabel()}</strong> · modo <strong>${modeTxt}</strong>: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong>. Banca $${getTodayBank().toFixed(2)}${comm>0?` − $${comm.toFixed(2)} ya comprometidos en pendientes = <strong>$${availableBank().toFixed(2)} disponibles</strong>`:''}. Selección por <strong>valor</strong> y reparto tipo Kelly. Riesgo del modo (test 2023-25): caída máxima histórica ${state.todayMode==='volumen'?'~20%':'~14%'} de banca — deja reserva para rachas.${state.todayOffset>0?' Las cuotas de días futuros pueden moverse: recarga antes de apostar.':''}</div>`;
   let curLeague = null;
   picks.forEach(p => {
     const g = p.g, o = p.c;
@@ -2345,6 +2352,7 @@ function registerTodayPackage() {
       stake: p.stake, score: o.prob!=null?Math.round(o.prob*100):null,
       book: String(o.book||'').startsWith('≈') ? '' : (o.book||''),
       mode: 'real', alignment: 'na',
+      engineMode: state.todayMode||'preciso', modelVer: 2,
       espnGameId: g.id, espnSport: g.sport, homeTeam: g.home.name, awayTeam: g.away.name, homeLogo: g.home.logo||null, awayLogo: g.away.logo||null,
       league: g.league, commence: g.date.toISOString(),
       notes: `Paquete Sharp · prob ${(o.prob*100).toFixed(0)}% · valor ${o.edge!=null?(o.edge>0?'+':'')+o.edge.toFixed(1)+'%':'—'}`,
@@ -5080,6 +5088,8 @@ function renderTrackerStats() {
     <div class="tracker-stat"><div class="l">Récord</div><div class="v">${won.length}–${lost.length}</div><div class="d">${wr.toFixed(0)}% acierto · cuota ${ao.toFixed(2)}</div></div>
     <div class="tracker-stat"><div class="l">Pendientes</div><div class="v">${pending.length}</div><div class="d">en juego o por jugar</div></div>
   `;
+  const msEl = document.getElementById('mode-stats-slot');
+  if (msEl) msEl.innerHTML = modeStatsHTML();
 }
 
 const LESSON_LABELS = {
@@ -5293,7 +5303,7 @@ function betCardHTML(b) {
     ${stake}
     <div class="br-body">
       <div class="br-match"><span class="tr-match">${teams}</span></div>
-      <div class="br-pick">${betMarketCell(b)}${odds}${lg}</div>
+      <div class="br-pick">${betMarketCell(b)}${odds}${lg}${clvChipHTML(b)}</div>
     </div>
     <div class="br-center">${center}</div>
     <div class="br-end"><div class="br-end-main">${endMain}</div><div class="br-acts">${acts}</div></div>
@@ -5744,6 +5754,100 @@ function applyAutoStatus(bet, status) {
 }
 
 let _autoResolveBusy = false;
+
+// ---------- P1/P2/P3: CLV automático con referencia sharp (Pinnacle) y movimiento de línea ----------
+function betOddsFromCache(b){
+  try{
+    const sk = ODDS_SPORT_MAP[b.espnSport]; if(!sk) return null;
+    const c = getCachedOdds(sk); if(!c || !c.data || !c.ts) return null;
+    const ageMin = (Date.now()-c.ts)/60000;
+    const hn=normalizeTeam(b.homeTeam||''), an=normalizeTeam(b.awayTeam||'');
+    if(!hn||!an) return null;
+    const ev=c.data.find(e=> teamsOverlap(hn,normalizeTeam(e.home_team)) && teamsOverlap(an,normalizeTeam(e.away_team)));
+    if(!ev) return null;
+    const r=b.resolve||deriveResolve(b); if(!r) return null;
+    let mk,name,point=null,others=[];
+    if(r.market==='ml'){
+      mk='h2h';
+      const hasDraw=(ev.bookmakers||[]).some(bm=>{const m=(bm.markets||[]).find(x=>x.key==='h2h'); return m&&(m.outcomes||[]).some(o=>o.name==='Draw');});
+      name = r.side==='home'?ev.home_team:(r.side==='away'?ev.away_team:'Draw');
+      others = (hasDraw?[ev.home_team,'Draw',ev.away_team]:[ev.home_team,ev.away_team]).filter(x=>x!==name);
+    } else if(r.market==='totals'){ mk='totals'; name=r.side==='over'?'Over':'Under'; point=r.line; others=[name==='Over'?'Under':'Over']; }
+    else if(r.market==='spread'){ mk='spreads'; name=r.side==='home'?ev.home_team:ev.away_team; point=r.line; others=[r.side==='home'?ev.away_team:ev.home_team]; }
+    else return null;
+    let best=0,bestBook=null;
+    (ev.bookmakers||[]).forEach(bm=>{
+      const m=(bm.markets||[]).find(x=>x.key===mk); if(!m) return;
+      const o=(m.outcomes||[]).find(x=>x.name===name && (point==null || x.point===point));
+      if(o && o.price>best){ best=o.price; bestBook=bm.title||bm.key; }
+    });
+    if(!(best>1)) return null;
+    let fair=null;
+    const pinPick=pinnacleOutcomePrice(ev,mk,name,point);
+    if(pinPick){
+      const oPrices=others.map(nm=> pinnacleOutcomePrice(ev,mk,nm, (mk==='spreads' && point!=null) ? -point : (mk==='totals'?point:null)));
+      if(oPrices.length && oPrices.every(p=>p && p>1)){
+        const inv=[pinPick,...oPrices].map(p=>1/p); const su=inv.reduce((a,x)=>a+x,0);
+        fair=(1/pinPick)/su;
+      }
+    }
+    return { best, bestBook, fair, ageMin, pin: pinPick||null };
+  }catch(e){ return null; }
+}
+function captureClosingLines(){
+  let changed=false;
+  (state.bets||[]).forEach(b=>{
+    if(b.status!=='pending' || b.closingOdds || !b.commence || !(b.odds>1)) return;
+    const t=new Date(b.commence).getTime(); if(isNaN(t)) return;
+    const dm=(Date.now()-t)/60000;
+    if(dm < -20 || dm > 45) return;
+    const snap=betOddsFromCache(b);
+    if(!snap || snap.ageMin>45 || !(snap.best>1)) return;
+    b.closingOdds=+snap.best.toFixed(3);
+    b.closingBook=snap.bestBook||null;
+    b.closingRef=snap.fair!=null?'pinnacle':'best';
+    b.closingAuto=true;
+    b.clvPct=+(((b.odds/b.closingOdds)-1)*100).toFixed(2);
+    if(snap.fair!=null) b.evClosePct=+(((b.odds*snap.fair)-1)*100).toFixed(2);
+    changed=true;
+  });
+  return changed;
+}
+function clvChipHTML(b){
+  try{
+    if (b.clvPct!=null && b.closingOdds){
+      const good=b.clvPct>=0;
+      const t=`Cierre ${b.closingOdds}${b.closingRef==='pinnacle' && b.evClosePct!=null ? ` · EV vs fair Pinnacle: ${b.evClosePct>=0?'+':''}${b.evClosePct}%` : ''}`;
+      return `<span class="clv-chip ${good?'up':'dn'}" title="${t}">CLV ${good?'+':''}${b.clvPct}%</span>`;
+    }
+    if (b.status==='pending' && b.commence && b.odds>1){
+      const t=new Date(b.commence).getTime();
+      if (!isNaN(t) && Date.now() < t - 20*60000){
+        const snap=betOddsFromCache(b);
+        if (snap && snap.ageMin<45 && snap.best>1 && Math.abs(snap.best-b.odds)>=0.02){
+          const fav = snap.best < b.odds;
+          return `<span class="mv-chip ${fav?'up':'dn'}" title="Cuota ahora ${snap.best.toFixed(2)} (${snap.bestBook||'mejor casa'})">línea ${(+b.odds).toFixed(2)}→${snap.best.toFixed(2)}</span>`;
+        }
+      }
+    }
+  }catch(e){}
+  return '';
+}
+function modeStatsHTML(){
+  const parts=[];
+  [['preciso','Preciso'],['volumen','Volumen']].forEach(([m,lbl])=>{
+    const bs=(state.bets||[]).filter(b=>b.engineMode===m);
+    if(!bs.length) return;
+    const st=bs.filter(b=>['won','lost','push','void'].includes(b.status));
+    const staked=st.reduce((a,b)=>a+(+b.stake||0),0);
+    const pl=st.reduce((a,b)=> a + (b.status==='won' ? (+b.stake||0)*(((+b.odds)||1)-1) : (b.status==='lost' ? -(+b.stake||0) : 0)), 0);
+    const cl=bs.filter(b=>b.clvPct!=null);
+    const clv=cl.length ? cl.reduce((a,b)=>a+b.clvPct,0)/cl.length : null;
+    parts.push(`<span class="ms-item"><strong>${lbl}</strong> · ${bs.length} apuesta${bs.length>1?'s':''}${staked>0?` · P/L ${pl>=0?'+':''}$${pl.toFixed(2)} · ROI ${pl>=0?'+':''}${(pl/staked*100).toFixed(1)}%`:''}${clv!=null?` · CLV ${clv>=0?'+':''}${clv.toFixed(1)}% <em>(${cl.length})</em>`:''}</span>`);
+  });
+  if(!parts.length) return '';
+  return `<div class="mode-stats"><span class="ms-t">Desde despliegue</span>${parts.join('')}</div>`;
+}
 async function autoResolveBets() {
   if (_autoResolveBusy) return;
   const pend = state.bets.filter(b => b.status==='pending' && b.espnGameId && b.espnSport);
@@ -5753,6 +5857,7 @@ async function autoResolveBets() {
     const bySport = {};
     pend.forEach(b => { (bySport[b.espnSport] = bySport[b.espnSport] || []).push(b); });
     let anyChange = false;
+    try { if (captureClosingLines()) anyChange = true; } catch(e) {}
     for (const sport of Object.keys(bySport)) {
       const group = bySport[sport];
       const days = group.map(b => b.commence ? new Date(b.commence) : new Date(b.date)).filter(d => !isNaN(d));
