@@ -953,6 +953,8 @@
   .seg-mini button + button { border-left:1px solid var(--border); }
   .seg-mini button.on { background:var(--c-salvia); color:#fff; }
   .tr-intel { font-size:10.5px; color:var(--text-3); margin-top:4px; font-family:var(--font-mono); }
+  .odds-fresh { font-family:var(--font-mono); font-size:10.5px; color:var(--text-3); align-self:center; }
+  .odds-fresh.warn { color:var(--c-coral); font-weight:700; }
   .clv-chip, .mv-chip { font-family:var(--font-mono); font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap; }
   .clv-chip.up, .mv-chip.up { background:rgba(46,125,82,.13); color:#2e7d52; }
   .clv-chip.dn, .mv-chip.dn { background:rgba(179,38,30,.10); color:var(--c-granate); }
@@ -1046,7 +1048,6 @@
           <option value="soccer/uefa.europa">Europa League</option>
           <option value="soccer/conmebol.libertadores">Libertadores</option>
           <option value="soccer/conmebol.sudamericana">Copa Sudamericana</option>
-          <option value="soccer/fifa.world">Mundial FIFA</option>
         </optgroup>
         <optgroup label="BÁSQUET"><option value="basketball/nba">NBA</option></optgroup>
         <optgroup label="BÉISBOL"><option value="baseball/mlb">MLB</option></optgroup>
@@ -1106,7 +1107,9 @@
           <button id="mode-btn-preciso" onclick="setTodayMode('preciso',this)">Preciso</button><button id="mode-btn-volumen" onclick="setTodayMode('volumen',this)">Volumen</button>
         </div>
       </label>
-      <button class="btn-secondary" onclick="loadToday()" style="margin-left:auto;">↻ Actualizar</button>
+      <span class="odds-fresh" id="today-odds-fresh" style="margin-left:auto;"></span>
+      <button class="btn-secondary" id="today-odds-btn" onclick="loadTodayOdds()">↓ Cargar cuotas</button>
+      <button class="btn-secondary" onclick="loadToday()">↻ Actualizar</button>
       <button class="btn-secondary" onclick="printTodayReport()">⎙ Imprimir reporte</button>
       <button class="btn-accent" onclick="registerTodayPackage()">+ Registrar paquete</button>
     </div>
@@ -1985,13 +1988,13 @@ function leagueBtnHTML(sp, on, onclick, nameOverride) {
 const TODAY_LEAGUE_OPTS = [
   ['soccer/ecu.1','LigaPro'], ['soccer/eng.1','Premier'], ['soccer/esp.1','LaLiga'],
   ['soccer/ita.1','Serie A'], ['soccer/ger.1','Bundesliga'], ['soccer/conmebol.libertadores','Libertadores'],
-  ['soccer/conmebol.sudamericana','Sudamericana'], ['soccer/fifa.world','Mundial FIFA'], ['basketball/nba','NBA'], ['baseball/mlb','MLB']];
+  ['soccer/conmebol.sudamericana','Sudamericana'], ['basketball/nba','NBA'], ['baseball/mlb','MLB']];
 function getTodayBank() { const v = parseFloat(localStorage.getItem('quantDailyBank')); return (v>0)?v:100; }
 function getTodayFloor() { const v = parseFloat(localStorage.getItem('quantTodayFloor')); return (v>=0.5 && v<=0.95) ? v : 0.60; }
 function setTodayFloor(v) { const n=parseFloat(v); if (n>=0.5) lsSet('quantTodayFloor', String(n)); renderTodayPicks(); }
 function setTodayBank(v) { const n=parseFloat(v); if (n>0) lsSet('quantDailyBank', String(n)); renderTodayPicks(); }
 function getTodayLeagues() {
-  try { const a = JSON.parse(localStorage.getItem('quantTodayLeagues')||'null'); if (Array.isArray(a)&&a.length) return a; } catch(e){}
+  try { const a = JSON.parse(localStorage.getItem('quantTodayLeagues')||'null'); if (Array.isArray(a)&&a.length) { const f=a.filter(sp=>sp!=='soccer/fifa.world'); if (f.length) return f; } } catch(e){}
   return ['soccer/ecu.1','soccer/eng.1','soccer/conmebol.libertadores'];
 }
 function toggleTodayLeague(sp) {
@@ -2013,12 +2016,41 @@ function setTodayOffset(n, btn){ state.todayOffset = n; if(btn){ btn.parentEleme
 function setTodayMode(m, btn){ state.todayMode = m; localStorage.setItem('sharpTodayMode', m); syncModeSeg(); renderTodayPicks(); }
 function syncModeSeg(){ const a=document.getElementById('mode-btn-preciso'), b=document.getElementById('mode-btn-volumen'); if(a&&b){ a.classList.toggle('on', state.todayMode!=='volumen'); b.classList.toggle('on', state.todayMode==='volumen'); } }
 function todayDateLabel(){ const d=new Date(); d.setDate(d.getDate()+state.todayOffset); return d.toLocaleDateString('es-EC',{weekday:'long',day:'numeric',month:'long'}); }
+
+// ---- Cuotas desde la pestaña Hoy: carga por ligas seleccionadas + indicador de frescura ----
+async function loadTodayOdds(){
+  const btn=document.getElementById('today-odds-btn');
+  const sels=[...new Set(getTodayLeagues().map(sp=>ODDS_SPORT_MAP[sp]?sp:null).filter(Boolean))];
+  if(!sels.length){ toast('Tus ligas seleccionadas no tienen mercado de cuotas','err'); return; }
+  if(!state.oddsKey){ toast('Configura tu API key de The Odds API en Herramientas','err'); return; }
+  if(btn){ btn.disabled=true; btn.textContent='↓ Cargando…'; }
+  let okn=0,total=0,fail=0;
+  for(const sp of sels){ try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n;} else fail++; }catch(e){ fail++; } }
+  if(btn){ btn.disabled=false; btn.textContent='↓ Cargar cuotas'; }
+  toast(`Cuotas: ${total} partido(s) en ${okn} liga(s)`+(fail?` · ${fail} sin datos`:''), okn?'ok':'err');
+  renderTodayOddsFresh();
+  loadToday();
+}
+function renderTodayOddsFresh(){
+  const el=document.getElementById('today-odds-fresh'); if(!el) return;
+  const sks=[...new Set(getTodayLeagues().map(sp=>ODDS_SPORT_MAP[sp]).filter(Boolean))];
+  if(!sks.length){ el.textContent=''; return; }
+  const ages=sks.map(sk=>{ const c=getCachedOdds(sk); return (c&&c.ts)?(Date.now()-c.ts)/60000:null; });
+  const missing=ages.filter(a=>a==null).length;
+  const loaded=ages.filter(a=>a!=null);
+  if(!loaded.length){ el.textContent='cuotas: sin cargar'; el.className='odds-fresh warn'; return; }
+  const worst=Math.max.apply(null,loaded);
+  const t = worst<1?'recién cargadas':(worst<60?`hace ${Math.round(worst)} min`:`hace ${(worst/60).toFixed(1)} h`);
+  el.textContent=`cuotas: ${t}`+(missing?` · ${missing} liga(s) sin cargar`:'');
+  el.className='odds-fresh'+((worst>60||missing)?' warn':'');
+}
 let __todayGen = 0;
 function todayErrMsg(stage, e){ const det = (e && e.message) ? ` (${String(e.message).slice(0,120)})` : ''; return `<div class="state-msg">No se pudo terminar ${stage}${det}. Pulsa <strong>↻ Actualizar</strong> para reintentar.</div>`; }
 async function loadToday() {
   const gen = ++__todayGen;                    // el último clic gana; corridas viejas se descartan
   const c = document.getElementById('today-content');
   syncModeSeg();
+  try { renderTodayOddsFresh(); } catch(e){}
   c.innerHTML = `<div class="small-note" style="margin-bottom:10px;">Cargando partidos (${todayDateLabel()})…</div>` + '<div class="skel-row"></div>'.repeat(4);
   const d = new Date(); d.setDate(d.getDate()+state.todayOffset); const ds = fmtDateESPN(d);
   const leagues = getTodayLeagues();
@@ -2324,6 +2356,7 @@ function renderTodayPicks() {
     </div>`;
   });
   c.innerHTML = html;
+  try { renderTodayOddsFresh(); } catch(e){}
   if (window.__animateToday) { animateCountsIn(c); window.__animateToday = false; }
 }
 function printTodayReport() {
@@ -4607,7 +4640,7 @@ function renderThemeControls() {
   document.querySelectorAll('#theme-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===th));
   document.querySelectorAll('#anim-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.anim===an));
 }
-const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','soccer/fifa.world','basketball/nba','baseball/mlb'];
+const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb'];
 function renderToolsOddsLeagues() {
   const c = document.getElementById('tools-odds-leagues'); if (!c) return;
   state.toolsOddsSel = state.toolsOddsSel || new Set();
@@ -5922,7 +5955,7 @@ state.activePreset = localStorage.getItem('quantActivePreset') || 'adaptativo';
 if (state.activePreset === 'adaptativo') state.weights = getAdaptiveWeights();
 
 // ---------- EN VIVO (multideporte) ----------
-const LIVE_LEAGUES = ['soccer/fifa.world','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/ecu.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb','football/nfl'];
+const LIVE_LEAGUES = ['soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/ecu.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb','football/nfl'];
 let _liveTabBusy=false, __liveTabTimer=null, __liveSig='', __liveActiveLg=null, __liveFullTs=0;
 async function fetchSummary(sport, id){
   const k = sport+'|'+id; state.summaryCache = state.summaryCache || {};
