@@ -953,6 +953,17 @@
   .seg-mini button + button { border-left:1px solid var(--border); }
   .seg-mini button.on { background:var(--c-salvia); color:#fff; }
   .tr-intel { font-size:10.5px; color:var(--text-3); margin-top:4px; font-family:var(--font-mono); }
+  .quota-wrap { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .q-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .q-head span { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); }
+  .q-num { font-family:var(--font-mono); font-size:30px; font-weight:800; color:var(--text-1); line-height:1; }
+  .q-num span { display:block; font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--text-3); margin-top:5px; }
+  .q-num.warn { color:var(--c-coral); } .q-num.crit { color:var(--c-granate); }
+  .q-bar { height:6px; border-radius:999px; background:#e1e7ef; overflow:hidden; margin:10px 0; }
+  .q-bar i { display:block; height:100%; background:#2e7d52; }
+  .q-bar i.warn { background:var(--c-coral); } .q-bar i.crit { background:var(--c-granate); }
+  .q-line { font-size:12px; color:var(--text-2); margin-top:6px; }
+  .q-line.crit { color:var(--c-granate); font-weight:600; }
   .odds-fresh { font-family:var(--font-mono); font-size:10.5px; color:var(--text-3); align-self:center; }
   .odds-fresh.warn { color:var(--c-coral); font-weight:700; }
   .clv-chip, .mv-chip { font-family:var(--font-mono); font-size:10px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap; }
@@ -1228,6 +1239,14 @@
       <input type="text" id="tools-odds-key" placeholder="tu API key" />
       <div style="margin-top:10px;display:flex;gap:8px;"><button class="btn-primary" onclick="saveOddsKey('tools-odds-key')">Guardar y activar</button><button class="btn-secondary" onclick="clearOddsKey('tools-odds-key')">Limpiar</button></div>
       <div id="tools-odds-status" style="margin-top:14px;font-family:var(--font-mono);font-size:11px;color:var(--text-3);"></div>
+      <div class="quota-wrap">
+        <div class="q-head"><span>Cupo de la API</span><button class="btn-secondary" id="odds-quota-btn" onclick="checkOddsQuota()">Revisar cupo (gratis)</button></div>
+        <div id="odds-quota-box"></div>
+        <p style="font-size:12px;color:var(--text-2);margin:12px 0 6px;">Coste por carga = 3 mercados × regiones. El plan gratis da 500 créditos al mes. Menos regiones = menos casas para comparar, pero el cupo dura mucho más:</p>
+        <div class="seg-mini" id="odds-region-seg">
+          <button data-rg="us,eu,uk" onclick="setOddsRegions('us,eu,uk')">Máximo · 9</button><button data-rg="eu,us" onclick="setOddsRegions('eu,us')">Medio · 6</button><button data-rg="eu" onclick="setOddsRegions('eu')">Ahorro · 3</button>
+        </div>
+      </div>
     </div>
     <div class="api-key-form">
       <div class="block-title">Apuesta base (×1) <span class="muted" style="text-transform:none;letter-spacing:0;">(tu unidad de stake)</span></div>
@@ -1259,7 +1278,7 @@
       <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Trae las cuotas de mercado de toda una liga de una sola vez, aunque no haya partidos esta semana. Quedan guardadas y disponibles para el paquete de Hoy, el cronograma y el arbitraje.</p>
       <p style="font-size:12.5px;color:var(--text-3);margin-bottom:8px;">Toca una liga para cargar sus cuotas:</p>
       <div class="lg-grid" id="tools-odds-leagues"></div>
-      <div id="tools-odds-status" style="font-size:12.5px;color:var(--text-3);margin-top:10px;"></div>
+      <div id="tools-src-status" style="font-size:12.5px;color:var(--text-3);margin-top:10px;"></div>
     </div>
     <div class="api-key-form">
       <div class="block-title">Sincronización entre dispositivos</div>
@@ -2024,10 +2043,11 @@ async function loadTodayOdds(){
   if(!sels.length){ toast('Tus ligas seleccionadas no tienen mercado de cuotas','err'); return; }
   if(!state.oddsKey){ toast('Configura tu API key de The Odds API en Herramientas','err'); return; }
   if(btn){ btn.disabled=true; btn.textContent='↓ Cargando…'; }
-  let okn=0,total=0,fail=0;
-  for(const sp of sels){ try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n;} else fail++; }catch(e){ fail++; } }
+  let okn=0,total=0,fail=0,lastErr=null;
+  for(const sp of sels){ try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n;} else fail++; }catch(e){ fail++; lastErr=e; } }
   if(btn){ btn.disabled=false; btn.textContent='↓ Cargar cuotas'; }
-  toast(`Cuotas: ${total} partido(s) en ${okn} liga(s)`+(fail?` · ${fail} sin datos`:''), okn?'ok':'err');
+  if(!okn && lastErr) toast('No se cargaron cuotas: '+String(lastErr.message||lastErr).slice(0,110),'err');
+  else toast(`Cuotas: ${total} partido(s) en ${okn} liga(s)`+(fail?` · ${fail} sin datos`:''), okn?'ok':'err');
   renderTodayOddsFresh();
   loadToday();
 }
@@ -2041,8 +2061,9 @@ function renderTodayOddsFresh(){
   if(!loaded.length){ el.textContent='cuotas: sin cargar'; el.className='odds-fresh warn'; return; }
   const worst=Math.max.apply(null,loaded);
   const t = worst<1?'recién cargadas':(worst<60?`hace ${Math.round(worst)} min`:`hace ${(worst/60).toFixed(1)} h`);
-  el.textContent=`cuotas: ${t}`+(missing?` · ${missing} liga(s) sin cargar`:'');
-  el.className='odds-fresh'+((worst>60||missing)?' warn':'');
+  const q=quotaTextShort();
+  el.textContent=`cuotas: ${t}`+(missing?` · ${missing} sin cargar`:'')+(q?` · ${q}`:'');
+  el.className='odds-fresh'+((worst>60||missing||(state.oddsQuota&&state.oddsQuota.rem!=null&&state.oddsQuota.rem<oddsCallCost()))?' warn':'');
 }
 let __todayGen = 0;
 function todayErrMsg(stage, e){ const det = (e && e.message) ? ` (${String(e.message).slice(0,120)})` : ''; return `<div class="state-msg">No se pudo terminar ${stage}${det}. Pulsa <strong>↻ Actualizar</strong> para reintentar.</div>`; }
@@ -3958,12 +3979,91 @@ function resetWeights(){state.weights={form:25,strength:25,h2h:15,homeAway:10,co
 
 // ---------- ODDS PANEL: SHARED FETCH ----------
 // Carga (y cachea) las cuotas de UNA liga sin necesidad de abrir un partido.
-async function loadOddsForSport(sp) {
+
+// ---------- Cupo de The Odds API: cost = mercados × regiones (plan gratis: 500 créditos/mes) ----------
+const ODDS_REGION_PRESETS = { max:'us,eu,uk', medio:'eu,us', ahorro:'eu' };
+function getOddsRegions(){ const v=localStorage.getItem('quantOddsRegions'); return (v && /^[a-z,]+$/.test(v)) ? v : 'us,eu,uk'; }
+function setOddsRegions(v){ lsSet('quantOddsRegions', v); renderOddsQuota(); toast(`Regiones: ${v} · ${oddsCallCost()} créditos por liga`,'ok'); }
+function oddsCallCost(){ return 3 * getOddsRegions().split(',').filter(Boolean).length; } // 3 mercados: h2h, totals, spreads
+function oddsUrlFor(sk){ return `https://api.the-odds-api.com/v4/sports/${sk}/odds/?apiKey=${state.oddsKey}&regions=${getOddsRegions()}&markets=h2h,totals,spreads&oddsFormat=decimal`; }
+function readQuotaHeaders(r){
+  try{
+    const rem=r.headers && r.headers.get('x-requests-remaining');
+    const used=r.headers && r.headers.get('x-requests-used');
+    const last=r.headers && r.headers.get('x-requests-last');
+    if(rem==null && used==null) return;                       // cabeceras ocultas por CORS
+    state.oddsQuota = { rem: rem!=null?+rem:null, used: used!=null?+used:null, last: last!=null?+last:null, ts: Date.now() };
+    try{ lsSet('quantOddsQuota', JSON.stringify(state.oddsQuota)); }catch(e){}
+    renderOddsQuota();
+  }catch(e){}
+}
+function loadQuotaFromStorage(){ try{ const q=JSON.parse(localStorage.getItem('quantOddsQuota')||'null'); if(q) state.oddsQuota=q; }catch(e){} }
+function quotaTextShort(){
+  const q=state.oddsQuota;
+  if(!q || q.rem==null) return null;
+  return `${q.rem} créd.`;
+}
+function initQuotaUI(){ loadQuotaFromStorage(); renderOddsQuota(); }
+function renderOddsQuota(){
+  const q=state.oddsQuota;
+  const cost=oddsCallCost();
+  const el=document.getElementById('odds-quota-box');
+  if(el){
+    let body;
+    if(!q || q.rem==null){
+      body=`<div class="q-line">Sin datos de cupo todavía. Pulsa <strong>Revisar cupo</strong> (es gratis, no gasta créditos).</div>`;
+    } else {
+      const pct=Math.max(0,Math.min(100, q.rem/500*100));
+      const lvl = q.rem<=0?'crit':(q.rem<cost?'crit':(q.rem<60?'warn':'ok'));
+      const when=q.ts?fmtAge((Date.now()-q.ts)/60000):'';
+      body=`<div class="q-num ${lvl}">${q.rem}<span>créditos restantes</span></div>
+        <div class="q-bar"><i class="${lvl}" style="width:${pct.toFixed(1)}%"></i></div>
+        <div class="q-line">Usados este ciclo: <strong>${q.used!=null?q.used:'—'}</strong>${q.last!=null?` · última llamada: ${q.last}`:''} · leído ${when}</div>
+        ${q.rem<=0?`<div class="q-line crit">Cupo agotado: la API responde con error hasta que se reinicie tu ciclo mensual. Opciones: esperar al reinicio, usar otra key, o pasar a un plan de pago.</div>`:''}
+        ${q.rem>0&&q.rem<cost?`<div class="q-line crit">No alcanza ni para una carga (${cost} créditos). Cambia a modo Ahorro abajo.</div>`:''}`;
+    }
+    el.innerHTML = body + `<div class="q-line">Coste actual: <strong>${cost} créditos por liga</strong> (3 mercados × ${getOddsRegions().split(',').length} regiones)${q&&q.rem!=null?` → te quedan ~${Math.floor(q.rem/cost)} cargas de liga`:''}.</div>`;
+  }
+  const seg=document.getElementById('odds-region-seg');
+  if(seg){ const cur=getOddsRegions();
+    seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.rg===cur)); }
+  try{ renderTodayOddsFresh(); }catch(e){}
+}
+// Chequeo gratuito: /v4/sports NO consume cupo y devuelve las cabeceras
+async function checkOddsQuota(){
+  const btn=document.getElementById('odds-quota-btn');
+  const box=document.getElementById('odds-quota-box');
+  if(!state.oddsKey){ toast('Primero guarda tu API key','err'); return; }
+  if(btn){ btn.disabled=true; btn.textContent='Revisando…'; }
+  try{
+    const r=await fetchT(`https://api.the-odds-api.com/v4/sports/?apiKey=${state.oddsKey}`, 12000);
+    readQuotaHeaders(r);
+    if(r.status===401){ if(box) box.innerHTML=`<div class="q-line crit">Clave rechazada (401). Suele ser key inválida o cupo agotado. Verifica tu key en the-odds-api.com.</div>`; toast('API key rechazada (401)','err'); return; }
+    if(r.status===429){ if(box) box.innerHTML=`<div class="q-line crit">Cupo agotado o demasiadas peticiones (429). Espera al reinicio de tu ciclo mensual o espacia las cargas.</div>`; toast('Cupo agotado (429)','err'); return; }
+    if(!r.ok){ toast(`Respuesta HTTP ${r.status}`,'err'); return; }
+    const q=state.oddsQuota;
+    if(!q || q.rem==null){ if(box) box.innerHTML=`<div class="q-line">La clave funciona, pero el navegador no expone las cabeceras de cupo. Revisa tu consumo en the-odds-api.com.</div>`; toast('Clave OK (cupo no visible)','ok'); }
+    else toast(`Clave OK · ${q.rem} créditos restantes`, q.rem>0?'ok':'err');
+  }catch(e){
+    if(box) box.innerHTML=`<div class="q-line crit">No hubo respuesta de la API (red o bloqueo del navegador): ${String(e.message||e).slice(0,90)}</div>`;
+    toast('Sin respuesta de la API','err');
+  } finally { if(btn){ btn.disabled=false; btn.textContent='Revisar cupo (gratis)'; } }
+}
+async function loadOddsForSport(sp, opts) {
   if (!state.oddsKey) { toast('Primero configura tu API key en Herramientas', 'err'); return null; }
   const sk = ODDS_SPORT_MAP[sp]; if (!sk) { toast('Esa liga no tiene cuotas disponibles', 'err'); return null; }
-  const url = `https://api.the-odds-api.com/v4/sports/${sk}/odds/?apiKey=${state.oddsKey}&regions=us,eu,uk&markets=h2h,totals,spreads&oddsFormat=decimal`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,150)}`);
+  // Ahorro de cupo: si la caché es fresca (<12 min) no se vuelve a pagar la llamada
+  const cached = getCachedOdds(sk);
+  if (!(opts&&opts.force) && cached && cached.ts && (Date.now()-cached.ts < 12*60000)) {
+    if (ODDS_SPORT_MAP[state.sport] === sk) state.oddsData = cached.data;
+    return Array.isArray(cached.data) ? cached.data.length : 0;
+  }
+  const r = await fetchT(oddsUrlFor(sk), 15000);
+  readQuotaHeaders(r);
+  if (r.status===401) throw new Error('clave rechazada (401): API key inválida o cupo agotado');
+  if (r.status===429) throw new Error('cupo agotado o demasiadas peticiones (429)');
+  if (r.status===422) throw new Error('parámetros no válidos (422)');
+  if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,120)}`);
   const data = await r.json();
   saveOddsToCache(sk, data);
   saveOddsSnapshot(data);
@@ -3990,12 +4090,12 @@ async function fetchOddsForCurrentSport() {
   if (!state.oddsKey) return null;
   const sk = ODDS_SPORT_MAP[state.sport]; if (!sk) return null;
   try {
-    // 3 mercados (h2h + totals + spreads) × 3 regiones = ~9 credits por fetch.
-    // Es la mejor relación costo/utilidad: una llamada cubre TODA la liga con los 3 mercados
-    // principales, y queda en caché para todos los partidos.
-    const url = `https://api.the-odds-api.com/v4/sports/${sk}/odds/?apiKey=${state.oddsKey}&regions=us,eu,uk&markets=h2h,totals,spreads&oddsFormat=decimal`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,150)}`);
+    // coste = 3 mercados (h2h+totals+spreads) × nº de regiones configuradas. Una llamada cubre TODA la liga.
+    const r = await fetchT(oddsUrlFor(sk), 15000);
+    readQuotaHeaders(r);
+    if (r.status===401) throw new Error('clave rechazada (401): API key inválida o cupo agotado');
+    if (r.status===429) throw new Error('cupo agotado o demasiadas peticiones (429)');
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.text()).slice(0,120)}`);
     return await r.json();
   } catch (e) { throw e; }
 }
@@ -4598,6 +4698,7 @@ function syncOddsKeyInputs() {
   const detInput = document.getElementById('det-odds-key');
   if (toolsInput) toolsInput.value = state.oddsKey;
   if (detInput) detInput.value = state.oddsKey;
+  try { initQuotaUI(); } catch(e){}
   const status = document.getElementById('tools-odds-status');
   if (status) status.textContent = state.oddsKey
     ? `Estado: API key configurada (${state.oddsKey.slice(0,4)}...${state.oddsKey.slice(-4)}).`
