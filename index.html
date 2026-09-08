@@ -953,6 +953,25 @@
   .seg-mini button + button { border-left:1px solid var(--border); }
   .seg-mini button.on { background:var(--c-salvia); color:#fff; }
   .tr-intel { font-size:10.5px; color:var(--text-3); margin-top:4px; font-family:var(--font-mono); }
+  .olg { display:flex; flex-direction:column; gap:6px; }
+  .olg-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border); border-radius:9px; background:var(--surface); }
+  .olg-dot { width:9px; height:9px; border-radius:50%; background:#c9d2dc; flex-shrink:0; }
+  .olg-row.ok .olg-dot { background:#2e7d52; } .olg-row.old .olg-dot { background:var(--c-coral); }
+  .olg-row.nocov .olg-dot { background:var(--c-granate); } .olg-row.empty .olg-dot { background:var(--c-coral); }
+  .olg-nm { display:flex; align-items:center; gap:7px; font-weight:700; font-size:13px; min-width:150px; }
+  .olg-st { font-family:var(--font-mono); font-size:11px; color:var(--text-3); flex:1; }
+  .olg-b { padding:5px 12px !important; font-size:11px !important; }
+  .olg-note { font-size:11.5px; color:var(--c-granate); padding:2px 12px 6px 31px; }
+  .dg-sum { background:#eef2f7; border-radius:9px; padding:11px 13px; font-size:13px; color:var(--text-2); margin-bottom:10px; }
+  .dg-row { display:flex; align-items:center; gap:10px; padding:8px 11px; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .dg-i { font-weight:800; width:14px; }
+  .dg-row.good .dg-i { color:#2e7d52; } .dg-row.bad .dg-i { color:var(--c-granate); } .dg-row.warn .dg-i { color:var(--c-coral); }
+  .dg-nm { font-weight:700; min-width:190px; } .dg-nm em { display:block; font-style:normal; font-size:10px; color:var(--text-3); font-weight:600; }
+  .dg-w { color:var(--text-3); font-size:12px; }
+  .mo-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:10px; }
+  .mo-l { display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--text-3); font-weight:700; margin-top:10px; }
+  .mo-l input, .mo-l select { padding:9px 11px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:13px; background:var(--surface); color:var(--text-1); }
+  @media(max-width:600px){ .dg-nm{min-width:120px;} .olg-nm{min-width:110px;} }
   .quota-wrap { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
   .q-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
   .q-head span { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--text-3); }
@@ -1059,6 +1078,19 @@
           <option value="soccer/uefa.europa">Europa League</option>
           <option value="soccer/conmebol.libertadores">Libertadores</option>
           <option value="soccer/conmebol.sudamericana">Copa Sudamericana</option>
+          <option value="soccer/uefa.europa.conf">Conference League</option>
+          <option value="soccer/eng.2">Championship</option>
+          <option value="soccer/ned.1">Eredivisie</option>
+          <option value="soccer/por.1">Primeira Liga</option>
+          <option value="soccer/bel.1">Bélgica Pro League</option>
+          <option value="soccer/tur.1">Süper Lig</option>
+          <option value="soccer/sco.1">Escocia Premiership</option>
+          <option value="soccer/usa.1">MLS</option>
+          <option value="soccer/mex.1">Liga MX</option>
+          <option value="soccer/bra.1">Brasileirão</option>
+          <option value="soccer/arg.1">Liga Argentina</option>
+          <option value="soccer/chi.1">Chile Primera</option>
+          <option value="soccer/ksa.1">Saudi Pro League</option>
         </optgroup>
         <optgroup label="BÁSQUET"><option value="basketball/nba">NBA</option></optgroup>
         <optgroup label="BÉISBOL"><option value="baseball/mlb">MLB</option></optgroup>
@@ -1082,6 +1114,7 @@
     <button class="tab tab-live" data-tab="live"><span class="nav-live-dot"></span>En vivo</button>
     <button class="tab" data-tab="schedule">Cronograma</button>
     <button class="tab" data-tab="arb">Arbitraje</button>
+    <button class="tab" data-tab="odds">Cuotas</button>
     <button class="tab" data-tab="tracker">Mis Apuestas</button>
     <button class="tab" data-tab="tools">Herramientas</button>
   </div>
@@ -1202,6 +1235,34 @@
   </section>
 
   <!-- HERRAMIENTAS -->
+  <section class="panel" id="panel-odds">
+    <h1 class="section-title">Cuotas</h1>
+    <p class="section-sub">Carga las cuotas, comprueba que llegaron bien y, si la API no cubre una liga, mételas a mano.</p>
+    <div class="api-key-form">
+      <div class="q-head"><span>Cupo de la API</span><button class="btn-secondary" id="odds-quota-btn2" onclick="checkOddsQuota()">Revisar cupo (gratis)</button></div>
+      <div id="odds-quota-box2"></div>
+    </div>
+    <div class="api-key-form">
+      <div class="block-title">1 · Ligas y estado de sus cuotas</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Verde = cuotas cargadas y frescas. Ámbar = viejas, conviene recargar. Gris = sin cargar. Rojo = la API no cubre esa liga (usa la carga manual de abajo).</p>
+      <div id="odds-league-grid" class="olg"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="loadAllTodayOdds()">↓ Cargar las ligas de mi paquete</button>
+        <button class="btn-secondary" onclick="renderOddsTab()">↻ Refrescar estado</button>
+      </div>
+    </div>
+    <div class="api-key-form">
+      <div class="block-title">2 · Diagnóstico: ¿por qué no hay apuestas?</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Revisa partido por partido si el problema son las cuotas o si el modelo los descartó por no tener valor.</p>
+      <button class="btn-secondary" onclick="runOddsDiagnostic()">Analizar partidos de hoy</button>
+      <div id="odds-diag" style="margin-top:12px;"></div>
+    </div>
+    <div class="api-key-form">
+      <div class="block-title">3 · Cuotas manuales</div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Para ligas que la API no cubre (LigaPro) o partidos sin cuotas. Copia las cuotas decimales de tu casa de apuestas. El modelo las usa igual que las automáticas.</p>
+      <div id="manual-odds-form"></div>
+    </div>
+  </section>
   <section class="panel" id="panel-tools">
     <h1 class="section-title">Herramientas</h1>
     <p class="section-sub">Configuración de la app: tu clave de The Odds API y la sincronización entre dispositivos.</p>
@@ -1377,8 +1438,18 @@ const ODDS_SPORT_MAP = {
   'soccer/conmebol.libertadores': 'soccer_conmebol_copa_libertadores',
   'soccer/conmebol.sudamericana': 'soccer_conmebol_copa_sudamericana',
   'soccer/fifa.world': 'soccer_fifa_world_cup',
-  'basketball/nba': 'basketball_nba', 'baseball/mlb': 'baseball_mlb', 'football/nfl': 'americanfootball_nfl'
+  'basketball/nba': 'basketball_nba', 'baseball/mlb': 'baseball_mlb', 'football/nfl': 'americanfootball_nfl',
+  // Ligas añadidas (cobertura verificada en la lista oficial de The Odds API)
+  'soccer/eng.2': 'soccer_efl_champ', 'soccer/ned.1': 'soccer_netherlands_eredivisie',
+  'soccer/por.1': 'soccer_portugal_primeira_liga', 'soccer/bel.1': 'soccer_belgium_first_div',
+  'soccer/tur.1': 'soccer_turkey_super_league', 'soccer/sco.1': 'soccer_spl',
+  'soccer/usa.1': 'soccer_usa_mls', 'soccer/mex.1': 'soccer_mexico_ligamx',
+  'soccer/bra.1': 'soccer_brazil_campeonato', 'soccer/arg.1': 'soccer_argentina_primera_division',
+  'soccer/chi.1': 'soccer_chile_campeonato', 'soccer/ksa.1': 'soccer_saudi_arabia_pro_league',
+  'soccer/uefa.europa.conf': 'soccer_uefa_europa_conference_league'
 };
+// Ligas SIN cobertura de cuotas en The Odds API (se avisa en la pestaña Cuotas en vez de fallar en silencio)
+const NO_ODDS_LEAGUES = { 'soccer/ecu.1': 'The Odds API no cubre la LigaPro de Ecuador. Carga sus cuotas a mano abajo.' };
 
 // ---------- DATE UTILS ----------
 function getWeekRange(o = 0) {
@@ -1957,13 +2028,32 @@ const LEAGUE_META = {
   'soccer/conmebol.libertadores': { name:'Libertadores', logo:null, color:'#1a7a3c', abbr:'LIB' },
   'soccer/conmebol.sudamericana': { name:'Sudamericana', logo:null, color:'#d4322c', abbr:'SUD' },
   'soccer/fifa.world': { name:'Mundial', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/4.png', color:'#c8102e', abbr:'FIFA' },
+  'soccer/eng.2': { name:'Championship', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/24.png', color:'#1b458f', abbr:'EFL' },
+  'soccer/ned.1': { name:'Eredivisie', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/11.png', color:'#e2654a', abbr:'NED' },
+  'soccer/por.1': { name:'Primeira Liga', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/14.png', color:'#046a38', abbr:'POR' },
+  'soccer/bel.1': { name:'Bélgica Pro', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/6.png', color:'#c8102e', abbr:'BEL' },
+  'soccer/tur.1': { name:'Süper Lig', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/18.png', color:'#e30a17', abbr:'TUR' },
+  'soccer/sco.1': { name:'Escocia', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/45.png', color:'#005eb8', abbr:'SCO' },
+  'soccer/usa.1': { name:'MLS', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/19.png', color:'#1d5a96', abbr:'MLS' },
+  'soccer/mex.1': { name:'Liga MX', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/22.png', color:'#046a38', abbr:'MEX' },
+  'soccer/bra.1': { name:'Brasileirão', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/85.png', color:'#009c3b', abbr:'BRA' },
+  'soccer/arg.1': { name:'Liga Argentina', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/1.png', color:'#75aadb', abbr:'ARG' },
+  'soccer/chi.1': { name:'Chile Primera', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/34.png', color:'#d52b1e', abbr:'CHI' },
+  'soccer/ksa.1': { name:'Saudi Pro', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/2490.png', color:'#006c35', abbr:'KSA' },
+  'soccer/uefa.europa.conf': { name:'Conference', logo:'https://a.espncdn.com/i/leaguelogos/soccer/500/20296.png', color:'#00a94f', abbr:'UECL' },
   'basketball/nba': { name:'NBA', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nba.png', color:'#c9082a', abbr:'NBA' },
   'baseball/mlb': { name:'MLB', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/mlb.png', color:'#041e42', abbr:'MLB' },
   'football/nfl': { name:'NFL', logo:'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png', color:'#013369', abbr:'NFL' }
 };
+function manualOddsKey(sport){ return 'manual_'+String(sport||'x').replace(/[^a-z0-9]/gi,'_'); }
+function oddsCacheKeyFor(sport){ return ODDS_SPORT_MAP[sport] || manualOddsKey(sport); }
 function oddsDataForGame(g){
   if (!g) return null;
-  const sk = ODDS_SPORT_MAP[g.sport]; if (!sk) return null;
+  const sk = ODDS_SPORT_MAP[g.sport];
+  if (!sk) {                                   // liga sin cobertura: usar cuotas manuales si las hay
+    const mc = getCachedOdds(manualOddsKey(g.sport));
+    return (mc && mc.data) ? mc.data : null;
+  }
   // Si el partido es de la liga seleccionada y ya hay cuotas en memoria, úsalas.
   if (ODDS_SPORT_MAP[state.sport] === sk && state.oddsData) return state.oddsData;
   // Cualquier otra liga del paquete: usa SU caché (clave del fix del paquete multi-liga).
@@ -2007,7 +2097,10 @@ function leagueBtnHTML(sp, on, onclick, nameOverride) {
 const TODAY_LEAGUE_OPTS = [
   ['soccer/ecu.1','LigaPro'], ['soccer/eng.1','Premier'], ['soccer/esp.1','LaLiga'],
   ['soccer/ita.1','Serie A'], ['soccer/ger.1','Bundesliga'], ['soccer/conmebol.libertadores','Libertadores'],
-  ['soccer/conmebol.sudamericana','Sudamericana'], ['basketball/nba','NBA'], ['baseball/mlb','MLB']];
+  ['soccer/conmebol.sudamericana','Sudamericana'], ['soccer/eng.2','Championship'], ['soccer/ned.1','Eredivisie'],
+  ['soccer/por.1','Primeira'], ['soccer/bel.1','Bélgica'], ['soccer/tur.1','Süper Lig'], ['soccer/usa.1','MLS'],
+  ['soccer/mex.1','Liga MX'], ['soccer/bra.1','Brasileirão'], ['soccer/arg.1','Argentina'],
+  ['soccer/uefa.europa.conf','Conference'], ['basketball/nba','NBA'], ['baseball/mlb','MLB'], ['football/nfl','NFL']];
 function getTodayBank() { const v = parseFloat(localStorage.getItem('quantDailyBank')); return (v>0)?v:100; }
 function getTodayFloor() { const v = parseFloat(localStorage.getItem('quantTodayFloor')); return (v>=0.5 && v<=0.95) ? v : 0.60; }
 function setTodayFloor(v) { const n=parseFloat(v); if (n>=0.5) lsSet('quantTodayFloor', String(n)); renderTodayPicks(); }
@@ -4007,7 +4100,8 @@ function initQuotaUI(){ loadQuotaFromStorage(); renderOddsQuota(); }
 function renderOddsQuota(){
   const q=state.oddsQuota;
   const cost=oddsCallCost();
-  const el=document.getElementById('odds-quota-box');
+  ['odds-quota-box','odds-quota-box2'].forEach(function(_id){
+  const el=document.getElementById(_id);
   if(el){
     let body;
     if(!q || q.rem==null){
@@ -4024,6 +4118,7 @@ function renderOddsQuota(){
     }
     el.innerHTML = body + `<div class="q-line">Coste actual: <strong>${cost} créditos por liga</strong> (3 mercados × ${getOddsRegions().split(',').length} regiones)${q&&q.rem!=null?` → te quedan ~${Math.floor(q.rem/cost)} cargas de liga`:''}.</div>`;
   }
+  });
   const seg=document.getElementById('odds-region-seg');
   if(seg){ const cur=getOddsRegions();
     seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.dataset.rg===cur)); }
@@ -4048,6 +4143,175 @@ async function checkOddsQuota(){
     if(box) box.innerHTML=`<div class="q-line crit">No hubo respuesta de la API (red o bloqueo del navegador): ${String(e.message||e).slice(0,90)}</div>`;
     toast('Sin respuesta de la API','err');
   } finally { if(btn){ btn.disabled=false; btn.textContent='Revisar cupo (gratis)'; } }
+}
+
+// ---------- PESTAÑA CUOTAS: estado, diagnóstico y carga manual ----------
+function oddsLeagueUniverse(){
+  const set=new Set([...getTodayLeagues(), ...TOOLS_ODDS_OPTS, ...Object.keys(NO_ODDS_LEAGUES)]);
+  return [...set];
+}
+function leagueOddsState(sp){
+  const meta=LEAGUE_META[sp]||{name:sp};
+  const noCov = NO_ODDS_LEAGUES[sp] || (!ODDS_SPORT_MAP[sp] ? 'Esta liga no tiene mercado en The Odds API.' : null);
+  if (noCov) {
+    const mc=getCachedOdds(manualOddsKey(sp));
+    const nm=(mc&&Array.isArray(mc.data))?mc.data.length:0;
+    return { sp, name:meta.name, cls: nm?'ok':'nocov', txt: nm?`${nm} partido(s) con cuota manual`:'sin cobertura', note:noCov, n:nm, manual:nm };
+  }
+  const sk=ODDS_SPORT_MAP[sp];
+  const c=getCachedOdds(sk);
+  if (!c || !c.ts) return { sp, name:meta.name, cls:'none', txt:'sin cargar', n:0, sk };
+  const mins=(Date.now()-c.ts)/60000;
+  const n=Array.isArray(c.data)?c.data.length:0;
+  const manual=(c.data||[]).filter(e=>(e.bookmakers||[]).some(b=>b.key==='manual')).length;
+  return { sp, name:meta.name, cls: n===0?'empty':(mins<60?'ok':'old'), txt: n===0?'sin partidos con cuota':(mins<60?`${n} partidos · ${fmtAge(mins)}`:`${n} partidos · ${fmtAge(mins)}`), n, mins, sk, manual };
+}
+function renderOddsTab(){
+  try{ renderOddsQuota(); }catch(e){}
+  const g=document.getElementById('odds-league-grid');
+  if (g){
+    g.innerHTML = oddsLeagueUniverse().map(sp=>{
+      const st=leagueOddsState(sp);
+      const btn = st.cls==='nocov' ? '' : `<button class="btn-secondary olg-b" onclick="loadOneLeagueOdds('${sp}')">↓ Cargar</button>`;
+      return `<div class="olg-row ${st.cls}">
+        <span class="olg-dot"></span>
+        <span class="olg-nm">${leagueLogoHTML(sp,18)}${st.name}</span>
+        <span class="olg-st">${st.txt}${st.manual?` · ${st.manual} manual`:''}</span>
+        ${btn}
+      </div>${st.note?`<div class="olg-note">${st.note}</div>`:''}`;
+    }).join('');
+  }
+  renderManualOddsForm();
+}
+async function loadOneLeagueOdds(sp){
+  if (NO_ODDS_LEAGUES[sp]) { toast('Esa liga no tiene cuotas en la API: usa la carga manual','err'); return; }
+  try{
+    const n=await loadOddsForSport(sp,{force:true});
+    toast(n!=null?`${LEAGUE_META[sp]?LEAGUE_META[sp].name:sp}: ${n} partido(s) con cuotas`:'Sin datos', n?'ok':'err');
+  }catch(e){ toast('Error: '+String(e.message||e).slice(0,110),'err'); }
+  renderOddsTab();
+}
+async function loadAllTodayOdds(){
+  const sels=getTodayLeagues().filter(sp=>ODDS_SPORT_MAP[sp]);
+  if(!sels.length){ toast('Tus ligas del paquete no tienen cobertura de cuotas','err'); return; }
+  let okn=0,total=0,lastErr=null;
+  for(const sp of sels){ try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n;} }catch(e){ lastErr=e; } }
+  toast(okn?`Cuotas: ${total} partido(s) en ${okn} liga(s)`:('No se cargaron: '+String(lastErr&&lastErr.message||'').slice(0,90)), okn?'ok':'err');
+  renderOddsTab();
+}
+// --- Diagnóstico: separa "sin cuotas" de "el modelo lo descartó" ---
+async function runOddsDiagnostic(){
+  const box=document.getElementById('odds-diag');
+  if(!box) return;
+  box.innerHTML='<div class="state-msg"><span class="loader"></span>Analizando…</div>';
+  try{
+    if(!todayGames.length) await loadToday();
+    if(!todayGames.length){ box.innerHTML='<div class="state-msg">No hay partidos hoy en tus ligas seleccionadas.</div>'; return; }
+    const floor=getTodayFloor();
+    const picks=buildTodayPicks()||[];
+    const withPick=new Set(picks.map(p=>p.g.id));
+    let nOdds=0,nNo=0,nPick=0;
+    const rows=todayGames.map(g=>{
+      const ev=matchOddsEvent(g);
+      const meta=LEAGUE_META[g.sport]||{name:g.sport};
+      const nm=`${g.home.shortName||g.home.name} vs ${g.away.shortName||g.away.name}`;
+      if(!ev){
+        nNo++;
+        const why = NO_ODDS_LEAGUES[g.sport] ? 'la API no cubre esta liga' : (getCachedOdds(ODDS_SPORT_MAP[g.sport]) ? 'cuotas cargadas pero este partido no aparece' : 'no has cargado cuotas de esta liga');
+        return `<div class="dg-row bad"><span class="dg-i">✗</span><span class="dg-nm">${nm}<em>${meta.name}</em></span><span class="dg-w">Sin cuotas — ${why}</span></div>`;
+      }
+      nOdds++;
+      if(withPick.has(g.id)){ nPick++;
+        const p=picks.find(x=>x.g.id===g.id);
+        return `<div class="dg-row good"><span class="dg-i">✓</span><span class="dg-nm">${nm}<em>${meta.name}</em></span><span class="dg-w">Apuesta: ${p.c.pick} @ ${(+p.c.odds).toFixed(2)} · ${(p.c.prob*100).toFixed(0)}%</span></div>`;
+      }
+      // hay cuotas pero no hubo pick: ¿por qué?
+      let bestP=0,bestE=-99,anyEval=false;
+      const mk=(g.opportunity&&g.opportunity.markets)||{};
+      Object.values(mk).forEach(m=>(m.topOptions||[]).forEach(o=>{
+        if(o.mode!=='market'||o.reliable===false||o.displayProb==null) return;
+        anyEval=true;
+        if(o.displayProb>bestP) bestP=o.displayProb;
+        const e=(o.oddsBest>1)?(o.oddsBest*o.displayProb-1)*100:-99;
+        if(e>bestE) bestE=e;
+      }));
+      let why;
+      if(!anyEval) why='cuotas incompletas para evaluar mercados';
+      else if(bestP<floor) why=`mejor probabilidad ${(bestP*100).toFixed(0)}% < tu piso ${(floor*100).toFixed(0)}%`;
+      else if(bestE<0) why=`sin valor: mejor ventaja ${bestE.toFixed(1)}% (cuota no compensa)`;
+      else why='descartado por el reparto (otro partido tenía más valor)';
+      return `<div class="dg-row warn"><span class="dg-i">•</span><span class="dg-nm">${nm}<em>${meta.name}</em></span><span class="dg-w">Con cuotas, sin apuesta — ${why}</span></div>`;
+    }).join('');
+    const verdict = nOdds===0
+      ? '<strong>El problema son las cuotas:</strong> ningún partido tiene cuotas cargadas. Carga las ligas arriba o mete cuotas a mano.'
+      : (nPick===0
+        ? `<strong>El problema es el filtro, no las cuotas:</strong> ${nOdds} partido(s) sí tienen cuotas pero ninguno pasó tu piso de ${(floor*100).toFixed(0)}%. Baja la prob. mínima en Hoy o prueba el modo Volumen.`
+        : `${nPick} apuesta(s) encontradas · ${nOdds} partido(s) con cuotas · ${nNo} sin cuotas.`);
+    box.innerHTML = `<div class="dg-sum">${verdict}</div>${rows}`;
+  }catch(e){ box.innerHTML=`<div class="state-msg">No se pudo analizar (${String(e.message||e).slice(0,90)}).</div>`; }
+}
+// --- Carga manual de cuotas ---
+function renderManualOddsForm(){
+  const c=document.getElementById('manual-odds-form'); if(!c) return;
+  const games=(todayGames&&todayGames.length)?todayGames:(state.games||[]);
+  if(!games.length){ c.innerHTML='<div class="state-msg">Primero carga partidos en Hoy o en Cronograma para poder elegir uno.</div>'; return; }
+  const isSoccer=g=>String(g.sport||'').startsWith('soccer');
+  const opts=games.map((g,i)=>`<option value="${i}">${(LEAGUE_META[g.sport]||{name:''}).name} · ${g.home.shortName||g.home.name} vs ${g.away.shortName||g.away.name}</option>`).join('');
+  const g0=games[0];
+  c.innerHTML=`
+    <label class="mo-l">Partido<select id="mo-game" onchange="renderManualOddsForm2()">${opts}</select></label>
+    <label class="mo-l">Casa de apuestas<input type="text" id="mo-book" placeholder="ej. Ecuabet, 1xBet" value="Manual"/></label>
+    <div id="mo-fields"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;"><button class="btn-primary" onclick="saveManualOdds()">Guardar cuotas</button></div>
+    <div id="mo-status" style="margin-top:10px;font-size:12px;color:var(--text-3);"></div>`;
+  renderManualOddsForm2();
+}
+function renderManualOddsForm2(){
+  const games=(todayGames&&todayGames.length)?todayGames:(state.games||[]);
+  const sel=document.getElementById('mo-game'); const g=games[sel?+sel.value:0]; if(!g) return;
+  const soccer=String(g.sport||'').startsWith('soccer');
+  const fx=document.getElementById('mo-fields'); if(!fx) return;
+  fx.innerHTML=`
+    <div class="mo-grid">
+      <label class="mo-l">${g.home.shortName||g.home.name} gana<input type="number" step="0.01" id="mo-h" placeholder="2.10"/></label>
+      ${soccer?`<label class="mo-l">Empate<input type="number" step="0.01" id="mo-d" placeholder="3.20"/></label>`:''}
+      <label class="mo-l">${g.away.shortName||g.away.name} gana<input type="number" step="0.01" id="mo-a" placeholder="3.40"/></label>
+    </div>
+    <div class="mo-grid">
+      <label class="mo-l">Línea de goles/carreras<input type="number" step="0.5" id="mo-tl" placeholder="${soccer?'2.5':'8.5'}"/></label>
+      <label class="mo-l">Más de (Over)<input type="number" step="0.01" id="mo-o" placeholder="1.90"/></label>
+      <label class="mo-l">Menos de (Under)<input type="number" step="0.01" id="mo-u" placeholder="1.90"/></label>
+    </div>
+    <p style="font-size:11.5px;color:var(--text-3);margin-top:6px;">Con el 1X2 basta para empezar. Los totales son opcionales: rellénalos solo si los tienes.</p>`;
+}
+function saveManualOdds(){
+  const games=(todayGames&&todayGames.length)?todayGames:(state.games||[]);
+  const sel=document.getElementById('mo-game'); const g=games[sel?+sel.value:0];
+  const st=document.getElementById('mo-status');
+  if(!g){ if(st) st.textContent='Elige un partido.'; return; }
+  const num=id=>{ const el=document.getElementById(id); const v=el?parseFloat(el.value):NaN; return (v>1.01)?v:null; };
+  const book=(document.getElementById('mo-book')||{}).value||'Manual';
+  const h=num('mo-h'), d=num('mo-d'), a=num('mo-a');
+  const tl=(()=>{ const el=document.getElementById('mo-tl'); const v=el?parseFloat(el.value):NaN; return isNaN(v)?null:v; })();
+  const o=num('mo-o'), u=num('mo-u');
+  if(!(h&&a)){ if(st) st.textContent='Necesito al menos las cuotas de local y visitante.'; return; }
+  const markets=[{ key:'h2h', outcomes:[{name:g.home.name,price:h},...(d?[{name:'Draw',price:d}]:[]),{name:g.away.name,price:a}] }];
+  if(tl!=null && o && u) markets.push({ key:'totals', outcomes:[{name:'Over',price:o,point:tl},{name:'Under',price:u,point:tl}] });
+  const sk = oddsCacheKeyFor(g.sport);
+  const cache = state.oddsCache[sk] || { ts:Date.now(), data:[] };
+  cache.data = Array.isArray(cache.data)?cache.data:[];
+  const hn=normalizeTeam(g.home.name), an=normalizeTeam(g.away.name);
+  let ev = cache.data.find(e=>teamsOverlap(hn,normalizeTeam(e.home_team))&&teamsOverlap(an,normalizeTeam(e.away_team)));
+  if(!ev){ ev={ id:'manual_'+g.id, sport_key:sk, commence_time:(g.date?g.date.toISOString():new Date().toISOString()), home_team:g.home.name, away_team:g.away.name, bookmakers:[] }; cache.data.push(ev); }
+  ev.bookmakers=(ev.bookmakers||[]).filter(b=>b.key!=='manual');
+  ev.bookmakers.push({ key:'manual', title:book, last_update:new Date().toISOString(), markets });
+  cache.ts=Date.now();
+  state.oddsCache[sk]=cache;
+  try{ lsSet('quantOddsCache', JSON.stringify(state.oddsCache)); }catch(e){}
+  if (ODDS_SPORT_MAP[state.sport]===sk) state.oddsData=cache.data;
+  if(st) st.textContent=`✓ Guardado para ${g.home.shortName||g.home.name} vs ${g.away.shortName||g.away.name}. Vuelve a Hoy y pulsa ↻ Actualizar.`;
+  toast('Cuotas manuales guardadas','ok');
+  renderOddsTab();
 }
 async function loadOddsForSport(sp, opts) {
   if (!state.oddsKey) { toast('Primero configura tu API key en Herramientas', 'err'); return null; }
@@ -4741,7 +5005,7 @@ function renderThemeControls() {
   document.querySelectorAll('#theme-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme===th));
   document.querySelectorAll('#anim-grid .theme-btn').forEach(b => b.classList.toggle('active', b.dataset.anim===an));
 }
-const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb'];
+const TOOLS_ODDS_OPTS = ['soccer/ecu.1','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','soccer/uefa.europa.conf','soccer/eng.2','soccer/ned.1','soccer/por.1','soccer/bel.1','soccer/tur.1','soccer/sco.1','soccer/usa.1','soccer/mex.1','soccer/bra.1','soccer/arg.1','soccer/chi.1','soccer/ksa.1','basketball/nba','baseball/mlb','football/nfl'];
 function renderToolsOddsLeagues() {
   const c = document.getElementById('tools-odds-leagues'); if (!c) return;
   state.toolsOddsSel = state.toolsOddsSel || new Set();
@@ -6056,7 +6320,7 @@ state.activePreset = localStorage.getItem('quantActivePreset') || 'adaptativo';
 if (state.activePreset === 'adaptativo') state.weights = getAdaptiveWeights();
 
 // ---------- EN VIVO (multideporte) ----------
-const LIVE_LEAGUES = ['soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/ecu.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb','football/nfl'];
+const LIVE_LEAGUES = ['soccer/usa.1','soccer/mex.1','soccer/bra.1','soccer/arg.1','soccer/ned.1','soccer/por.1','soccer/eng.2','soccer/eng.1','soccer/esp.1','soccer/ita.1','soccer/ger.1','soccer/fra.1','soccer/ecu.1','soccer/uefa.champions','soccer/uefa.europa','soccer/conmebol.libertadores','soccer/conmebol.sudamericana','basketball/nba','baseball/mlb','football/nfl'];
 let _liveTabBusy=false, __liveTabTimer=null, __liveSig='', __liveActiveLg=null, __liveFullTs=0;
 async function fetchSummary(sport, id){
   const k = sport+'|'+id; state.summaryCache = state.summaryCache || {};
@@ -6215,6 +6479,7 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.tab==='tools') renderTools();
     if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); startTrackerPoll(); } else { stopTrackerPoll(); }
     if (t.dataset.tab==='arb') renderArb();
+    if (t.dataset.tab==='odds') renderOddsTab();
     if (t.dataset.tab==='schedule' && state.games && state.games.length && typeof refreshLiveScores==='function') refreshLiveScores();
     if (t.dataset.tab==='today') { renderTodayLeagues(); if (!todayGames.length) loadToday(); else renderTodayPicks(); }
   });
