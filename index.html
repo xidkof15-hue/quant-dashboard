@@ -1113,7 +1113,6 @@
     <button class="tab active" data-tab="today">Hoy · Apostar</button>
     <button class="tab tab-live" data-tab="live"><span class="nav-live-dot"></span>En vivo</button>
     <button class="tab" data-tab="schedule">Cronograma</button>
-    <button class="tab" data-tab="arb">Arbitraje</button>
     <button class="tab" data-tab="odds">Cuotas</button>
     <button class="tab" data-tab="tracker">Mis Apuestas</button>
     <button class="tab" data-tab="tools">Herramientas</button>
@@ -1127,7 +1126,7 @@
     <h1 class="section-title">Hoy · Paquete de apuestas</h1>
     <p class="section-sub">Directo a los mercados: las mejores probabilidades del día con tu banca diaria repartida. Apuesta lo más cerca posible del inicio de cada partido.</p>
     <div class="today-box" style="background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:14px;display:flex;gap:14px;flex-wrap:wrap;align-items:end;">
-      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Banca de hoy ($)
+      <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);" title="Tu capital de trabajo TOTAL, no lo que quieres apostar hoy. Cada apuesta usa un porcentaje pequeño de esta cifra.">Capital total ($)
         <input type="number" id="today-bank" step="5" min="5" style="width:110px;" onchange="setTodayBank(this.value)" />
       </label>
       <label style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3);">Prob. mínima
@@ -1152,7 +1151,7 @@
         </div>
       </label>
       <span class="odds-fresh" id="today-odds-fresh" style="margin-left:auto;"></span>
-      <button class="btn-secondary" id="today-odds-btn" onclick="loadTodayOdds()">↓ Cargar cuotas</button>
+      <button class="btn-secondary" id="today-odds-btn" onclick="loadTodayOdds()" title="Solo cobra créditos por las ligas que tengan partidos ese día.">↓ Cargar cuotas</button>
       <button class="btn-secondary" onclick="loadToday()">↻ Actualizar</button>
       <button class="btn-secondary" onclick="printTodayReport()">⎙ Imprimir reporte</button>
       <button class="btn-accent" onclick="registerTodayPackage()">+ Registrar paquete</button>
@@ -1195,46 +1194,6 @@
 
   <!-- HERRAMIENTAS (arbitraje + hedging — cosas que no son de un solo partido) -->
   <!-- ARBITRAJE / HEDGING -->
-  <section class="panel" id="panel-arb">
-    <h1 class="section-title">Arbitraje y Hedging</h1>
-    <p class="section-sub">El arbitraje (surebet) busca partidos donde combinar cuotas de varias casas te deja ganar pase lo que pase. El hedging cubre una apuesta que ya hiciste. Ambos usan las cuotas que cargues desde la sección Cuotas de cualquier partido del Cronograma.</p>
-
-    <div class="bankroll-box">
-      <div class="block-title">Tu bankroll para arbitraje</div>
-      <p style="font-size:13px;color:var(--text-2);margin-bottom:10px;">Cuánto dinero total quieres exponer en cada arbitraje. El sistema reparte ese monto entre las casas para asegurar la ganancia — igual que la calculadora del Cronograma reparte el stake con Kelly. Se guarda en tu navegador.</p>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <input type="number" id="arb-bankroll" step="1" min="1" placeholder="100" style="max-width:200px;" oninput="onArbBankrollChange()" />
-        <span class="muted" style="font-family:var(--font-mono);font-size:11px;">USD de exposición total por arbitraje</span>
-      </div>
-    </div>
-
-    <div class="subtabs" id="arb-subtabs">
-      <button class="subtab active" data-arbsub="scan">Escáner de surebets</button>
-      <button class="subtab" data-arbsub="hedge">Calculadora de hedging</button>
-    </div>
-
-    <div class="arb-subpanel active" id="arbsub-scan">
-      <p class="section-sub">Escanea toda la liga que tengas cargada en caché y detecta arbitrajes activos, ordenados por margen. Los stakes se calculan sobre tu bankroll.</p>
-      <div id="arb-content"><div class="state-msg">Carga cuotas desde la sección <strong>Cuotas</strong> de cualquier partido del Cronograma para que el escáner tenga datos que analizar.</div></div>
-    </div>
-
-    <div class="arb-subpanel" id="arbsub-hedge">
-      <p class="section-sub">Calcula cuánto apostar al lado opuesto de una posición abierta para asegurar ganancia o limitar la pérdida.</p>
-      <div class="calc-form">
-        <div class="block-title">Calculadora de hedging</div>
-        <div class="add-bet-grid">
-          <div class="form-row"><label>Stake original ($)</label><input type="number" id="hg-stake" step="0.01" placeholder="100" /></div>
-          <div class="form-row"><label>Cuota original (decimal)</label><input type="number" id="hg-odds1" step="0.01" placeholder="2.50" /></div>
-          <div class="form-row"><label>Cuota actual del lado opuesto</label><input type="number" id="hg-odds2" step="0.01" placeholder="1.80" /></div>
-        </div>
-        <div class="form-actions"><button class="btn-accent" onclick="calcHedge()">Calcular</button><button class="btn-secondary" onclick="document.querySelectorAll('#arbsub-hedge input').forEach(i=>i.value='');document.getElementById('hg-result').innerHTML='';">Limpiar</button></div>
-      </div>
-      <div id="hg-result"></div>
-      <div class="small-note"><strong>Cómo leer los resultados:</strong> el sistema calcula 3 escenarios: (1) "Lock-in equivalente" — apuestas el monto que iguala tu ganancia sin importar quién gane; (2) "Break-even" — apuestas lo justo para no perder dinero si tu apuesta original falla; (3) "Sin hedge" — qué pasaría si no haces nada. Útil cuando una cuota se movió fuerte a tu favor antes del evento.</div>
-    </div>
-  </section>
-
-  <!-- HERRAMIENTAS -->
   <section class="panel" id="panel-odds">
     <h1 class="section-title">Cuotas</h1>
     <p class="section-sub">Carga las cuotas, comprueba que llegaron bien y, si la API no cubre una liga, mételas a mano.</p>
@@ -1408,7 +1367,7 @@ const state = {
   oddsKey: localStorage.getItem('oddsApiKey') || '',
   bets: JSON.parse(localStorage.getItem('quantBets') || '[]'),
   oddsData: null,
-  oddsHistory: JSON.parse(localStorage.getItem('quantOddsHistory') || '{}'),
+  oddsHistory: {},   // el histórico de instantáneas se eliminó (ocupaba demasiado)
   oddsCache: JSON.parse(localStorage.getItem('quantOddsCache') || '{}'),
   calcMarket: { category: null, optionKey: null, customProb: null, customLabel: null },
   lastCalc: null,
@@ -2011,6 +1970,7 @@ async function loadWeek() {
     enrichGameSignals(g).then(() => { renderSchedule(); if (state.selectedGame && state.selectedGame.id === g.id) renderDetailSummary(g); });
   });
   // Resultados finalizados -> registro de outcomes -> ajuste silencioso del preset adaptativo
+  try { reclaimStorage(); } catch(e){}
   scanShadowOutcomes();
   recomputeAdaptive();
   startLivePolling();
@@ -2123,7 +2083,7 @@ function renderTodayLeagues() {
 }
 let todayGames = [];
 state.todayOffset = 0;
-state.todayMode = localStorage.getItem('sharpTodayMode') || 'preciso';
+state.todayMode = localStorage.getItem('sharpTodayMode') || 'volumen';   // backtest: positivo 2024, 2025 y 2026
 function setTodayOffset(n, btn){ state.todayOffset = n; if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); } loadToday(); }
 function setTodayMode(m, btn){ state.todayMode = m; localStorage.setItem('sharpTodayMode', m); syncModeSeg(); renderTodayPicks(); }
 function syncModeSeg(){ const a=document.getElementById('mode-btn-preciso'), b=document.getElementById('mode-btn-volumen'); if(a&&b){ a.classList.toggle('on', state.todayMode!=='volumen'); b.classList.toggle('on', state.todayMode==='volumen'); } }
@@ -2132,17 +2092,39 @@ function todayDateLabel(){ const d=new Date(); d.setDate(d.getDate()+state.today
 // ---- Cuotas desde la pestaña Hoy: carga por ligas seleccionadas + indicador de frescura ----
 async function loadTodayOdds(){
   const btn=document.getElementById('today-odds-btn');
-  const sels=[...new Set(getTodayLeagues().map(sp=>ODDS_SPORT_MAP[sp]?sp:null).filter(Boolean))];
-  if(!sels.length){ toast('Tus ligas seleccionadas no tienen mercado de cuotas','err'); return; }
   if(!state.oddsKey){ toast('Configura tu API key de The Odds API en Herramientas','err'); return; }
   if(btn){ btn.disabled=true; btn.textContent='↓ Cargando…'; }
-  let okn=0,total=0,fail=0,lastErr=null;
-  for(const sp of sels){ try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n;} else fail++; }catch(e){ fail++; lastErr=e; } }
-  if(btn){ btn.disabled=false; btn.textContent='↓ Cargar cuotas'; }
-  if(!okn && lastErr) toast('No se cargaron cuotas: '+String(lastErr.message||lastErr).slice(0,110),'err');
-  else toast(`Cuotas: ${total} partido(s) en ${okn} liga(s)`+(fail?` · ${fail} sin datos`:''), okn?'ok':'err');
-  renderTodayOddsFresh();
-  loadToday();
+  try {
+    // Mirar el calendario es GRATIS (ESPN). Solo pagamos créditos por las ligas
+    // que de verdad tienen partidos ese día: una liga sin partidos costaba créditos a cambio de nada.
+    if(!todayGames.length) await loadToday();
+    const conPartidos = [...new Set((todayGames||[]).map(g=>g.sport))].filter(sp=>ODDS_SPORT_MAP[sp]);
+    const sinCobertura = [...new Set((todayGames||[]).map(g=>g.sport))].filter(sp=>!ODDS_SPORT_MAP[sp]).length;
+    if(!conPartidos.length){
+      toast(sinCobertura?'No hay partidos con cobertura de cuotas ese día (0 créditos gastados)':'No hay partidos ese día: no gasté créditos','err');
+      return;
+    }
+    const costo = conPartidos.length * oddsCallCost();
+    const q = state.oddsQuota;
+    if(q && q.rem!=null && q.rem < costo){
+      toast(`Te quedan ${q.rem} créditos y esta carga cuesta ${costo}. Reduce ligas o espera al reinicio del mes.`,'err');
+      return;
+    }
+    let okn=0,total=0,fail=0,lastErr=null,reuso=0;
+    for(const sp of conPartidos){
+      const c = getCachedOdds(ODDS_SPORT_MAP[sp]);
+      const fresca = c && c.ts && (Date.now()-c.ts < 12*60000);   // <12 min: ya vale, no se vuelve a pagar
+      try{ const n=await loadOddsForSport(sp); if(n!=null){okn++; total+=n; if(fresca) reuso++;} else fail++; }
+      catch(e){ fail++; lastErr=e; }
+    }
+    const pagadas = okn - reuso;
+    if(!okn && lastErr) toast('No se cargaron cuotas: '+String(lastErr.message||lastErr).slice(0,110),'err');
+    else toast(`${total} partido(s) con cuotas en ${okn} liga(s) · ~${pagadas*oddsCallCost()} créditos`+(reuso?` (${reuso} ya estaban frescas)`:'')+(fail?` · ${fail} sin datos`:''), okn?'ok':'err');
+    renderTodayOddsFresh();
+    renderTodayPicks();
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='↓ Cargar cuotas'; }
+  }
 }
 function renderTodayOddsFresh(){
   const el=document.getElementById('today-odds-fresh'); if(!el) return;
@@ -2155,7 +2137,8 @@ function renderTodayOddsFresh(){
   const worst=Math.max.apply(null,loaded);
   const t = worst<1?'recién cargadas':(worst<60?`hace ${Math.round(worst)} min`:`hace ${(worst/60).toFixed(1)} h`);
   const q=quotaTextShort();
-  el.textContent=`cuotas: ${t}`+(missing?` · ${missing} sin cargar`:'')+(q?` · ${q}`:'');
+  const pres=presupuestoDiario();
+  el.textContent=`cuotas: ${t}`+(missing?` · ${missing} sin cargar`:'')+(q?` · ${q}`:'')+(pres?` · hoy puedes ${pres.ligas} liga${pres.ligas===1?'':'s'}`:'');
   el.className='odds-fresh'+((worst>60||missing||(state.oddsQuota&&state.oddsQuota.rem!=null&&state.oddsQuota.rem<oddsCallCost()))?' warn':'');
 }
 let __todayGen = 0;
@@ -2392,24 +2375,34 @@ function buildTodayPicks() {
 }
 function committedPending(){ return (state.bets||[]).filter(b=>b.status==='pending').reduce((a,b)=>a+(+b.stake||0),0); }
 function availableBank(){ return Math.max(0, getTodayBank() - committedPending()); }
+// --- Tamaño de apuesta proporcional al CAPITAL (medio Kelly) ---
+// Antes se repartía toda la banca entre las apuestas del día: con $50 salían stakes de
+// $10-16 (20-32% del capital), tamaño con el que se pierde dinero AUNQUE tengas ventaja.
+// Ahora cada apuesta vale un % de tu capital y el resto se queda quieto.
+const HALF_KELLY   = 0.50;   // medio Kelly: casi el mismo crecimiento, mucho menos riesgo
+const MAX_PER_BET  = 0.05;   // nunca más del 5% del capital en una sola apuesta
+const MAX_EXPOSURE = 0.25;   // nunca más del 25% del capital en juego a la vez
+const MIN_STAKE    = 1.00;   // por debajo de esto las casas no aceptan
+function stakeForKelly(bank, kellyFraction){
+  const frac = Math.min(Math.max(0, kellyFraction) * HALF_KELLY, MAX_PER_BET);
+  return Math.round(bank * frac * 100) / 100;
+}
 function allocateStakes(picks) {
-  const bank = availableBank();
+  const bank = getTodayBank();                   // tu capital total de trabajo
   const act = picks.filter(p=>p.on);
   picks.filter(p=>!p.on).forEach(p=>p.stake=0);
   if (!act.length) return 0;
-  // Pesos Kelly (a más valor/edge, más stake). Reparten TU banca del día.
-  let w = act.map(p => Math.max(0.0001, p.c.kelly));
-  let tot = w.reduce((a,b)=>a+b,0);
-  let share = w.map(x => x/tot);
-  // Tope 40% por apuesta; redistribuye el exceso al resto (evita sobre-concentrar)
-  const CAP = 0.40;
-  for (let it=0; it<4; it++) {
-    const over = share.reduce((a,s)=> a + Math.max(0, s-CAP), 0);
-    if (over <= 1e-9) break;
-    const underTot = share.reduce((a,s)=> a + (s<CAP ? s : 0), 0);
-    share = share.map(s => s>=CAP ? CAP : s + (underTot ? over*(s/underTot) : 0));
+  act.forEach(p => { p.stake = stakeForKelly(bank, p.c.kelly); });
+  // Tope de exposición: lo pendiente + lo nuevo nunca pasa del 25% del capital
+  const room = Math.max(0, bank*MAX_EXPOSURE - committedPending());
+  let total = act.reduce((a,p)=>a+p.stake,0);
+  if (total > room && total > 0) {
+    const k = room/total;
+    act.forEach(p => { p.stake = Math.round(p.stake*k*100)/100; });
+    total = act.reduce((a,p)=>a+p.stake,0);
   }
-  act.forEach((p,i) => { p.stake = Math.max(1, Math.round(bank*share[i]*2)/2); });
+  // Las que quedan por debajo del mínimo de la casa se desactivan (no se fuerzan)
+  act.forEach(p => { if (p.stake < MIN_STAKE) { p.stake = 0; p.tooSmall = true; } else p.tooSmall = false; });
   return act.reduce((a,p)=>a+p.stake,0);
 }
 function toggleTodayPick(id) {
@@ -2436,7 +2429,13 @@ function renderTodayPicks() {
   const doneSet = new Set((state.bets||[]).map(b=>{ if(!b.espnGameId) return null; const r=b.resolve||deriveResolve(b); return r?`${b.espnGameId}|${r.market}|${r.side}`:null; }).filter(Boolean));
   const comm = committedPending();
   const modeTxt = state.todayMode==='volumen' ? 'Volumen (fútbol: 70% mercado + 30% fuerza, piso 55%, valor ≥3%)' : 'Preciso (modelo actual)';
-  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete para <strong>${todayDateLabel()}</strong> · modo <strong>${modeTxt}</strong>: <strong>${picks.filter(p=>p.on).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong>. Banca $${getTodayBank().toFixed(2)}${comm>0?` − $${comm.toFixed(2)} ya comprometidos en pendientes = <strong>$${availableBank().toFixed(2)} disponibles</strong>`:''}. Selección por <strong>valor</strong> y reparto tipo Kelly. Riesgo del modo (test 2023-25): caída máxima histórica ${state.todayMode==='volumen'?'~20%':'~14%'} de banca — deja reserva para rachas.${state.todayOffset>0?' Las cuotas de días futuros pueden moverse: recarga antes de apostar.':''}</div>`;
+  const cap = getTodayBank();
+  const expo = comm + total;
+  const pctExpo = cap>0 ? (expo/cap*100) : 0;
+  const small = picks.filter(p=>p.on && p.tooSmall).length;
+  let html = `<div class="small-note" style="margin-bottom:10px;">Paquete para <strong>${todayDateLabel()}</strong> · modo <strong>${modeTxt}</strong>: <strong>${picks.filter(p=>p.on && p.stake>0).length} apuestas en ${games} partidos · $${total.toFixed(2)}</strong>.
+  Capital $${cap.toFixed(2)} · cada apuesta usa como máximo el <strong>5%</strong> (medio Kelly) y el total en juego nunca pasa del <strong>25%</strong>: ahora mismo $${expo.toFixed(2)} (${pctExpo.toFixed(0)}%)${comm>0?`, de los cuales $${comm.toFixed(2)} ya están en apuestas pendientes`:''}.
+  ${small?`<br>${small} apuesta(s) quedaron por debajo del mínimo de $1 y se desactivaron: con más capital entrarán solas. `:''}Tu capital crece solo: sube la cifra de arriba cuando ganes y los stakes suben contigo.${state.todayOffset>0?' Las cuotas de días futuros pueden moverse: recarga antes de apostar.':''}</div>`;
   let curLeague = null;
   picks.forEach(p => {
     const g = p.g, o = p.c;
@@ -2797,11 +2796,6 @@ function sportScale(sportKey) {
   if (sportKey === 'baseball/mlb')   return { kTotal: 2.5, kSpread: 2, smallOff: 0.5, bigOff: 1.5, suggLineRound: 0.5 };
   return { kTotal: 8, kSpread: 7, smallOff: 5, bigOff: 10, suggLineRound: 0.5 };
 }
-function probToScore(prob) { return Math.round(prob * 100 + 5); } // ej: 0.60→65 (MEDIA), 0.70→75 (ALTA)
-function bandLetter(score) { return score >= 70 ? 'alta' : (score >= 55 ? 'media' : 'baja'); }
-
-// ---------- CUOTAS REALES + CALIFICACIÓN (confianza + valor) ----------
-// Mejor cuota y promedio de un conjunto de precios de varias casas
 function bestAvgOdds(rows) {
   const arr = (rows||[]).map(r => (typeof r === 'number') ? { price:r, book:null } : r)
                         .filter(r => r && typeof r.price === 'number' && r.price > 1);
@@ -3043,22 +3037,6 @@ function evalOption(o) {
 // CALIFICACIÓN nueva: combina CONFIANZA (probabilidad) y VALOR (EV de la cuota real).
 // Mezcla 50/50 el pronóstico del modelo con el de las casas (sin margen).
 // Un valor esperado (EV) negativo baja la nota fuerte — eso la hace conservadora.
-function marketScore(pModel, pMarket, oddsReal) {
-  if (pMarket == null || !oddsReal || oddsReal <= 1) {
-    const s = Math.round(Math.max(0, Math.min(100, pModel*100 + 5)));
-    return { score: s, pBlend: pModel, edge: null, ev1: null, provisional: true };
-  }
-  const pBlend = 0.5*pModel + 0.5*pMarket;
-  const edge = pBlend - (1/oddsReal);
-  const ev1  = pBlend*oddsReal - 1;
-  const conf = pBlend * 100;
-  const value = Math.max(0, Math.min(100, 50 + edge*300));
-  let score = 0.5*conf + 0.5*value;
-  if (ev1 < 0) score *= 0.6;
-  return { score: Math.round(Math.max(0, Math.min(100, score))), pBlend, edge, ev1, provisional: false };
-}
-
-// Devuelve las CATEGORÍAS disponibles para un partido (Paso 1 del selector)
 function getMarketCategories(g) {
   if (g.sport.startsWith('soccer')) {
     return [
@@ -3608,17 +3586,6 @@ function selectMarketOption(optKey) {
   updateCalculator();
 }
 
-function updatePropsCustom() {
-  const probEl = document.getElementById('props-prob');
-  const labelEl = document.getElementById('props-label');
-  if (!probEl) return;
-  const pr = parseFloat(probEl.value);
-  state.calcMarket.customProb = (pr > 0 && pr < 100) ? pr/100 : null;
-  state.calcMarket.customLabel = labelEl.value.trim() || null;
-  syncPickLabelField();
-  updateCalculator();
-}
-
 function updateCalculator() {
   const g = state.selectedGame; if (!g) return;
   const oddsEl = document.getElementById('calc-odds');
@@ -4068,14 +4035,7 @@ function updateWeight(k,v){
   }
 }
 function updateWeightTotal(){const t=Object.values(state.weights).reduce((a,b)=>a+b,0); const el=document.getElementById('weight-total'); if(el){el.textContent=t+'%'; el.style.color=(t===100)?'var(--c-salvia)':(Math.abs(t-100)<=5?'var(--text-2)':'var(--c-granate)');}}
-function resetWeights(){state.weights={form:25,strength:25,h2h:15,homeAway:10,context:10,consistency:10,rest:5}; renderRating(); state.games.forEach(g=>{if(g.homeStats&&g.awayStats){ g.viability=computeViability(g.homeStats,g.awayStats,state.weights); computeGameOpportunity(g);}}); renderSchedule(); updateStatBar();}
-
-// ---------- ODDS PANEL: SHARED FETCH ----------
-// Carga (y cachea) las cuotas de UNA liga sin necesidad de abrir un partido.
-
-// ---------- Cupo de The Odds API: cost = mercados × regiones (plan gratis: 500 créditos/mes) ----------
-const ODDS_REGION_PRESETS = { max:'us,eu,uk', medio:'eu,us', ahorro:'eu' };
-function getOddsRegions(){ const v=localStorage.getItem('quantOddsRegions'); return (v && /^[a-z,]+$/.test(v)) ? v : 'us,eu,uk'; }
+function getOddsRegions(){ const v=localStorage.getItem('quantOddsRegions'); return (v && /^[a-z,]+$/.test(v)) ? v : 'eu'; }   // Ahorro por defecto: 3 créditos/liga, rinde el cupo gratis 3x
 function setOddsRegions(v){ lsSet('quantOddsRegions', v); renderOddsQuota(); toast(`Regiones: ${v} · ${oddsCallCost()} créditos por liga`,'ok'); }
 function oddsCallCost(){ return 3 * getOddsRegions().split(',').filter(Boolean).length; } // 3 mercados: h2h, totals, spreads
 function oddsUrlFor(sk){ return `https://api.the-odds-api.com/v4/sports/${sk}/odds/?apiKey=${state.oddsKey}&regions=${getOddsRegions()}&markets=h2h,totals,spreads&oddsFormat=decimal`; }
@@ -4097,6 +4057,19 @@ function quotaTextShort(){
   return `${q.rem} créd.`;
 }
 function initQuotaUI(){ loadQuotaFromStorage(); renderOddsQuota(); }
+// Reparte los créditos que quedan entre los días que faltan del mes, para que no te
+// quedes sin cupo a mitad de mes con una rutina diaria.
+function diasRestantesMes(){
+  const d=new Date(), fin=new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  return Math.max(1, fin - d.getDate() + 1);
+}
+function presupuestoDiario(){
+  const q=state.oddsQuota;
+  if(!q || q.rem==null) return null;
+  const dias=diasRestantesMes();
+  const cred=Math.floor(q.rem/dias);
+  return { dias, cred, ligas: Math.floor(cred/oddsCallCost()) };
+}
 function renderOddsQuota(){
   const q=state.oddsQuota;
   const cost=oddsCallCost();
@@ -4116,7 +4089,9 @@ function renderOddsQuota(){
         ${q.rem<=0?`<div class="q-line crit">Cupo agotado: la API responde con error hasta que se reinicie tu ciclo mensual. Opciones: esperar al reinicio, usar otra key, o pasar a un plan de pago.</div>`:''}
         ${q.rem>0&&q.rem<cost?`<div class="q-line crit">No alcanza ni para una carga (${cost} créditos). Cambia a modo Ahorro abajo.</div>`:''}`;
     }
-    el.innerHTML = body + `<div class="q-line">Coste actual: <strong>${cost} créditos por liga</strong> (3 mercados × ${getOddsRegions().split(',').length} regiones)${q&&q.rem!=null?` → te quedan ~${Math.floor(q.rem/cost)} cargas de liga`:''}.</div>`;
+    const pres = presupuestoDiario();
+    el.innerHTML = body + `<div class="q-line">Coste actual: <strong>${cost} créditos por liga</strong> (3 mercados × ${getOddsRegions().split(',').length} regiones)${q&&q.rem!=null?` → te quedan ~${Math.floor(q.rem/cost)} cargas de liga`:''}.</div>`
+      + (pres ? `<div class="q-line">Para tu rutina diaria: quedan <strong>${pres.dias} días</strong> de mes, así que puedes gastar <strong>${pres.cred} créditos por noche</strong> = <strong>${pres.ligas} liga${pres.ligas===1?'':'s'} cada noche</strong> sin quedarte sin cupo.</div>` : '');
   }
   });
   const seg=document.getElementById('odds-region-seg');
@@ -4307,7 +4282,7 @@ function saveManualOdds(){
   ev.bookmakers.push({ key:'manual', title:book, last_update:new Date().toISOString(), markets });
   cache.ts=Date.now();
   state.oddsCache[sk]=cache;
-  try{ lsSet('quantOddsCache', JSON.stringify(state.oddsCache)); }catch(e){}
+  persistOddsCache(sk);
   if (ODDS_SPORT_MAP[state.sport]===sk) state.oddsData=cache.data;
   if(st) st.textContent=`✓ Guardado para ${g.home.shortName||g.home.name} vs ${g.away.shortName||g.away.name}. Vuelve a Hoy y pulsa ↻ Actualizar.`;
   toast('Cuotas manuales guardadas','ok');
@@ -4344,7 +4319,7 @@ async function loadLeagueOddsNow() {
     if (n != null) {
       toast(`Cuotas de ${label} cargadas: ${n} partido(s) con mercado`, 'ok');
       if (state.games && state.games.length) await Promise.all(state.games.map(g => computeGameViability(g)));
-      renderSchedule(); renderArb();
+      renderSchedule();
       if (state.selectedGame) refreshOpenDetailSections && refreshOpenDetailSections();
     }
   } catch(e) { toast('Error al cargar cuotas: ' + e.message, 'err'); }
@@ -4366,11 +4341,35 @@ async function fetchOddsForCurrentSport() {
 
 // ---------- ODDS CACHE (persistent) ----------
 // Guarda la última respuesta completa de The Odds API por liga, sobrevive a recargas y cambios de pestaña.
+const ODDS_CACHE_MAX_LEAGUES = 8;        // solo las ligas que estás usando
+const ODDS_CACHE_MAX_AGE_MS   = 12*3600000;  // 12 h: más viejo que eso no sirve para apostar
+// Deja la caché en un tamaño sano: fuera lo caducado y, si sobran ligas, fuera las más antiguas.
+function pruneOddsCache(keep) {
+  const now = Date.now();
+  const entries = Object.entries(state.oddsCache||{})
+    .filter(([k,v]) => v && v.ts && (now - v.ts < ODDS_CACHE_MAX_AGE_MS || k === keep));
+  entries.sort((a,b) => (b[1].ts||0) - (a[1].ts||0));
+  const kept = {};
+  entries.forEach(([k,v], i) => { if (i < ODDS_CACHE_MAX_LEAGUES || k === keep) kept[k] = v; });
+  state.oddsCache = kept;
+  return kept;
+}
+// Guarda avisando si el navegador se queda sin espacio, en vez de fallar callado.
+function persistOddsCache(keep) {
+  pruneOddsCache(keep);
+  try { lsSet('quantOddsCache', JSON.stringify(state.oddsCache)); return true; }
+  catch(e) {
+    // Sin espacio: nos quedamos solo con la liga recién cargada y reintentamos.
+    const only = {}; if (keep && state.oddsCache[keep]) only[keep] = state.oddsCache[keep];
+    state.oddsCache = only;
+    try { lsSet('quantOddsCache', JSON.stringify(state.oddsCache)); toast('Memoria del navegador llena: dejé solo las cuotas recién cargadas','err'); return true; }
+    catch(e2) { try { localStorage.removeItem('quantOddsCache'); } catch(e3){} toast('No se pudieron guardar las cuotas: memoria del navegador llena','err'); return false; }
+  }
+}
 function saveOddsToCache(sk, data) {
   if (!sk || !data) return;
   state.oddsCache[sk] = { ts: Date.now(), data };
-  try { lsSet('quantOddsCache', JSON.stringify(state.oddsCache)); }
-  catch(e) { console.warn('Cache save failed:', e); }
+  persistOddsCache(sk);
 }
 function clearOddsCacheFor(sk) {
   if (!sk) return;
@@ -4411,7 +4410,6 @@ function clearCacheCurrentSport() {
   if (!confirm(`¿Limpiar caché de cuotas de "${sk}"? Tendrás que recargar (consume calls de tu API).`)) return;
   clearOddsCacheFor(sk);
   renderGameOdds();
-  renderArb();
 }
 async function refreshOddsNow() {
   const sk = ODDS_SPORT_MAP[state.sport]; if (!sk) return;
@@ -4423,7 +4421,6 @@ async function refreshOddsNow() {
     saveOddsToCache(sk, data);
     saveOddsSnapshot(data); // mantiene la lógica de movimientos intacta
     renderGameOdds();
-    renderArb();
   } catch(e) {
     if (c) c.innerHTML = `<div class="state-msg">⚠ ${e.message}</div>`;
   }
@@ -4450,7 +4447,6 @@ function getAllManualOdds() {
 }
 function getManualOdds(id) { return getAllManualOdds()[id] || null; }
 function getBankroll() { const v = parseFloat(localStorage.getItem('quantBankroll')); return (v>0)?v:0; }
-function setBankroll(v) { if (v>0) lsSet('quantBankroll', String(v)); else lsRemove('quantBankroll'); }
 function getBaseStake() { const v = parseFloat(localStorage.getItem('quantBaseStake')); return (v>0)?v:0; }
 function setBaseStake(v) { if (v>0) lsSet('quantBaseStake', String(v)); else lsRemove('quantBaseStake'); }
 function setManualOdds(id, obj) {
@@ -4560,7 +4556,6 @@ async function loadGameOdds() {
     saveOddsToCache(sk, state.oddsData);
     saveOddsSnapshot(state.oddsData);
     renderGameOdds();
-    renderArb();
   } catch(e) {
     c.innerHTML = `<div class="state-msg">⚠ ${e.message}</div>`;
   }
@@ -4751,36 +4746,8 @@ function renderTotalsOrSpreads(g, ev, marketKey) {
 
 // Movimiento de cuotas SOLO de este partido (usa los snapshots ya guardados)
 function renderGameMovement(g, ev) {
-  const sk = ODDS_SPORT_MAP[state.sport];
-  const history = state.oddsHistory[sk] || [];
-  if (history.length < 2) {
-    return `<div class="game-odds-hint" style="margin-top:14px;">Movimiento de cuotas: necesitas al menos 2 cargas (con minutos/horas de diferencia) para detectar cambios. Llevas ${history.length}.</div>`;
-  }
-  const latest = history[history.length-1], previous = history[history.length-2];
-  const cur = latest.events[ev.id], prev = previous.events[ev.id];
-  if (!cur || !prev) {
-    return `<div class="game-odds-hint" style="margin-top:14px;">Movimiento de cuotas: este partido no estaba en el snapshot anterior, aún no hay comparación.</div>`;
-  }
-  const pctH = prev.bH ? ((cur.bH-prev.bH)/prev.bH)*100 : 0;
-  const pctA = prev.bA ? ((cur.bA-prev.bA)/prev.bA)*100 : 0;
-  const pctD = prev.bD ? ((cur.bD-prev.bD)/prev.bD)*100 : 0;
-  const elapsedMin = Math.round((latest.ts-previous.ts)/60000);
-  const arrow = v => v > 0.05 ? `<span class="move-up">↑ ${v.toFixed(2)}%</span>` : (v < -0.05 ? `<span class="move-down">↓ ${Math.abs(v).toFixed(2)}%</span>` : `<span class="move-stable">— estable</span>`);
-  return `
-    <h3 style="font-size:15px;font-weight:700;margin:20px 0 2px;">Movimiento de cuotas — últimos ${elapsedMin} min</h3>
-    <table class="game-odds-table"><thead><tr><th>Lado</th><th>Antes</th><th>Ahora</th><th>Cambio</th></tr></thead><tbody>
-      <tr><td>${cur.home}</td><td>${prev.bH?prev.bH.toFixed(2):'—'}</td><td><strong>${cur.bH?cur.bH.toFixed(2):'—'}</strong></td><td>${arrow(pctH)}</td></tr>
-      ${prev.bD?`<tr><td>Empate</td><td>${prev.bD.toFixed(2)}</td><td><strong>${cur.bD?cur.bD.toFixed(2):'—'}</strong></td><td>${arrow(pctD)}</td></tr>`:''}
-      <tr><td>${cur.away}</td><td>${prev.bA?prev.bA.toFixed(2):'—'}</td><td><strong>${cur.bA?cur.bA.toFixed(2):'—'}</strong></td><td>${arrow(pctA)}</td></tr>
-    </tbody></table>
-    <div class="game-odds-hint">▸ <span class="move-down">Cuota baja</span> = entra dinero a ese lado (si tu modelo lo respalda, apuesta pronto). <span class="move-up">Cuota sube</span> = pierde apoyo (mejor valor si tu modelo lo respalda).</div>
-  `;
+  return `<div class="game-odds-hint" style="margin-top:14px;">El movimiento de línea ahora se sigue en <strong>Mis Apuestas</strong>: cada apuesta pendiente muestra si la cuota se movió a tu favor, y al cerrar el partido se guarda tu CLV.</div>`;
 }
-
-// Al hacer click en una cuota de cualquier mercado → abre la calculadora y la autollena.
-// category: '1x2', 'ml', 'ou', 'spread'
-// optionKey: la clave de la opción en cascade (ej. 'home', 'o2.5', 'hm1.5')
-// displayLabel: lo que se pone literal en el campo "Selección / línea exacta" (ej. "Over 2.5")
 function pickOddsForCalc(category, optionKey, displayLabel, book, odds) {
   const g = state.selectedGame; if (!g) return;
   // Asegurar que la sección Calculadora esté abierta Y renderizada
@@ -4838,68 +4805,6 @@ function getArbBankroll() {
   const v = parseFloat(localStorage.getItem('quantArbBankroll'));
   return (v && v > 0) ? v : 100;
 }
-function onArbBankrollChange() {
-  const el = document.getElementById('arb-bankroll');
-  const v = parseFloat(el.value);
-  if (v && v > 0) lsSet('quantArbBankroll', String(v));
-  renderArb();
-}
-function renderArb() {
-  const c = document.getElementById('arb-content');
-  const bkEl = document.getElementById('arb-bankroll');
-  if (bkEl && !bkEl.value) bkEl.value = getArbBankroll();
-  const arbBankroll = getArbBankroll();
-  // Rehidratar desde caché si no hay oddsData en memoria
-  if (!state.oddsData) {
-    const sk = ODDS_SPORT_MAP[state.sport];
-    const cache = getCachedOdds(sk);
-    if (cache) state.oddsData = cache.data;
-  }
-  if (!state.oddsData) { c.innerHTML = `<div class="state-msg">Carga primero las cuotas desde la sección <strong>Cuotas</strong> de cualquier partido del cronograma.</div>`; return; }
-  const arbs = [];
-  state.oddsData.forEach(ev => {
-    const hasDraw = ev.bookmakers?.[0]?.markets?.[0]?.outcomes?.some(o=>o.name==='Draw');
-    let bH={p:0,b:''},bA={p:0,b:''},bD={p:0,b:''};
-    ev.bookmakers?.forEach(bm => {
-      const m = bm.markets?.find(m=>m.key==='h2h'); if (!m) return;
-      m.outcomes.forEach(o=>{
-        if (o.name===ev.home_team && o.price>bH.p) bH={p:o.price,b:bm.title};
-        else if (o.name===ev.away_team && o.price>bA.p) bA={p:o.price,b:bm.title};
-        else if (o.name==='Draw' && o.price>bD.p) bD={p:o.price,b:bm.title};
-      });
-    });
-    const sum = (bH.p?1/bH.p:0) + (bA.p?1/bA.p:0) + (hasDraw?(bD.p?1/bD.p:0):0);
-    if (sum > 0 && sum < 1) {
-      const profit = (1-sum)*100;
-      const total = arbBankroll;
-      const sH = (total/bH.p) / sum;
-      const sA = (total/bA.p) / sum;
-      const sD = hasDraw && bD.p ? (total/bD.p)/sum : 0;
-      arbs.push({ ev, hasDraw, bH, bA, bD, profit, total, sH, sA, sD });
-    }
-  });
-  arbs.sort((a,b)=>b.profit-a.profit);
-  if (!arbs.length) {
-    c.innerHTML = `<div class="state-msg">No se detectaron oportunidades de arbitraje en este momento.<br><span class="muted">Las arbs aparecen y desaparecen rápido. Vuelve a cargar cuotas en unos minutos desde la sección Cuotas de cualquier partido.</span></div>`;
-    return;
-  }
-  c.innerHTML = `<div class="muted" style="font-family:var(--font-mono);font-size:11px;margin-bottom:14px;">▲ ${arbs.length} oportunidad(es) detectada(s) · ordenadas por margen</div>` + arbs.map(a => {
-    const date = new Date(a.ev.commence_time);
-    const guaranteed = a.total * a.profit / 100;
-    return `<div class="arb-card">
-      <div class="arb-head"><div><div class="arb-title">${a.ev.home_team} vs ${a.ev.away_team}</div><div class="muted" style="font-family:var(--font-mono);font-size:11px;margin-top:4px;">${date.toLocaleString('es-EC',{timeZone:'America/Guayaquil'})}</div></div><div class="arb-profit">+${a.profit.toFixed(2)}%</div></div>
-      <div class="arb-body">
-        <div class="muted" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Distribución óptima para $${a.total} de exposición total</div>
-        <div class="arb-leg"><span><strong>Local</strong></span><span>${a.bH.b}</span><span>${a.bH.p.toFixed(2)}</span><span class="accent"><strong>$${a.sH.toFixed(2)}</strong></span></div>
-        ${a.hasDraw ? `<div class="arb-leg"><span><strong>Empate</strong></span><span>${a.bD.b||'—'}</span><span>${a.bD.p?a.bD.p.toFixed(2):'—'}</span><span class="accent"><strong>${a.sD?'$'+a.sD.toFixed(2):'—'}</strong></span></div>`:''}
-        <div class="arb-leg"><span><strong>Visita</strong></span><span>${a.bA.b}</span><span>${a.bA.p.toFixed(2)}</span><span class="accent"><strong>$${a.sA.toFixed(2)}</strong></span></div>
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:13px;display:flex;justify-content:space-between;"><span class="muted">Ganancia garantizada:</span><span class="accent" style="font-weight:700;">+$${guaranteed.toFixed(2)}</span></div>
-      </div>
-    </div>`;
-  }).join('') + `<div class="small-note"><strong>Realidad del arbitraje:</strong> los bookmakers detectan patrones de arbitraje y pueden limitar tu cuenta. Pinnacle es la única casa que NO limita por arbitraje. Las arbs grandes (>3%) suelen ser errores que se corrigen en minutos.</div>`;
-}
-
-// ---------- HEDGING ----------
 function calcHedge() {
   const r = document.getElementById('hg-result');
   const S1 = parseFloat(document.getElementById('hg-stake').value);
@@ -4947,14 +4852,12 @@ function saveOddsKey(inputId) {
   syncOddsKeyInputs();
   // Refrescar lo que esté visible
   if (state.selectedGame) renderGameOdds();
-  renderArb();
 }
 function clearOddsKey(inputId) {
   state.oddsKey = '';
   lsRemove('oddsApiKey');
   syncOddsKeyInputs();
   if (state.selectedGame) renderGameOdds();
-  renderArb();
 }
 // Mantiene los inputs de API key y el texto de estado sincronizados
 function syncOddsKeyInputs() {
@@ -5104,25 +5007,24 @@ function clearAllDsCache() {
 function openClearHistoryModal() {
   document.getElementById('modal-card').innerHTML = `
     <button class="modal-close" onclick="closeModal()">×</button>
-    <h2>Limpiar histórico</h2>
-    <p style="font-size:13px;color:var(--text-2);margin:8px 0 14px;line-height:1.5;">Deja la app como recién instalada. <strong style="color:var(--c-granate);">No se puede deshacer.</strong></p>
-    <div class="tracker-block-sub" style="margin-bottom:6px;"><strong>Se borrará</strong></div>
+    <h2>Borrar datos de apuestas</h2>
+    <p style="font-size:13px;color:var(--text-2);margin:8px 0 14px;line-height:1.5;">Empiezas de cero con tus apuestas. <strong>La app, su configuración y tus claves no se tocan.</strong> <strong style="color:var(--c-granate);">No se puede deshacer.</strong></p>
+    <div class="tracker-block-sub" style="margin-bottom:6px;"><strong>Se borra</strong></div>
     <ul style="font-size:13px;color:var(--text-2);margin:0 0 14px;padding-left:18px;line-height:1.7;">
-      <li>Todas las apuestas (activas, finalizadas y archivadas)</li>
-      <li>El registro de resultados de partidos</li>
-      <li>Los pesos aprendidos del preset Adaptativo (vuelve a base Balanceada)</li>
-      <li>La caché de cuotas y su histórico</li>
-      <li>La caché de fuentes de datos (clima, lesiones, xG)</li>
+      <li>Todas las apuestas: pendientes, ganadas, perdidas y nulas</li>
+      <li>Las estadísticas que dependen de ellas (resultado, ROI, récord, CLV y "desde despliegue")</li>
+      <li>La caché de cuotas (se vuelve a descargar cuando la necesites)</li>
+      <li>El registro de aprendizaje y los pesos aprendidos (vuelven a su base)</li>
     </ul>
     <div class="tracker-block-sub" style="margin-bottom:6px;"><strong>Se conserva</strong></div>
     <ul style="font-size:13px;color:var(--text-2);margin:0 0 14px;padding-left:18px;line-height:1.7;">
-      <li>Tus API keys (The Odds API, API-Football)</li>
-      <li>La sincronización entre dispositivos (tu clave)</li>
-      <li>El bankroll de arbitraje</li>
-      <li>Tus presets personalizados y el preset activo</li>
+      <li>La app completa y todas sus pestañas</li>
+      <li>Tu API key de The Odds API y tu cupo de créditos</li>
+      <li>Tu clave de sincronización entre dispositivos</li>
+      <li>Tus ligas, banca, modo, tema y resto de ajustes</li>
     </ul>
-    <p style="font-size:12px;color:var(--text-3);margin-bottom:16px;line-height:1.5;">El estado vacío se enviará a la nube para que tus otros dispositivos sincronizados reciban el reset.</p>
-    <div style="display:flex;gap:8px;"><button class="btn-danger" onclick="confirmClearHistory()">Sí, limpiar todo</button><button class="btn-secondary" onclick="closeModal()">Cancelar</button></div>`;
+    <p style="font-size:12px;color:var(--text-3);margin-bottom:16px;line-height:1.5;">El borrado se propaga a tu iPhone, iPad y PC: las apuestas anteriores no volverán aunque otro dispositivo todavía las tenga.</p>
+    <div style="display:flex;gap:8px;"><button class="btn-danger" onclick="confirmClearHistory()">Sí, borrar mis apuestas</button><button class="btn-secondary" onclick="closeModal()">Cancelar</button></div>`;
   document.getElementById('modal-overlay').classList.add('active');
 }
 
@@ -5143,7 +5045,10 @@ async function cloudOverwriteEmpty() {
 }
 
 function confirmClearHistory() {
-  // Tombstones: marca las apuestas actuales como borradas para que ningun merge futuro las reviva.
+  // Marca de reinicio: TODA apuesta anterior a este instante queda descartada en la fusión,
+  // también las que otro dispositivo tenga y este no conozca. Así el borrado sí se propaga.
+  const RESET_AT = Date.now();
+  localStorage.setItem('quantResetAt', String(RESET_AT));
   const ids = (state.bets || []).map(b => b.id).filter(Boolean);
   state.deletedBets = Array.from(new Set([...(state.deletedBets || []), ...ids])).slice(-500);
   state.bets = [];
@@ -5182,7 +5087,19 @@ function confirmClearHistory() {
 // ============================================================
 // BET TRACKER
 // ============================================================
-function persistBets() { lsSet('quantBets', JSON.stringify(state.bets)); }
+function persistBets() {
+  // Sella cada apuesta con la hora de modificación: la fusión entre dispositivos
+  // se queda con la versión más reciente en vez de con "la del dispositivo local".
+  const now = new Date().toISOString();
+  (state.bets||[]).forEach(b => {
+    if (!b) return;
+    const snap = JSON.stringify([b.status,b.stake,b.odds,b.pick,b.finalScore,b.clvPct,b.closingOdds,b.liveScore,b.resolve]);
+    if (b.__snap !== snap) { b.__snap = snap; b.updatedAt = now; }
+    if (!b.updatedAt) b.updatedAt = b.createdAt || now;
+  });
+  lsSet('quantBets', JSON.stringify(state.bets));
+}
+function getResetAt(){ const v = +localStorage.getItem('quantResetAt'); return (v>0) ? v : 0; }
 
 // Modal minimal para registrar apuestas que el sistema no cubre (auto:false).
 function openManualBetModal() {
@@ -5408,64 +5325,7 @@ function calcSharpRating() {
   return { total, band, desc, components: { roi: roiScore, clv: clvScore, discipline: disciplineScore, consistency: consistencyScore, volume: volumeScore }, raw: { roi, avgClv, settled: settled.length, clvSamples: withClosing.length } };
 }
 
-function renderSharpRating() {
-  const c = document.getElementById('sharp-rating-card');
-  const sr = calcSharpRating();
-  if (!sr) { c.innerHTML = ''; return; }
-  const bandColor = sr.total>=75?'var(--c-salvia)':sr.total>=60?'var(--c-cobre)':sr.total>=45?'var(--c-pizarra)':'var(--c-granate)';
-  c.innerHTML = `
-    <div class="sharp-card">
-      <div class="sharp-head">
-        <div><div class="sharp-title">Sharp Rating · tu calificación como apostador</div><div class="muted" style="font-family:var(--font-mono);font-size:11px;margin-top:4px;">Calculado sobre ${sr.raw.settled} apuestas · ${sr.raw.clvSamples} con CLV</div></div>
-        <div style="text-align:right;"><div class="sharp-score">${sr.total}</div><div class="sharp-band" style="color:${bandColor};">${sr.band}</div></div>
-      </div>
-      <div style="font-size:13px;color:var(--text-2);line-height:1.55;">${sr.desc}</div>
-      <div class="sharp-components">
-        <div class="sharp-comp"><div class="l">ROI score (30%)</div><div class="v">${Math.round(sr.components.roi)}</div><div class="b"><div style="width:${sr.components.roi}%;"></div></div></div>
-        <div class="sharp-comp"><div class="l">CLV score (25%)</div><div class="v">${Math.round(sr.components.clv)}</div><div class="b"><div style="width:${sr.components.clv}%;"></div></div></div>
-        <div class="sharp-comp"><div class="l">Disciplina (20%)</div><div class="v">${Math.round(sr.components.discipline)}</div><div class="b"><div style="width:${sr.components.discipline}%;"></div></div></div>
-        <div class="sharp-comp"><div class="l">Consistencia stake (15%)</div><div class="v">${Math.round(sr.components.consistency)}</div><div class="b"><div style="width:${sr.components.consistency}%;"></div></div></div>
-        <div class="sharp-comp"><div class="l">Volumen (10%)</div><div class="v">${Math.round(sr.components.volume)}</div><div class="b"><div style="width:${sr.components.volume}%;"></div></div></div>
-      </div>
-      <div class="edu-box" style="margin-top:14px;"><div class="ttl">Cómo subir tu Sharp Rating</div>
-        <strong>ROI:</strong> sólo apuesta value bets (edge > 5%). El ROI sostenido es lo más difícil pero importante.<br>
-        <strong>CLV:</strong> <em>llena el campo "Cuota al cierre"</em> en cada apuesta. Si frecuentemente apuestas a cuotas mejores que el cierre, eres sharp.<br>
-        <strong>Disciplina:</strong> registra "Score modelo" y solo apuesta con score ≥ 60.<br>
-        <strong>Consistencia:</strong> stake fijo del 1-3% del bankroll, no varíes salvajemente.<br>
-        <strong>Volumen:</strong> 50+ apuestas para que las estadísticas sean significativas.
-      </div>
-    </div>
-  `;
-}
-
-// Snapshots for movement tracking
-function saveOddsSnapshot(data) {
-  if (!data) return;
-  const sk = ODDS_SPORT_MAP[state.sport];
-  const ts = Date.now();
-  state.oddsHistory[sk] = state.oddsHistory[sk] || [];
-  const snap = { ts, events: {} };
-  data.forEach(ev => {
-    let bH=0, bA=0, bD=0;
-    ev.bookmakers?.forEach(bm => {
-      const h2h = bm.markets?.find(m => m.key === 'h2h');
-      if (!h2h) return;
-      h2h.outcomes.forEach(o => {
-        if (o.name === ev.home_team && o.price > bH) bH = o.price;
-        else if (o.name === ev.away_team && o.price > bA) bA = o.price;
-        else if (o.name === 'Draw' && o.price > bD) bD = o.price;
-      });
-    });
-    snap.events[ev.id] = { home: ev.home_team, away: ev.away_team, bH, bA, bD, commence: ev.commence_time };
-  });
-  state.oddsHistory[sk].push(snap);
-  if (state.oddsHistory[sk].length > 50) state.oddsHistory[sk] = state.oddsHistory[sk].slice(-50);
-  lsSet('quantOddsHistory', JSON.stringify(state.oddsHistory));
-}
-
-// NOTA: el movimiento de cuotas global se reemplazó por renderGameMovement() por partido,
-// que vive en la sección Cuotas del detalle. saveOddsSnapshot() sigue alimentando ese histórico.
-
+function saveOddsSnapshot(){ /* sin efecto */ }
 function renderTrackerStats() {
   const c = document.getElementById('tracker-stats');
   const b = state.bets;
@@ -5500,23 +5360,6 @@ const LESSON_LABELS = {
 const STATUS_ES = { pending:'pendiente', won:'ganada', lost:'perdida', push:'nula' };
 
 // Celda "Fecha / hora": muestra hora del partido, o EN VIVO si esta en juego.
-function betWhenCell(b) {
-  if (b.liveStatus === 'in') {
-    const sc = b.liveScore ? `<span class="live-info" style="font-weight:700;color:var(--text-1);">${b.liveScore}</span>` : '';
-    const clk = b.liveClock ? `<span class="live-info">${b.liveClock}${b.livePeriod?` · P${b.livePeriod}`:''}</span>` : (b.liveDetail ? `<span class="live-info">${b.liveDetail}</span>` : '');
-    return `<span class="live-pill">EN VIVO</span>${sc}${clk}`;
-  }
-  let d = null;
-  if (b.commence) { const x = new Date(b.commence); if (!isNaN(x)) d = x; }
-  if (d) {
-    const t = d.toLocaleString('es-EC',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'America/Guayaquil'});
-    const cd = countdownStr(d);
-    return `<span class="tr-time">${CLK} ${t}</span>${cd?`<span class="tr-cd">${cd}</span>`:''}`;
-  }
-  if (b.date) { const x = new Date(b.date+'T12:00:00'); if (!isNaN(x)) return x.toLocaleDateString('es-EC',{day:'2-digit',month:'short',year:'2-digit'}); }
-  return b.date || '—';
-}
-// Celda "Mercado": todos los detalles de la apuesta.
 function betMarketCell(b) {
   let mk = b.market||'—', pick = b.pick||'';
   if (b.resolve) {
@@ -5549,14 +5392,6 @@ function normalizeMarketKey(b) {
   if (m.includes('doble')) return 'dc';
   if (m.includes('dnb') || m.includes('no apuesta')) return 'dnb';
   return 'other';
-}
-function withinRange(b, range) {
-  if (range === 'all') return true;
-  const days = range === '7d' ? 7 : (range === '30d' ? 30 : null);
-  if (!days) return true;
-  const ref = b.commence ? new Date(b.commence) : (b.date ? new Date(b.date+'T12:00:00') : null);
-  if (!ref || isNaN(ref)) return true;
-  return (Date.now() - ref.getTime()) <= days*86400000;
 }
 function betDateObj(b) {
   return b.commence ? new Date(b.commence) : (b.date ? new Date(b.date+'T12:00:00') : null);
@@ -5743,13 +5578,6 @@ function buildLessonHTML(b) {
     </div>
     ${b.notes?`<div class="lesson-section"><div class="lh">Tus notas al registrar</div><em>"${b.notes}"</em></div>`:''}`;
 }
-function openLessonModal(id) {
-  const b = state.bets.find(x=>x.id===id); if (!b) return;
-  document.getElementById('modal-card').innerHTML = buildLessonHTML(b);
-  document.getElementById('modal-overlay').classList.add('active');
-}
-
-// ---------- MODAL: EDITAR APUESTA ----------
 function openEditModal(id) {
   const b = state.bets.find(x=>x.id===id); if (!b) return;
   const v = s => (s==null?'':String(s)).replace(/"/g,'&quot;');
@@ -5814,98 +5642,15 @@ function aggMetrics(bets) {
   return { n: bets.length, settled: s.length, won: w.length, winRate: s.length?w.length/s.length:0, pl: tr-ts, roi: ts?(tr-ts)/ts:0, staked: ts };
 }
 
-function renderTrackerDescriptive() {
-  const c = document.getElementById('tracker-descriptive');
-  const settled = state.bets.filter(x=>x.status!=='pending');
-  if (settled.length < 3) { c.innerHTML = `<div class="empty-tracker">Necesitas ≥3 apuestas liquidadas. Tienes ${settled.length}.</div>`; return; }
-  const bySport = groupBy(settled, b=>b.sport||'—');
-  const byMarket = groupBy(settled, b=>b.market);
-  const byBand = groupBy(settled, b => b.score==null?'Sin score':(b.score>=75?'ALTA':b.score>=60?'MEDIA':b.score>=45?'BAJA':'EVITAR'));
-  const T = m => Object.keys(m).map(k=>{const a=aggMetrics(m[k]); return `<tr><td>${k}</td><td>${a.n}</td><td>${(a.winRate*100).toFixed(0)}%</td><td class="${a.pl>=0?'pos':'neg'}">${a.pl>=0?'+':''}$${a.pl.toFixed(2)}</td><td class="${a.roi>=0?'pos':'neg'}">${(a.roi*100).toFixed(1)}%</td></tr>`;}).join('');
-  c.innerHTML = `<div class="insights">
-    <div class="insight-card pizarra"><div class="head">Por liga</div><table class="breakdown-table"><thead><tr><th>Liga</th><th>N</th><th>WR</th><th>P/L</th><th>ROI</th></tr></thead><tbody>${T(bySport)}</tbody></table></div>
-    <div class="insight-card pizarra"><div class="head">Por mercado</div><table class="breakdown-table"><thead><tr><th>Mercado</th><th>N</th><th>WR</th><th>P/L</th><th>ROI</th></tr></thead><tbody>${T(byMarket)}</tbody></table></div>
-    <div class="insight-card pizarra"><div class="head">Por banda de score</div><table class="breakdown-table"><thead><tr><th>Banda</th><th>N</th><th>WR</th><th>P/L</th><th>ROI</th></tr></thead><tbody>${T(byBand)}</tbody></table></div>
-  </div>
-  <div class="insight-card" style="margin-top:14px;"><div class="head">Curva de P/L acumulada</div><canvas id="pl-chart" style="max-height:280px;"></canvas></div>`;
-  const sorted = [...settled].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let cum=0; const pts = sorted.map(b=>{ if(b.status==='won')cum+=b.stake*(b.odds-1); else if(b.status==='lost')cum-=b.stake; return {x:b.date,y:cum};});
-  const ctx = document.getElementById('pl-chart');
-  if (ctx && window.Chart) new Chart(ctx, { type:'line', data:{ labels:pts.map(p=>p.x), datasets:[{ label:'P/L acumulado ($)', data:pts.map(p=>p.y), borderColor:cum>=0?'#2d5e42':'#7a2e2e', backgroundColor: cum>=0?'rgba(45,94,66,0.08)':'rgba(122,46,46,0.08)', borderWidth:2, fill:true, tension:0.1, pointRadius:3, pointBackgroundColor: cum>=0?'#2d5e42':'#7a2e2e' }] }, options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ ticks:{color:'#8a8680',font:{family:'Cascadia Code, monospace',size:10}}, grid:{color:'#e8e4dd'} }, y:{ ticks:{color:'#8a8680',font:{family:'Cascadia Code, monospace',size:10},callback:v=>'$'+v}, grid:{color:'#e8e4dd'} } } } });
-}
-
-function renderTrackerMatrix() {
-  const c = document.getElementById('tracker-matrix');
-  const settled = state.bets.filter(x=>x.status!=='pending' && x.lesson);
-  if (settled.length < 3) { c.innerHTML = `<div class="empty-tracker">Necesitas al menos 3 apuestas liquidadas con campo "Alineación con modelo" (no N/A) para ver esta matriz.</div>`; return; }
-  const buckets = { validation: [], variance: [], insight: [], discipline: [] };
-  settled.forEach(b => { if (buckets[b.lesson]) buckets[b.lesson].push(b); });
-  const card = (key, title, color, desc) => {
-    const arr = buckets[key];
-    const a = aggMetrics(arr);
-    return `<div class="insight-card ${color}">
-      <div class="head">${title}</div>
-      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-        <div style="font-size:36px;font-weight:800;letter-spacing:-0.03em;">${arr.length}</div>
-        <div class="muted" style="font-family:var(--font-mono);font-size:11px;">${a.staked? 'P/L $' + a.pl.toFixed(2) : ''}</div>
-      </div>
-      <div class="body" style="font-size:13px;color:var(--text-2);">${desc}</div>
-    </div>`;
-  };
-  c.innerHTML = `<div class="insights" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
-    ${card('validation', '✓ Validación (alineado + W)', 'salvia', 'Seguiste el modelo y ganaste. <strong>Mantén este patrón.</strong>')}
-    ${card('variance', '≡ Varianza (alineado + L)', 'pizarra', 'Seguiste el modelo y perdiste. Esperable a corto plazo. No abandones el sistema.')}
-    ${card('insight', '◆ Intuición (contra + W)', 'cobre', 'Fuiste contra el modelo y ganaste. Anota POR QUÉ — puede ser señal real o solo suerte.')}
-    ${card('discipline', '✕ Indisciplina (contra + L)', 'granate', 'Fuiste contra el modelo y perdiste. <strong>Patrón a eliminar.</strong>')}
-  </div>
-  <div class="small-note" style="border-left-color:var(--c-pizarra);"><strong>Cómo interpretar:</strong> A largo plazo, los apostadores ganadores tienen MUCHAS validaciones y MUY POCAS indisciplinas. Si tu cuadrante "Intuición" tiene varios casos, revisa las notas — quizás estás viendo algo que el modelo no captura, y deberías ajustar los pesos en el Calificador.</div>`;
-}
-
-function renderTrackerPredictive() {
-  const c = document.getElementById('tracker-predictive');
-  const settled = state.bets.filter(x=>x.status!=='pending');
-  if (settled.length < 5) { c.innerHTML = `<div class="empty-tracker">Necesitas al menos 5 apuestas liquidadas. Tienes ${settled.length}.</div>`; return; }
-  const combos = groupBy(settled, b=>`${b.sport}/${b.market}`);
-  const cm = Object.entries(combos).filter(([_,a])=>a.length>=3).map(([k,a])=>({k,...aggMetrics(a)})).sort((a,b)=>b.roi-a.roi);
-  const best = cm[0], worst = cm[cm.length-1];
-  const withScore = settled.filter(b=>b.score!=null);
-  const followed = withScore.filter(b=>b.score>=60);
-  const ignored = withScore.filter(b=>b.score<60);
-  const fAgg = aggMetrics(followed), iAgg = aggMetrics(ignored);
-  const dRate = withScore.length ? followed.length/withScore.length : null;
-  const sorted = [...settled].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let curS=0, mxW=0, mxL=0;
-  sorted.forEach(b=>{ if(b.status==='won'){if(curS>=0)curS++; else curS=1; mxW=Math.max(mxW,curS);} else if(b.status==='lost'){if(curS<=0)curS--; else curS=-1; mxL=Math.max(mxL,-curS);}});
-  const overall = aggMetrics(settled);
-  const avgOdds = settled.reduce((a,b)=>a+b.odds,0)/settled.length;
-  const kelly = avgOdds>1 ? Math.max(0,(overall.winRate*avgOdds-1)/(avgOdds-1)) : 0;
-  const halfKelly = kelly/2;
-  const insights = [];
-  if (best && worst && best.roi > 0 && best.roi-worst.roi > 0.1) insights.push({ head:'◆ Patrón ganador', body:`Tu mejor categoría: <strong>${best.k}</strong> con <strong>${(best.roi*100).toFixed(1)}% ROI</strong> en ${best.n} apuestas (WR ${(best.winRate*100).toFixed(0)}%). Considera enfocarte aquí.`, cls:'cobre' });
-  if (worst && worst.roi < -0.05 && worst.n >= 3) insights.push({ head:'◇ Patrón perdedor', body:`Tu peor categoría: <strong>${worst.k}</strong> con <strong>${(worst.roi*100).toFixed(1)}% ROI</strong> en ${worst.n} apuestas. Considera dejarla.`, cls:'granate' });
-  if (dRate !== null) insights.push({ head:'◈ Disciplina con score', body:`Seguiste el modelo en <strong>${(dRate*100).toFixed(0)}%</strong> de apuestas con score. Cuando seguiste: ROI ${(fAgg.roi*100).toFixed(1)}%, WR ${(fAgg.winRate*100).toFixed(0)}%. Cuando ignoraste: ROI ${(iAgg.roi*100).toFixed(1)}%, WR ${(iAgg.winRate*100).toFixed(0)}%.`, cls: fAgg.roi>iAgg.roi+0.05?'salvia':'pizarra' });
-  insights.push({ head:'◐ Stake óptimo (Kelly)', body:`Con tu WR (${(overall.winRate*100).toFixed(0)}%) y cuota promedio ${avgOdds.toFixed(2)}, Kelly puro = <strong>${(kelly*100).toFixed(1)}%</strong>. Half-Kelly recomendado: <strong>${(halfKelly*100).toFixed(1)}%</strong> ${kelly<=0?'(NEGATIVO: tu edge es 0 o negativo)':'(úsalo como stake máximo)'}.`, cls:'pizarra' });
-  insights.push({ head:'◑ Rachas', body:`Mejor racha de victorias: <strong>${mxW}</strong>. Peor racha de derrotas: <strong>${mxL}</strong>. ${mxL>=5?'Una racha de 5+ derrotas es estadísticamente normal; tu disciplina de stake es lo que te protege.':'Tus rachas están bajo control.'}`, cls:'pizarra' });
-  if (overall.roi < -0.1 && settled.length >= 10) insights.push({ head:'⚠ Alerta de bankroll', body:`Tu ROI total es <strong>${(overall.roi*100).toFixed(1)}%</strong> en ${settled.length} apuestas. Considera <strong>pausar al menos 1 semana</strong>, revisar el modelo y reducir stakes.`, cls:'granate' });
-  if (overall.roi > 0.05 && settled.length >= 20) insights.push({ head:'✓ Validación', body:`Con ${settled.length} apuestas y ROI <strong>${(overall.roi*100).toFixed(1)}%</strong>, tu sistema muestra señales positivas. Apunta a 50+ operaciones para confirmar.`, cls:'salvia' });
-  insights.push({ head:'Próximos pasos', body:`1. Apunta a 30+ apuestas liquidadas. <br>2. Stake fijo del ${Math.min(3, Math.max(1, halfKelly*100)).toFixed(1)}% del bankroll. <br>3. Solo apuestas con score ≥ 60. <br>4. Anota notas detalladas: tu yo del futuro las leerá.`, cls:'pizarra' });
-  c.innerHTML = `<div class="insights">${insights.map(i=>`<div class="insight-card ${i.cls}"><div class="head">${i.head}</div><div class="body">${i.body}</div></div>`).join('')}</div>`;
-}
-
-// ============================================================
-// PRESET ADAPTATIVO + MARCADO AUTOMATICO DE RESULTADOS (Fases A y B)
-// ============================================================
-// Adaptativo PAUSADO: el modelo nuevo (mercado primero) no usa estos pesos para la probabilidad
-// (la da el mercado). Los pesos solo afinan el Modo Estimación. Se reactivará cuando el modelo
-// propio esté validado, para que no aprenda de señales poco fiables en bucle.
-const ADAPTIVE_ENABLED = false;
+// --- constantes restauradas (el motor las sigue usando) ---
 const ADAPTIVE_BASE = { form:25, strength:25, h2h:15, homeAway:10, context:10, consistency:10, rest:5 };
-const ADAPTIVE_MIN_RESULTS = 20;   // hasta 20 resultados finalizados, usa la base sensata
+const ADAPTIVE_EASE = 0.30;
+const ADAPTIVE_ENABLED = false;
+const ADAPTIVE_MIN_RESULTS = 20;
+const ADAPTIVE_SENS = 0.012;
 const ADAPTIVE_WMIN = 3, ADAPTIVE_WMAX = 40;
-const ADAPTIVE_SENS = 0.012;       // sensibilidad: delta de subscores -> peso
-const ADAPTIVE_EASE = 0.30;        // fraccion del camino al objetivo por cada recalculo
 const WKEYS = ['form','strength','h2h','homeAway','context','consistency','rest'];
-
+const ODDS_REGION_PRESETS = { max:'us,eu,uk', medio:'eu,us', ahorro:'eu' };
 function getAdaptiveWeights() {
   if (!ADAPTIVE_ENABLED) return Object.assign({}, ADAPTIVE_BASE); // pausado: siempre base
   try {
@@ -6478,7 +6223,6 @@ document.querySelectorAll('.tab').forEach(t => {
     if (t.dataset.tab==='live') { loadLiveTab(); startLiveTabPoll(); } else { stopLiveTabPoll(); }
     if (t.dataset.tab==='tools') renderTools();
     if (t.dataset.tab==='tracker') { renderTracker(); autoResolveBets(); startTrackerPoll(); } else { stopTrackerPoll(); }
-    if (t.dataset.tab==='arb') renderArb();
     if (t.dataset.tab==='odds') renderOddsTab();
     if (t.dataset.tab==='schedule' && state.games && state.games.length && typeof refreshLiveScores==='function') refreshLiveScores();
     if (t.dataset.tab==='today') { renderTodayLeagues(); if (!todayGames.length) loadToday(); else renderTodayPicks(); }
@@ -6491,7 +6235,6 @@ document.querySelectorAll('#arb-subtabs .subtab').forEach(t => {
     document.querySelectorAll('.arb-subpanel').forEach(p=>p.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('arbsub-'+t.dataset.arbsub).classList.add('active');
-    if (t.dataset.arbsub==='scan') renderArb();
   });
 });
 document.querySelectorAll('.sort-btn').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.sort-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); state.sortMode = b.dataset.sort; renderSchedule(); }));
@@ -6597,8 +6340,9 @@ function gatherState() {
     weights: state.weights,
     customPresets: state.customPresets,
     oddsKey: state.oddsKey,
-    oddsCache: state.oddsCache,
-    oddsHistory: state.oddsHistory,
+    // La caché de cuotas YA NO se sincroniza: es efímera, por dispositivo, y hacía
+    // que el blob creciera sin límite (causa de que fallaran guardado y sincronización).
+    resetAt: getResetAt(),
     outcomeLog: getOutcomeLog(),
     adaptiveWeights: getAdaptiveWeights(),
     adaptiveMeta: getAdaptiveMeta(),
@@ -6615,12 +6359,20 @@ function gatherState() {
 }
 
 // Fusiona apuestas de dos fuentes por id, excluyendo las borradas. Lo local gana en empate.
-function mergeBets(cloudBets, localBets, deletedSet) {
+function betStamp(b){ return +(new Date(b && (b.updatedAt || b.createdAt) || 0)) || 0; }
+function mergeBets(cloudBets, localBets, deletedSet, resetAt) {
   const byId = {};
-  (Array.isArray(cloudBets) ? cloudBets : []).forEach(b => { if (b && b.id) byId[b.id] = b; });
-  (Array.isArray(localBets) ? localBets : []).forEach(b => { if (b && b.id) byId[b.id] = b; });
+  const put = b => {
+    if (!b || !b.id) return;
+    const prev = byId[b.id];
+    // Gana la versión modificada más recientemente, venga de donde venga.
+    if (!prev || betStamp(b) >= betStamp(prev)) byId[b.id] = b;
+  };
+  (Array.isArray(cloudBets) ? cloudBets : []).forEach(put);
+  (Array.isArray(localBets) ? localBets : []).forEach(put);
   return Object.values(byId)
     .filter(b => !deletedSet.has(b.id))
+    .filter(b => !resetAt || betStamp(b) >= resetAt)
     .sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
 }
 
@@ -6628,21 +6380,9 @@ function mergeBets(cloudBets, localBets, deletedSet) {
 function mergeBlobs(cloud, local) {
   cloud = cloud || {};
   const deletedSet = new Set([...(cloud.deletedBets||[]), ...(local.deletedBets||[])]);
-  // Caché de cuotas: nos quedamos con la entrada más reciente por liga
-  const oddsCache = { ...(cloud.oddsCache||{}) };
-  Object.entries(local.oddsCache||{}).forEach(([k,v]) => {
-    if (!oddsCache[k] || (v && v.ts || 0) >= (oddsCache[k].ts || 0)) oddsCache[k] = v;
-  });
-  // Histórico de cuotas: unimos snapshots por liga, sin duplicados, máx 50
-  const oddsHistory = {};
-  const allKeys = new Set([...Object.keys(cloud.oddsHistory||{}), ...Object.keys(local.oddsHistory||{})]);
-  allKeys.forEach(k => {
-    const seen = new Set();
-    const merged = [...((cloud.oddsHistory||{})[k]||[]), ...((local.oddsHistory||{})[k]||[])]
-      .filter(s => { if (seen.has(s.ts)) return false; seen.add(s.ts); return true; })
-      .sort((a,b) => a.ts - b.ts);
-    oddsHistory[k] = merged.slice(-50);
-  });
+  // Marca de reinicio: gana la más reciente. Toda apuesta creada ANTES de esa marca
+  // se descarta aunque otro dispositivo todavía la tenga (así el borrado sí se propaga).
+  const resetAt = Math.max(+(cloud.resetAt||0), +(local.resetAt||0)) || 0;
   // Registro de resultados: union por gameId (igual que apuestas borradas)
   const outcomeLog = { ...(cloud.outcomeLog||{}), ...(local.outcomeLog||{}) };
   // Cuotas manuales: union por id, gana la entrada con _ts más reciente
@@ -6659,13 +6399,12 @@ function mergeBlobs(cloud, local) {
   return {
     _v: 1,
     _ts: Date.now(),
-    bets: mergeBets(cloud.bets, local.bets, deletedSet),
-    deletedBets: [...deletedSet].slice(-200),
+    bets: mergeBets(cloud.bets, local.bets, deletedSet, resetAt),
+    deletedBets: [...deletedSet].slice(-500),
+    resetAt,
     weights: local.weights,
     customPresets: { ...(cloud.customPresets||{}), ...(local.customPresets||{}) },
     oddsKey: local.oddsKey || cloud.oddsKey || '',
-    oddsCache,
-    oddsHistory,
     outcomeLog,
     adaptiveWeights,
     adaptiveMeta,
@@ -6692,14 +6431,12 @@ function applyBlob(blob, rerender) {
     if (blob.customPresets)                state.customPresets = blob.customPresets;
     if (typeof blob.oddsKey === 'string')  state.oddsKey = blob.oddsKey;
     if (blob.oddsCache)                    state.oddsCache = blob.oddsCache;
-    if (blob.oddsHistory)                  state.oddsHistory = blob.oddsHistory;
     localStorage.setItem('quantBets', JSON.stringify(state.bets));
     localStorage.setItem('quantDeletedBets', JSON.stringify(state.deletedBets));
     localStorage.setItem('quantWeights', JSON.stringify(state.weights));
     localStorage.setItem('quantPresets', JSON.stringify(state.customPresets));
     localStorage.setItem('oddsApiKey', state.oddsKey);
-    localStorage.setItem('quantOddsCache', JSON.stringify(state.oddsCache));
-    localStorage.setItem('quantOddsHistory', JSON.stringify(state.oddsHistory));
+    if (blob.resetAt) localStorage.setItem('quantResetAt', String(blob.resetAt));
     if (blob.outcomeLog)      localStorage.setItem('quantOutcomeLog', JSON.stringify(blob.outcomeLog));
     if (blob.adaptiveWeights) localStorage.setItem('quantAdaptiveWeights', JSON.stringify(blob.adaptiveWeights));
     if (blob.adaptiveMeta)    localStorage.setItem('quantAdaptiveMeta', JSON.stringify(blob.adaptiveMeta));
@@ -6765,11 +6502,49 @@ async function cloudPushNow() {
   if (syncPendingRetry) { syncPendingRetry = false; scheduleSyncPush(); }
 }
 
+// Baja de la nube y aplica lo que venga (sin subir). Es lo que faltaba: antes la app
+// solo leía al abrirse, así que iPhone/iPad/PC se quedaban congelados en su versión.
+let syncLastPull = 0;
+async function cloudRefresh(force) {
+  if (!syncCode || syncBusy || syncApplying) return;
+  if (!force && Date.now() - syncLastPull < 20000) return;   // no más de una lectura cada 20 s
+  syncLastPull = Date.now();
+  try {
+    const cloud = await cloudPull();
+    if (!cloud) return;
+    const merged = mergeBlobs(cloud, gatherState());
+    const changed = JSON.stringify(merged.bets) !== JSON.stringify(state.bets);
+    applyBlob(merged, changed);
+    if (changed) { try { renderTracker(); } catch(e){} }
+    setSyncStatus('ok', 'Sincronizado');
+  } catch(e) { setSyncStatus('error', 'Sin conexión'); }
+}
+function startSyncWatch(){
+  if (window.__syncWatch) return;
+  window.__syncWatch = setInterval(()=>{ if (!document.hidden) cloudRefresh(false); }, 60000);
+  document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) cloudRefresh(true); });
+  window.addEventListener('focus', ()=>cloudRefresh(false));
+  window.addEventListener('online', ()=>cloudRefresh(true));
+}
+
 // Programa un envío diferido (1.5 s) — agrupa varios cambios seguidos en un solo push.
 function scheduleSyncPush() {
   if (!syncCode || syncApplying) return;
   clearTimeout(syncPushTimer);
   syncPushTimer = setTimeout(cloudPushNow, 1500);
+}
+
+// Al arrancar: libera el espacio que ocupaban los datos viejos y deja la caché en tamaño sano.
+// Es lo que impedía guardar las cuotas (el navegador tiene ~5 MB por sitio).
+function reclaimStorage() {
+  try { localStorage.removeItem('quantOddsHistory'); } catch(e){}
+  try {
+    pruneOddsCache();
+    localStorage.setItem('quantOddsCache', JSON.stringify(state.oddsCache));
+  } catch(e) {
+    state.oddsCache = {};
+    try { localStorage.removeItem('quantOddsCache'); } catch(e2){}
+  }
 }
 
 // Envoltorios de localStorage que además sincronizan
@@ -6827,6 +6602,7 @@ async function initSync() {
     applyBlob(merged, false); // loadWeek/renderTracker se ejecutan después en el init
     // Subimos el resultado fusionado para dejar la nube consistente
     cloudPushNow();
+    startSyncWatch();
     setSyncStatus('ok', 'Sincronizado');
   } catch(e) {
     console.warn('initSync:', e);
